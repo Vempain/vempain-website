@@ -56,18 +56,9 @@ export function GalleryBlock({title, siteFileList, totalFiles, gallerySubjects, 
             return [];
         }
 
-        const normalizeDate = (val: unknown) => {
-            if (!val) return '';
-            if (typeof val === 'string') return val;
-            if (typeof val === 'object' && 'date' in (val as any)) {
-                return String((val as any).date ?? '');
-            }
-            return String(val);
-        };
-
         const rawEntries = [
             {label: 'Kommentti', value: activeFile.comment},
-            {label: 'Kuvausaika', value: normalizeDate(activeFile.originalDateTime)},
+            {label: 'Kuvausaika', value: activeFile.originalDateTime},
             {label: 'Oikeuksien haltija', value: activeFile.rightsHolder},
             {label: 'Käyttöehdot', value: activeFile.rightsTerms},
             {label: 'Oikeuksien URL', value: activeFile.rightsUrl},
