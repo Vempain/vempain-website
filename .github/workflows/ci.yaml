@@ -170,6 +170,7 @@ jobs:
           docker tag $FRONTEND_IMAGE:latest $FRONTEND_IMAGE:${newVersion}
           docker push --all-tags $FRONTEND_IMAGE
         env:
+          VEMPAIN_ACTION_TOKEN: ${{ secrets.VEMPAIN_ACTION_TOKEN }}
           FRONTEND_IMAGE: ${{ env.FRONTEND_IMAGE }}
           mainVersion: ${{ steps.basemain.outputs.mainVersion }}
           baseVersion: ${{ steps.basemain.outputs.baseVersion }}
