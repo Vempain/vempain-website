@@ -22,7 +22,7 @@
   },
   "dependencies" : {
     "@ant-design/icons" : "^6.1.0",
-    "@vempain/vempain-auth-frontend" : "^0.9.29",
+    "@vempain/vempain-auth-frontend" : "^0.9.30",
     "antd" : "^6.1.0",
     "axios" : "^1.13.2",
     "corepack" : "^0.34.5",
