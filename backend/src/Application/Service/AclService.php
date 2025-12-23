@@ -10,8 +10,7 @@ class AclService
     public function __construct(
         private readonly WebSiteAclRepository $aclRepository,
         private readonly WebSiteJwtTokenRepository $tokenRepository,
-    )
-    {
+    ) {
     }
 
     public function canAccess(?int $aclId, ?array $claims): bool

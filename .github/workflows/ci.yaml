@@ -32,6 +32,10 @@ jobs:
         env:
           COMPOSER_MEMORY_LIMIT: 2G
 
+      - name: Run backend formatting fixing
+        working-directory: backend
+        run: ./vendor/bin/phpcbf
+
       - name: Run backend lint
         working-directory: backend
         run: composer lint

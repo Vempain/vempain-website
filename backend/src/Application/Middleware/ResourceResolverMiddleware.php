@@ -16,8 +16,7 @@ class ResourceResolverMiddleware implements MiddlewareInterface
         private readonly FileService $fileService,
         private readonly LoggerInterface $logger,
         private readonly PageService $pageService,
-    )
-    {
+    ) {
     }
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface

@@ -22,8 +22,7 @@ class PageService
         private readonly AclService $aclService,
         private readonly PageCacheEvaluator $pageCacheEvaluator,
         private readonly LoggerInterface $logger,
-    )
-    {
+    ) {
     }
 
     public function handlePageRequest(ServerRequestInterface $request): ?ResponseInterface

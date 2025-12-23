@@ -15,8 +15,7 @@ class PageCacheEvaluator
         private readonly LoggerInterface $logger,
         private readonly WebSitePageRepository $pageRepository,
         private readonly LegacyEmbedParser $legacyEmbedParser,
-    )
-    {
+    ) {
     }
 
     public function render(WebSitePage $page): ?string
