@@ -27,11 +27,13 @@ jobs:
           extensions: bcmath, mbstring, pdo_pgsql
 
       - name: Install Composer dependencies
+        working-directory: backend
         run: composer install --no-progress --prefer-dist
         env:
           COMPOSER_MEMORY_LIMIT: 2G
 
       - name: Run backend lint
+        working-directory: backend
         run: composer lint
 
   frontend-tests:
@@ -49,16 +51,19 @@ jobs:
           VEMPAIN_ACTION_TOKEN: ${{ secrets.VEMPAIN_ACTION_TOKEN }}
 
       - name: Install frontend dependencies
+        working-directory: frontend
         run: yarn install
         env:
           VEMPAIN_ACTION_TOKEN: ${{ secrets.VEMPAIN_ACTION_TOKEN }}
 
       - name: Run frontend lint
+        working-directory: frontend
         run: yarn lint
         env:
           VEMPAIN_ACTION_TOKEN: ${{ secrets.VEMPAIN_ACTION_TOKEN }}
 
       - name: Run frontend tests
+        working-directory: frontend
         run: yarn test --passWithNoTests --watchAll=false
         env:
           VEMPAIN_ACTION_TOKEN: ${{ secrets.VEMPAIN_ACTION_TOKEN }}
@@ -107,6 +112,7 @@ jobs:
           baseVersion: ${{ steps.basemain.outputs.baseVersion }}
 
       - name: Set new package version
+        working-directory: frontend
         run: |
           echo "Setting version from tag: ${newVersion}"
           yarn version --immediate ${newVersion}
@@ -115,6 +121,7 @@ jobs:
           VEMPAIN_ACTION_TOKEN: ${{ secrets.VEMPAIN_ACTION_TOKEN }}
 
       - name: Build production package
+        working-directory: frontend
         run: |
           yarn install
           yarn build:production
@@ -131,7 +138,7 @@ jobs:
       - name: Build and push backend image
         shell: bash
         run: |
-          docker build --progress=plain --secret id=vempain_token,env=VEMPAIN_ACTION_TOKEN -f backend/Dockerfile -t $BACKEND_IMAGE:latest .
+          docker build --progress=plain --secret id=vempain_token,env=VEMPAIN_ACTION_TOKEN -f backend/Dockerfile -t $BACKEND_IMAGE:latest backend
           echo "Tagging backend image with versions: ${{ steps.basemain.outputs.mainVersion }}, ${{ steps.basemain.outputs.baseVersion }}, ${{ steps.newVer.outputs.newVersion }}"
           docker tag $BACKEND_IMAGE:latest $BACKEND_IMAGE:${{ steps.basemain.outputs.mainVersion }}
           docker tag $BACKEND_IMAGE:latest $BACKEND_IMAGE:${{ steps.basemain.outputs.baseVersion }}
