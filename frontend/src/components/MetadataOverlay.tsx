@@ -41,7 +41,7 @@ export function MetadataOverlay({entries, subjects = []}: { entries: MetadataEnt
                         </Descriptions>
                         {subjects && subjects.length > 0 && (
                                 <div style={{marginTop: 12}}>
-                                    <ShowSubjects subjects={subjects} max={6}/>
+                                    <ShowSubjects subjects={subjects}/>
                         </div>
                         )}
                     </div>

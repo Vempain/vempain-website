@@ -1,7 +1,7 @@
 import {Button, Card, Empty, Image, Spin, Tooltip, Typography} from "antd";
 import {ShowSubjects} from "./ShowSubjects.tsx";
 import {fileAPI} from "../services";
-import {useEffect, useMemo, useRef, useState} from "react";
+import {useCallback, useEffect, useMemo, useRef, useState} from "react";
 import type {MetadataEntry, WebSiteFile, WebSiteSubject} from "../models";
 import {MetadataOverlay} from "./MetadataOverlay.tsx";
 
@@ -43,6 +43,20 @@ export function GalleryBlock({title, siteFileList, totalFiles, gallerySubjects, 
     const [showMetadata, setShowMetadata] = useState<boolean>(false);
     const prefetchingRef = useRef(false);
 
+    const handlePreviewVisibleChange = (visible: boolean) => {
+        setPreviewVisible(visible);
+        if (!visible) {
+            setShowMetadata(false);
+        }
+    };
+
+    const handlePreviewChange = (index: number) => {
+        setPreviewIndex(index);
+        setShowMetadata(false);
+    };
+
+    const stableFetchMore = useCallback(() => fetchMoreFiles(), [fetchMoreFiles]);
+
     // Memos
     const activeFile = useMemo(() => previewVisible ? siteFileList[previewIndex] ?? null : null, [siteFileList, previewIndex, previewVisible]);
     const columnsStyle = useMemo(() => ({
@@ -58,7 +72,7 @@ export function GalleryBlock({title, siteFileList, totalFiles, gallerySubjects, 
 
         const rawEntries = [
             {label: 'Kommentti', value: activeFile.comment},
-            {label: 'Kuvausaika', value: activeFile.originalDateTime},
+            {label: 'Kuvausaika', value: (activeFile.originalDateTime !== null ? activeFile.originalDateTime : "")},
             {label: 'Oikeuksien haltija', value: activeFile.rightsHolder},
             {label: 'Käyttöehdot', value: activeFile.rightsTerms},
             {label: 'Oikeuksien URL', value: activeFile.rightsUrl},
@@ -77,31 +91,24 @@ export function GalleryBlock({title, siteFileList, totalFiles, gallerySubjects, 
         });
     }, [activeFile]);
 
-    // Reset metadata overlay when preview closes or active file changes
-    useEffect(() => {
-        if (!previewVisible) {
-            setShowMetadata(false);
-        }
-    }, [previewVisible, activeFile?.id]);
-
+    // Prefetch next page when near the end of the current set
     useEffect(() => {
         if (!previewVisible || !hasMore) return;
         if (prefetchingRef.current) return;
         if (previewIndex < siteFileList.length - 2) return;
 
         prefetchingRef.current = true;
-        fetchMoreFiles()
-                .catch(() => {/* ignore errors, caller handles logging */
-                })
-                .finally(() => {
-                    prefetchingRef.current = false;
-                });
-    }, [previewVisible, previewIndex, siteFileList.length, hasMore, fetchMoreFiles]);
+        stableFetchMore()
+            .catch(() => { /* ignore errors */ })
+            .finally(() => {
+                prefetchingRef.current = false;
+            });
+    }, [previewVisible, previewIndex, siteFileList.length, hasMore, stableFetchMore]);
 
     return (
             <Card size="small" className="gallery-embed">
                 {title && <Typography.Text strong>{title}</Typography.Text>}
-                <ShowSubjects subjects={gallerySubjects} max={8}/>
+                <ShowSubjects subjects={gallerySubjects}/>
                 <div style={{marginTop: 8}}>
                     {siteFileList.length === 0 && <Spin/>}
                     {siteFileList.length === 0 && (
@@ -110,13 +117,13 @@ export function GalleryBlock({title, siteFileList, totalFiles, gallerySubjects, 
                     {siteFileList.length > 0 && (
                             <Image.PreviewGroup
                                     preview={{
-                                        visible: previewVisible,
-                                        onVisibleChange: setPreviewVisible,
+                                        open: previewVisible,
+                                        onOpenChange: handlePreviewVisibleChange,
                                         current: previewIndex,
-                                        onChange: (index: number) => setPreviewIndex(index),
+                                        onChange: handlePreviewChange,
                                         movable: true,
                                         countRender: (current, total) => `${current + 1} / ${totalFiles ?? total}`,
-                                        toolbarRender: (original) => (
+                                        actionsRender: (original) => (
                                                 <>
                                                     {(metadataEntries.length > 0 || (activeFile?.subjects?.length ?? 0) > 0) && (
                                                             <Button
@@ -179,7 +186,7 @@ export function GalleryBlock({title, siteFileList, totalFiles, gallerySubjects, 
                     )}
                     {siteFileList.length > 0 && hasMore && (
                             <div style={{display: 'flex', justifyContent: 'center', marginTop: 16}}>
-                                <Button type="primary" onClick={fetchMoreFiles} disabled={!hasMore}>
+                                <Button type="primary" onClick={stableFetchMore} disabled={!hasMore}>
                                     Lataa lisää
                                 </Button>
                             </div>

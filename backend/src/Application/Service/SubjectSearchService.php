@@ -472,7 +472,7 @@ SQL;
                 'aclId' => $file->getAclId(),
                 'subjects' => $this->subjectTransformer->manyFromEntities($file->getSubjects()),
                 'comment' => $file->getComment(),
-                'originalDateTime' => $file->getOriginalDateTime(),
+                'originalDateTime' => $file->getOriginalDateTime()?->format('Y-m-d H:i:s'),
                 'rightsHolder' => $file->getRightsHolder(),
                 'rightsTerms' => $file->getRightsTerms(),
                 'rightsUrl' => $file->getRightsUrl(),

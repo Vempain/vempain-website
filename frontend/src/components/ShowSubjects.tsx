@@ -3,7 +3,6 @@ import type {WebSiteSubject} from '../models';
 
 interface ShowSubjectsProps {
     subjects?: WebSiteSubject[];
-    onSubjectClick?: (subjectId: number) => void;
 }
 
 const getDisplayName = (subject: WebSiteSubject): string => {
@@ -16,18 +15,14 @@ const getDisplayName = (subject: WebSiteSubject): string => {
             ?? `Subject #${subject.id}`;
 };
 
-export function ShowSubjects({subjects = [], onSubjectClick}: ShowSubjectsProps) {
+export function ShowSubjects({subjects = []}: ShowSubjectsProps) {
     if (subjects.length === 0) {
         return null;
     }
 
     const handleClick = (subjectId: number, e: React.MouseEvent) => {
         e.preventDefault();
-        if (onSubjectClick) {
-            onSubjectClick(subjectId);
-        } else {
-            window.dispatchEvent(new CustomEvent('subject-search-open', {detail: [subjectId]}));
-        }
+        window.dispatchEvent(new CustomEvent('subject-search-open', {detail: [subjectId]}));
     };
 
     return (
