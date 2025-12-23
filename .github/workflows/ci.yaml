@@ -66,9 +66,15 @@ jobs:
         env:
           VEMPAIN_ACTION_TOKEN: ${{ secrets.VEMPAIN_ACTION_TOKEN }}
 
-      - name: Run frontend tests
+      - name: Run frontend test
         working-directory: frontend
         run: yarn test --passWithNoTests --watchAll=false
+        env:
+          VEMPAIN_ACTION_TOKEN: ${{ secrets.VEMPAIN_ACTION_TOKEN }}
+
+      - name: Run frontend coverage
+        working-directory: frontend
+        run: yarn test:coverage --passWithNoTests
         env:
           VEMPAIN_ACTION_TOKEN: ${{ secrets.VEMPAIN_ACTION_TOKEN }}
 
