@@ -1,0 +1,28 @@
+# Logs
+logs
+*.log
+
+frontend/node_modules
+backend/vendor
+backend/start.sh
+
+dist
+dist-ssr
+*.local
+.*.local
+
+# Editor directories and files
+.idea
+*.iml
+.env
+
+# Docker
+traefik/letsencrypt/
+docker-compose.override.yml
+
+# Frontend
+frontend/.env
+frontend/.env.local
+frontend/.env.prod
+frontend/dist
+frontend/src/buildInfo.json

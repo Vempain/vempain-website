@@ -1,0 +1,143 @@
+#root {
+    height: 100vh;
+}
+
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background-color: #f0f2f5;
+}
+
+.app-layout {
+    min-height: 100vh;
+}
+
+.app-main {
+    display: flex;
+    margin-top: 64px;
+    min-height: calc(100vh - 64px);
+}
+
+.app-sider .logo {
+    height: 32px;
+    margin: 16px;
+    color: #fff;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.app-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #fff;
+    padding: 0 24px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.menu-search {
+    display: flex;
+    align-items: center;
+    min-width: 32px;
+    height: 64px;
+    padding: 0 8px;
+}
+
+.menu-search--active {
+    min-width: 220px;
+}
+
+.menu-search button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 32px;
+    width: 32px;
+    margin: 0;
+}
+
+.menu-search .ant-input-search {
+    display: flex;
+    align-items: center;
+}
+
+.header-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.app-content {
+    margin: 24px;
+    padding: 24px;
+    background: #fff;
+    min-height: calc(100vh - 112px);
+    border-radius: 12px;
+    flex: 1;
+    width: auto;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.content-section {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.card-grid {
+    width: 100%;
+}
+
+.card-column {
+    display: flex;
+}
+
+.card {
+    padding: 16px;
+    border: 1px solid #f0f0f0;
+    border-radius: 8px;
+    background: #fafafa;
+    transition: box-shadow 0.2s ease;
+}
+
+.card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.card .ant-typography-warning {
+    color: #d48806;
+}
+
+.login-layout {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #1a365d 0%, #2f855a 100%);
+}
+
+.login-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.login-card {
+    background: #fff;
+    padding: 32px;
+    border-radius: 16px;
+    max-width: 400px;
+    width: 100%;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+button.ant-btn {
+    display: inline-flex;
+    align-items: center;
+}
+
+.login-modal {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}

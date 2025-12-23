@@ -1,0 +1,1 @@
+export {trimSlashes, toPathSegment} from './VempainTools';

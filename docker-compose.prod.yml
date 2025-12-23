@@ -1,0 +1,99 @@
+services:
+  traefik:
+    image: traefik:v3
+    container_name: vempain-site-traefik
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:6000"
+    ports:
+      - "127.0.0.1:6000:6000"
+      - "127.0.0.1:8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - vempain-web-site
+
+  vempain-site-frontend:
+    image: vempain-site-frontend:0.0.1
+    networks:
+      - vempain-web-site
+    depends_on:
+      - vempain-site-backend
+    ports:
+      - "127.0.0.1:6001:80"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${APP_ENV}_vempain-web-site"
+      - "traefik.http.routers.vempain-site-frontend.rule=Host(\"${TRAEFIK_SITE_HOST}\") && !PathPrefix(\"/api\") && !PathPrefix(\"/file\") && !PathPrefix(\"/health\")"
+      - "traefik.http.routers.vempain-site-frontend.entrypoints=web"
+      - "traefik.http.routers.vempain-site-frontend.priority=100"
+      - "traefik.http.routers.vempain-site-frontend.service=vempain-site-frontend"
+      - "traefik.http.services.vempain-site-frontend.loadbalancer.server.port=80"
+
+  vempain-site-backend:
+    image: vempain-site-backend:0.0.1
+    environment:
+      APP_ENV: ${APP_ENV:-production}
+      APP_DEBUG: ${APP_DEBUG:-false}
+      ENV_VEMPAIN_SITE_DB_HOST: ${ENV_VEMPAIN_SITE_DB_HOST}
+      ENV_VEMPAIN_SITE_DB_PORT: ${ENV_VEMPAIN_SITE_DB_PORT}
+      ENV_VEMPAIN_SITE_DB_NAME: ${ENV_VEMPAIN_SITE_DB_NAME}
+      ENV_VEMPAIN_SITE_DB_SCHEMA: ${ENV_VEMPAIN_SITE_DB_SCHEMA}
+      ENV_VEMPAIN_SITE_DB_USER: ${ENV_VEMPAIN_SITE_DB_USER}
+      ENV_VEMPAIN_SITE_DB_PASSWORD: ${ENV_VEMPAIN_SITE_DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_TTL_SECONDS: ${JWT_TTL_SECONDS:-1200}
+      VEMPAIN_WEBSITE_WEB_ROOT: /files
+    volumes:
+      - ${VEMPAIN_WEBSITE_WEB_ROOT}:/files:ro
+      - ${ENV_VEMPAIN_SITE_LOG_VOLUME}:/var/log/vempain
+    networks:
+      - vempain-web-site
+    depends_on:
+      vempain-site-db:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:6002:8000"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${APP_ENV}_vempain-web-site"
+      - "traefik.http.routers.vempain-site-backend.rule=Host(\"${TRAEFIK_SITE_HOST}\") && (PathPrefix(\"/api\") || PathPrefix(\"/file\") || PathPrefix(\"/health\"))"
+      - "traefik.http.routers.vempain-site-backend.entrypoints=web"
+      - "traefik.http.routers.vempain-site-backend.priority=200"
+      - "traefik.http.routers.vempain-site-backend.service=vempain-site-backend"
+      - "traefik.http.services.vempain-site-backend.loadbalancer.server.port=8000"
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8000/health || exit 1" ]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+
+  vempain-site-db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: ${ENV_VEMPAIN_SITE_DB_NAME}
+      POSTGRES_USER: ${ENV_VEMPAIN_SITE_DB_USER}
+      POSTGRES_PASSWORD: ${ENV_VEMPAIN_SITE_DB_PASSWORD}
+    ports:
+      - "${ENV_VEMPAIN_SITE_DB_EXT_ADDRESS}:${ENV_VEMPAIN_SITE_DB_EXT_PORT}:5432"
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - site_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${ENV_VEMPAIN_SITE_DB_USER} -d ${ENV_VEMPAIN_SITE_DB_NAME}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - vempain-web-site
+
+networks:
+  vempain-web-site:
+    driver: bridge
+
+volumes:
+  site_db_data:
+    driver: local
+

@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<ruleset name="VempainBackend">
+    <description>Custom PHPCS rules for modern backend code only.</description>
+    <file>src/Application</file>
+    <file>src/Domain</file>
+    <file>src/Infrastructure</file>
+    <file>src/bootstrap.php</file>
+    <exclude-pattern>src/lib/*</exclude-pattern>
+    <rule ref="PSR12">
+        <!-- Increase max line length -->
+        <properties>
+            <property name="lineLength" value="160"/>
+        </properties>
+    </rule>
+
+    <!-- or explicitly adjust the line length sniffs -->
+    <rule ref="Generic.Files.LineLength">
+        <properties>
+            <property name="lineLimit" value="160"/>
+            <property name="absoluteLineLimit" value="0"/>
+        </properties>
+    </rule>
+</ruleset>
