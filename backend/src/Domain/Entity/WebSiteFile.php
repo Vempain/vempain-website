@@ -154,4 +154,54 @@ class WebSiteFile
     {
         $this->subjects = new ArrayCollection($subjects);
     }
+
+    public function getRightsHolder(): ?string
+    {
+        return $this->rightsHolder;
+    }
+
+    public function getRightsTerms(): ?string
+    {
+        return $this->rightsTerms;
+    }
+
+    public function getRightsUrl(): ?string
+    {
+        return $this->rightsUrl;
+    }
+
+    public function getCreatorName(): ?string
+    {
+        return $this->creatorName;
+    }
+
+    public function getCreatorEmail(): ?string
+    {
+        return $this->creatorEmail;
+    }
+
+    public function getCreatorCountry(): ?string
+    {
+        return $this->creatorCountry;
+    }
+
+    public function getCreatorUrl(): ?string
+    {
+        return $this->creatorUrl;
+    }
+
+    public function getLocationId(): ?int
+    {
+        return $this->locationId;
+    }
+
+    public function getLength(): ?int
+    {
+        return $this->length;
+    }
+
+    public function getPages(): ?int
+    {
+        return $this->pages;
+    }
 }

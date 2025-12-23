@@ -1,5 +1,5 @@
 import {AbstractAPI} from './AbstractAPI.ts';
-import type {WebSiteFile, WebSiteGallery, WebSiteSubject} from '../models';
+import type {WebSiteFile, WebSiteGallery} from '../models';
 import type {PagedRequest, PagedResponse} from "@vempain/vempain-auth-frontend";
 
 class GalleryAPI extends AbstractAPI {
@@ -10,7 +10,7 @@ class GalleryAPI extends AbstractAPI {
     async getGalleryFiles(
         galleryId: number,
         params: Partial<PagedRequest & { order?: string; direction?: 'asc' | 'desc'; search?: string }> = {}
-    ) {
+    ): Promise<PagedResponse<WebSiteFile>> {
         const searchParams = new URLSearchParams();
         if (params.page !== undefined) searchParams.set('page', String(Math.max(0, params.page)));
         if (params.size !== undefined) searchParams.set('perPage', String(Math.max(1, Math.min(50, params.size))));
@@ -18,7 +18,8 @@ class GalleryAPI extends AbstractAPI {
         if (params.direction) searchParams.set('direction', params.direction);
         if (params.search) searchParams.set('search', params.search);
         const query = searchParams.toString();
-        return await this.request<PagedResponse<WebSiteFile> & { gallerySubjects: WebSiteSubject[] }>(`/${galleryId}/files${query ? `?${query}` : ''}`);
+        const response = await this.axiosInstance.get<PagedResponse<WebSiteFile>>(`/${galleryId}/files${query ? `?${query}` : ''}`);
+        return response.data;
     }
 }
 

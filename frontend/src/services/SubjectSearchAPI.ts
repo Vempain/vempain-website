@@ -31,18 +31,17 @@ class SubjectSearchAPI extends AbstractAPI {
         });
     }
 
-    async searchByIds(params: SubjectSearchByIdsRequest) {
+    async searchByIds(params: SubjectSearchByIdsRequest): Promise<SubjectSearchResponse> {
         const payload = {
             subjectIds: params.subjectIds ?? [],
             page: params.page ?? 0,
             size: params.size ?? 12,
             sort_by: params.sort_by ?? 'id',
-            direction: params.direction ?? 'asc',
+            direction: params.direction ?? 'ASC',
         };
-        return await this.request<SubjectSearchResponse>('/subjects/search', {
-            method: 'POST',
-            body: JSON.stringify(payload),
-        });
+
+        const response = await this.axiosInstance.post<SubjectSearchResponse>('/subjects/search', payload);
+        return response.data;
     }
 }
 

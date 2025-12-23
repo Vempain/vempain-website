@@ -1,0 +1,213 @@
+name: Continuous Integration
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+env:
+  REGISTRY: ghcr.io
+  REGISTRY_NAMESPACE: vempain
+  BACKEND_IMAGE: ghcr.io/vempain/vempain-site-backend
+  FRONTEND_IMAGE: ghcr.io/vempain/vempain-site-frontend
+
+concurrency: build
+
+jobs:
+  backend-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.5
+          extensions: bcmath, mbstring, pdo_pgsql
+
+      - name: Install Composer dependencies
+        working-directory: backend
+        run: composer install --no-progress --prefer-dist
+        env:
+          COMPOSER_MEMORY_LIMIT: 2G
+
+      - name: Run backend formatting fixing
+        working-directory: backend
+        run: ./vendor/bin/phpcbf
+
+      - name: Run backend lint
+        working-directory: backend
+        run: composer lint
+
+  frontend-tests:
+    runs-on: ubuntu-latest
+    needs: backend-tests
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6.1.0
+        with:
+          node-version: '22'
+        env:
+          VEMPAIN_ACTION_TOKEN: ${{ secrets.VEMPAIN_ACTION_TOKEN }}
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: yarn install
+        env:
+          VEMPAIN_ACTION_TOKEN: ${{ secrets.VEMPAIN_ACTION_TOKEN }}
+
+      - name: Run frontend lint
+        working-directory: frontend
+        run: yarn lint
+        env:
+          VEMPAIN_ACTION_TOKEN: ${{ secrets.VEMPAIN_ACTION_TOKEN }}
+
+      - name: Run frontend test
+        working-directory: frontend
+        run: yarn test --passWithNoTests --watchAll=false
+        env:
+          VEMPAIN_ACTION_TOKEN: ${{ secrets.VEMPAIN_ACTION_TOKEN }}
+
+      - name: Run frontend coverage
+        working-directory: frontend
+        run: yarn test:coverage --passWithNoTests
+        env:
+          VEMPAIN_ACTION_TOKEN: ${{ secrets.VEMPAIN_ACTION_TOKEN }}
+
+  release-and-publish:
+    runs-on: ubuntu-latest
+    needs: [ backend-tests, frontend-tests ]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    env:
+      VEMPAIN_ACTION_TOKEN: ${{ secrets.VEMPAIN_ACTION_TOKEN }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6.1.0
+        with:
+          node-version: '22'
+
+      - name: Get main and base version
+        id: basemain
+        shell: bash
+        run: |
+          baseVersion=$(cat VERSION)
+          mainVersion=$(echo ${baseVersion} | cut -d '.' -f 1)
+          echo "baseVersion=${baseVersion}" >> $GITHUB_OUTPUT
+          echo "mainVersion=${mainVersion}" >> $GITHUB_OUTPUT
+
+      - name: Generate new version
+        id: newVer
+        shell: bash
+        run: |
+          git fetch --tags origin
+          currentVersion=$(git tag --list --sort=-version:refname "${baseVersion}.*" | head -n 1 || "${baseVersion}.0")
+
+          if [ -z "${currentVersion}" ]; then
+            newVersion="${baseVersion}.0"
+          else
+            runningNumber=$(echo ${currentVersion} | cut -f 3 -d '.')
+            newVersion="${baseVersion}.$((${runningNumber} + 1))"
+          fi
+
+          echo "The generated new version is: ${newVersion}"
+          echo "newVersion=${newVersion}" >> $GITHUB_OUTPUT
+        env:
+          baseVersion: ${{ steps.basemain.outputs.baseVersion }}
+
+      - name: Set new package version
+        working-directory: frontend
+        run: |
+          echo "Setting version from tag: ${newVersion}"
+          yarn version --immediate ${newVersion}
+        env:
+          newVersion: ${{ steps.newVer.outputs.newVersion }}
+          VEMPAIN_ACTION_TOKEN: ${{ secrets.VEMPAIN_ACTION_TOKEN }}
+
+      - name: Build production package
+        working-directory: frontend
+        run: |
+          yarn install
+          yarn build:production
+        env:
+          VEMPAIN_ACTION_TOKEN: ${{ secrets.VEMPAIN_ACTION_TOKEN }}
+
+      - name: Log into registry ${{ env.REGISTRY }}
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push backend image
+        shell: bash
+        run: |
+          docker build --progress=plain --secret id=vempain_token,env=VEMPAIN_ACTION_TOKEN -f backend/Dockerfile -t $BACKEND_IMAGE:latest backend
+          echo "Tagging backend image with versions: ${{ steps.basemain.outputs.mainVersion }}, ${{ steps.basemain.outputs.baseVersion }}, ${{ steps.newVer.outputs.newVersion }}"
+          docker tag $BACKEND_IMAGE:latest $BACKEND_IMAGE:${{ steps.basemain.outputs.mainVersion }}
+          docker tag $BACKEND_IMAGE:latest $BACKEND_IMAGE:${{ steps.basemain.outputs.baseVersion }}
+          docker tag $BACKEND_IMAGE:latest $BACKEND_IMAGE:${{ steps.newVer.outputs.newVersion }}
+          docker push --all-tags $BACKEND_IMAGE
+        env:
+          BACKEND_IMAGE: ${{ env.BACKEND_IMAGE }}
+          mainVersion: ${{ steps.basemain.outputs.mainVersion }}
+          baseVersion: ${{ steps.basemain.outputs.baseVersion }}
+          newVersion: ${{ steps.newVer.outputs.newVersion }}
+
+      - name: Build and push frontend image
+        shell: bash
+        run: |
+          docker build --progress=plain --secret id=vempain_token,env=VEMPAIN_ACTION_TOKEN -f frontend/Dockerfile -t $FRONTEND_IMAGE:latest frontend
+          echo "Tagging frontend image with versions: ${mainVersion}, ${baseVersion}, ${newVersion}"
+          docker tag $FRONTEND_IMAGE:latest $FRONTEND_IMAGE:${mainVersion}
+          docker tag $FRONTEND_IMAGE:latest $FRONTEND_IMAGE:${baseVersion}
+          docker tag $FRONTEND_IMAGE:latest $FRONTEND_IMAGE:${newVersion}
+          docker push --all-tags $FRONTEND_IMAGE
+        env:
+          FRONTEND_IMAGE: ${{ env.FRONTEND_IMAGE }}
+          mainVersion: ${{ steps.basemain.outputs.mainVersion }}
+          baseVersion: ${{ steps.basemain.outputs.baseVersion }}
+          newVersion: ${{ steps.newVer.outputs.newVersion }}
+
+      - name: Create git tag
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ secrets.VEMPAIN_ACTION_TOKEN }}
+          script: |
+            github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: 'refs/tags/${{ steps.newVer.outputs.newVersion }}',
+              sha: context.sha
+            })
+
+      - name: Create GitHub Release
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ secrets.VEMPAIN_ACTION_TOKEN }}
+          script: |
+            const tag = '${{ steps.newVer.outputs.newVersion }}';
+            const resp = await github.rest.repos.createRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              tag_name: tag,
+              name: `Release ${tag}`,
+              body: `Automated release for ${tag}
+
+              Docker tags pushed:
+              - latest
+              - ${{ steps.basemain.outputs.mainVersion }}
+              - ${{ steps.basemain.outputs.baseVersion }}
+              - ${tag}
+              `,
+              draft: false,
+              prerelease: false,
+              generate_release_notes: true
+            });
+            core.info(`Release created: ${resp.data.html_url}`);
