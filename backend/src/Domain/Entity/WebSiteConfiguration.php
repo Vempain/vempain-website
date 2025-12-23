@@ -50,4 +50,3 @@ class WebSiteConfiguration
         return $this->configValue;
     }
 }
-

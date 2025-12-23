@@ -81,7 +81,12 @@ class SubjectSearchService
             ? ''
             : ($caseSensitive ? 'WHERE s.subject LIKE :term' : 'WHERE LOWER(s.subject) LIKE :term');
 
-        $countSql = "SELECT COUNT(DISTINCT p.id) FROM web_site_page p JOIN web_site_page_subject wps ON wps.page_id = p.id JOIN web_site_subject s ON s.id = wps.subject_id $where";
+        $countSql = <<<SQL
+SELECT COUNT(DISTINCT p.id)
+FROM web_site_page p
+JOIN web_site_page_subject wps ON wps.page_id = p.id
+JOIN web_site_subject s ON s.id = wps.subject_id $where
+SQL;
         $stmt = $conn->prepare($countSql);
         if ($searchTerm !== '') {
             $stmt->bindValue('term', $like);
@@ -89,9 +94,14 @@ class SubjectSearchService
         $total = (int)$stmt->executeQuery()->fetchOne();
 
         $offset = $page * $size;
-        $listSql = "SELECT DISTINCT p.id FROM web_site_page p JOIN web_site_page_subject wps ON wps.page_id = p.id JOIN web_site_subject s ON s.id = wps.subject_id $where ORDER BY $orderColumn " . strtoupper(
-                $direction
-            ) . " LIMIT :limit OFFSET :offset";
+        $listSql = <<<SQL
+SELECT DISTINCT p.id
+FROM web_site_page p
+JOIN web_site_page_subject wps ON wps.page_id = p.id
+JOIN web_site_subject s ON s.id = wps.subject_id $where
+ORDER BY $orderColumn {$direction}
+LIMIT :limit OFFSET :offset
+SQL;
         $listStmt = $conn->prepare($listSql);
         if ($searchTerm !== '') {
             $listStmt->bindValue('term', $like);
@@ -145,7 +155,12 @@ class SubjectSearchService
             ? ''
             : ($caseSensitive ? 'WHERE s.subject LIKE :term' : 'WHERE LOWER(s.subject) LIKE :term');
 
-        $countSql = "SELECT COUNT(DISTINCT g.id) FROM web_site_gallery g JOIN web_site_gallery_subject wgs ON wgs.gallery_id = g.id JOIN web_site_subject s ON s.id = wgs.subject_id $where";
+        $countSql = <<<SQL
+SELECT COUNT(DISTINCT g.id)
+FROM web_site_gallery g
+JOIN web_site_gallery_subject wgs ON wgs.gallery_id = g.id
+JOIN web_site_subject s ON s.id = wgs.subject_id $where
+SQL;
         $stmt = $conn->prepare($countSql);
         if ($searchTerm !== '') {
             $stmt->bindValue('term', $like);
@@ -153,9 +168,14 @@ class SubjectSearchService
         $total = (int)$stmt->executeQuery()->fetchOne();
 
         $offset = $page * $size;
-        $listSql = "SELECT DISTINCT g.id FROM web_site_gallery g JOIN web_site_gallery_subject wgs ON wgs.gallery_id = g.id JOIN web_site_subject s ON s.id = wgs.subject_id $where ORDER BY $orderColumn " . strtoupper(
-                $direction
-            ) . " LIMIT :limit OFFSET :offset";
+        $listSql = <<<SQL
+SELECT DISTINCT g.id
+FROM web_site_gallery g
+JOIN web_site_gallery_subject wgs ON wgs.gallery_id = g.id
+JOIN web_site_subject s ON s.id = wgs.subject_id $where
+ORDER BY $orderColumn {$direction}
+LIMIT :limit OFFSET :offset
+SQL;
         $listStmt = $conn->prepare($listSql);
         if ($searchTerm !== '') {
             $listStmt->bindValue('term', $like);
@@ -204,7 +224,12 @@ class SubjectSearchService
             ? ''
             : ($caseSensitive ? 'WHERE s.subject LIKE :term' : 'WHERE LOWER(s.subject) LIKE :term');
 
-        $countSql = "SELECT COUNT(DISTINCT f.id) FROM web_site_file f JOIN web_site_file_subject wfs ON wfs.file_id = f.id JOIN web_site_subject s ON s.id = wfs.subject_id $where";
+        $countSql = <<<SQL
+SELECT COUNT(DISTINCT f.id)
+FROM web_site_file f
+JOIN web_site_file_subject wfs ON wfs.file_id = f.id
+JOIN web_site_subject s ON s.id = wfs.subject_id $where
+SQL;
         $stmt = $conn->prepare($countSql);
         if ($searchTerm !== '') {
             $stmt->bindValue('term', $like);
@@ -212,9 +237,13 @@ class SubjectSearchService
         $total = (int)$stmt->executeQuery()->fetchOne();
 
         $offset = $page * $size;
-        $listSql = "SELECT DISTINCT f.id FROM web_site_file f JOIN web_site_file_subject wfs ON wfs.file_id = f.id JOIN web_site_subject s ON s.id = wfs.subject_id $where ORDER BY $orderColumn " . strtoupper(
-                $direction
-            ) . " LIMIT :limit OFFSET :offset";
+        $listSql = <<<SQL
+SELECT DISTINCT f.id
+FROM web_site_file f
+JOIN web_site_file_subject wfs ON wfs.file_id = f.id
+JOIN web_site_subject s ON s.id = wfs.subject_id $where
+ORDER BY $orderColumn {$direction} LIMIT :limit OFFSET :offset
+SQL;
         $listStmt = $conn->prepare($listSql);
         if ($searchTerm !== '') {
             $listStmt->bindValue('term', $like);
@@ -442,6 +471,21 @@ SQL;
                 'mimetype' => $file->getMimetype(),
                 'aclId' => $file->getAclId(),
                 'subjects' => $this->subjectTransformer->manyFromEntities($file->getSubjects()),
+                'comment' => $file->getComment(),
+                'originalDateTime' => $file->getOriginalDateTime(),
+                'rightsHolder' => $file->getRightsHolder(),
+                'rightsTerms' => $file->getRightsTerms(),
+                'rightsUrl' => $file->getRightsUrl(),
+                'creatorName' => $file->getCreatorName(),
+                'creatorEmail' => $file->getCreatorEmail(),
+                'creatorCountry' => $file->getCreatorCountry(),
+                'creatorUrl' => $file->getCreatorUrl(),
+                'locationId' => $file->getLocationId(),
+                'width' => $file->getWidth(),
+                'height' => $file->getHeight(),
+                'length' => $file->getLength(),
+                'pages' => $file->getPages(),
+                'metadata' => $file->getMetadata()
             ];
         }, $entities);
 
@@ -478,7 +522,12 @@ SQL;
     {
         $conn = $this->entityManager->getConnection();
         $where = $searchTerm === '' ? '' : ($caseSensitive ? 'WHERE s.subject LIKE :term' : 'WHERE LOWER(s.subject) LIKE :term');
-        $sql = "SELECT COUNT(DISTINCT p.id) FROM web_site_page p JOIN web_site_page_subject wps ON wps.page_id = p.id JOIN web_site_subject s ON s.id = wps.subject_id $where";
+        $sql = <<<SQL
+SELECT COUNT(DISTINCT p.id)
+FROM web_site_page p
+JOIN web_site_page_subject wps ON wps.page_id = p.id
+JOIN web_site_subject s ON s.id = wps.subject_id $where
+SQL;
         $stmt = $conn->prepare($sql);
         if ($searchTerm !== '') {
             $stmt->bindValue('term', $like);
@@ -490,7 +539,12 @@ SQL;
     {
         $conn = $this->entityManager->getConnection();
         $where = $searchTerm === '' ? '' : ($caseSensitive ? 'WHERE s.subject LIKE :term' : 'WHERE LOWER(s.subject) LIKE :term');
-        $sql = "SELECT COUNT(DISTINCT g.id) FROM web_site_gallery g JOIN web_site_gallery_subject wgs ON wgs.gallery_id = g.id JOIN web_site_subject s ON s.id = wgs.subject_id $where";
+        $sql = <<<SQL
+SELECT COUNT(DISTINCT g.id)
+FROM web_site_gallery g
+JOIN web_site_gallery_subject wgs ON wgs.gallery_id = g.id
+JOIN web_site_subject s ON s.id = wgs.subject_id $where
+SQL;
         $stmt = $conn->prepare($sql);
         if ($searchTerm !== '') {
             $stmt->bindValue('term', $like);
@@ -502,7 +556,12 @@ SQL;
     {
         $conn = $this->entityManager->getConnection();
         $where = $searchTerm === '' ? '' : ($caseSensitive ? 'WHERE s.subject LIKE :term' : 'WHERE LOWER(s.subject) LIKE :term');
-        $sql = "SELECT COUNT(DISTINCT f.id) FROM web_site_file f JOIN web_site_file_subject wfs ON wfs.file_id = f.id JOIN web_site_subject s ON s.id = wfs.subject_id $where";
+        $sql = <<<SQL
+SELECT COUNT(DISTINCT f.id)
+FROM web_site_file f
+JOIN web_site_file_subject wfs ON wfs.file_id = f.id
+JOIN web_site_subject s ON s.id = wfs.subject_id $where
+SQL;
         $stmt = $conn->prepare($sql);
         if ($searchTerm !== '') {
             $stmt->bindValue('term', $like);
@@ -510,4 +569,3 @@ SQL;
         return (int)$stmt->executeQuery()->fetchOne();
     }
 }
-

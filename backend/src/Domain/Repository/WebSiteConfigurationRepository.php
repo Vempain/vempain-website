@@ -32,4 +32,3 @@ class WebSiteConfigurationRepository
             ->findAll();
     }
 }
-

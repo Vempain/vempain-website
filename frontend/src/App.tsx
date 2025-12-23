@@ -1,39 +1,11 @@
 import {useCallback, useEffect, useRef, useState} from 'react';
-import {
-    Button,
-    Col,
-    Divider,
-    Empty,
-    Form,
-    Input,
-    Layout,
-    Menu,
-    type MenuProps,
-    message,
-    Modal,
-    Pagination,
-    Row,
-    Select,
-    Tabs,
-    Tooltip,
-    Tree,
-    Typography
-} from 'antd';
+import {Button, Col, Form, Input, Layout, Menu, type MenuProps, message, Modal, Pagination, Row, Select, Space, Tabs, Tooltip, Tree, Typography} from 'antd';
 import type {DataNode} from 'antd/es/tree';
-import {MenuFoldOutlined, MenuUnfoldOutlined, SearchOutlined} from '@ant-design/icons';
+import {SearchOutlined} from '@ant-design/icons';
 import './App.css';
 import {useAuth} from './context/AuthContextInstance';
-import {BottomFooter, GalleryEmbed, ShowSubjects} from './components';
-import type {
-    DirectoryNode,
-    SubjectSearchResponse,
-    WebSiteFile,
-    WebSiteGallery,
-    WebSitePage,
-    WebSitePageContent,
-    WebSitePageDirectory,
-    WebSiteSubject
-} from "./models";
+import {BottomFooter, GalleryLoader, ShowSubjects, SubjectSearchLoader} from './components';
+import type {DirectoryNode, WebSiteFile, WebSiteGallery, WebSitePage, WebSitePageContent, WebSitePageDirectory, WebSiteSubject} from "./models";
 import {galleryAPI, pageAPI, subjectSearchAPI, webSiteConfigurationAPI} from "./services";
 import {toPathSegment, trimSlashes} from "./tools";
 
@@ -71,7 +43,6 @@ const DEFAULT_SITE_CONFIG = {name: 'Vempain', description: 'Vempain'}
 
 function App() {
     const {isAuthenticated, login, logout, showLogin, hideLogin, loginVisible} = useAuth()
-    const [collapsed, setCollapsed] = useState(false)
     const [activeSection, setActiveSection] = useState('pages')
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
@@ -89,16 +60,8 @@ function App() {
     const [pageContent, setPageContent] = useState<WebSitePageContent | null>(null)
     const [siteConfig, setSiteConfig] = useState(DEFAULT_SITE_CONFIG)
     const [searchModalVisible, setSearchModalVisible] = useState(false)
-    const [freeTextQuery, setFreeTextQuery] = useState('')
-    const [freeTextResult, setFreeTextResult] = useState<WebSitePage[]>([])
-    const [freeTextLoading, setFreeTextLoading] = useState(false)
     const [subjectOptions, setSubjectOptions] = useState<WebSiteSubject[]>([])
     const [selectedSubjects, setSelectedSubjects] = useState<number[]>([])
-    const [subjectSearchResult, setSubjectSearchResult] = useState<SubjectSearchResponse | null>(null)
-    const [subjectSearchLoading, setSubjectSearchLoading] = useState(false)
-    const [searchActiveGalleryId, setSearchActiveGalleryId] = useState<number | null>(null)
-    const [subjectPaging, setSubjectPaging] = useState({pages: 0, galleries: 0, files: 0})
-    const [subjectFilesPage, setSubjectFilesPage] = useState<SubjectSearchResponse['files'] | null>(null)
     const hasInitialized = useRef(false)
 
     const menuBarItems: MenuItem[] = [
@@ -214,12 +177,12 @@ function App() {
         }
     }, [pagination.page, pagination.size, search, selectedDirectory])
 
-    async function loadDirectories() {
+    const loadDirectories = useCallback(async () => {
         const response = await pageAPI.getPublicPageDirectories()
         if (response.data) {
             setDirectories(response.data)
         }
-    }
+    }, [])
 
     async function loadTree(directory: string) {
         const response = await pageAPI.getDirectoryTree(directory)
@@ -296,28 +259,6 @@ function App() {
         handleGlobalSearch(searchInput)
     }
 
-    const handleFreeTextSearch = useCallback(async () => {
-        if (!freeTextQuery.trim()) {
-            return;
-        }
-        setFreeTextLoading(true)
-        try {
-            const resp = await pageAPI.getPublicPages({search: freeTextQuery, page: 0, size: 12})
-            if (resp.data) {
-                setFreeTextResult(resp.data.content)
-                setActiveSection('search')
-                setSubjectSearchResult(null)
-                setSearchActiveGalleryId(null)
-            } else {
-                message.error(resp.error || 'Search failed')
-            }
-        } catch (err) {
-            message.error(err instanceof Error ? err.message : 'Search failed')
-        } finally {
-            setFreeTextLoading(false)
-        }
-    }, [freeTextQuery])
-
     const handleSubjectAutocomplete = useCallback(async (term: string) => {
         if (term.length < 3) {
             return;
@@ -333,60 +274,26 @@ function App() {
     }, [])
 
     const handleSubjectSearch = useCallback(async () => {
-        if (selectedSubjects.length === 0) {
-            return;
-        }
-        setSubjectSearchLoading(true)
-        try {
-            const resp = await subjectSearchAPI.searchByIds({subjectIds: selectedSubjects, page: 0, size: 20})
-            if (resp.data) {
-                setSubjectSearchResult(resp.data)
-                setSubjectFilesPage(resp.data.files)
-                setSubjectPaging({
-                    pages: resp.data.pages.page ?? 0,
-                    galleries: resp.data.galleries.page ?? 0,
-                    files: resp.data.files.page ?? 0,
-                })
-                setActiveSection('search')
-                setSearchActiveGalleryId(null)
-            } else {
-                message.error(resp.error || 'Subject search failed')
-            }
-        } catch (err) {
-            message.error(err instanceof Error ? err.message : 'Subject search failed')
-        } finally {
-            setSubjectSearchLoading(false)
-        }
-    }, [selectedSubjects])
+        setActiveSection('search');
+    }, []);
 
-    const handleSubjectPageChange = useCallback(async (pageNumber: number) => {
-        if (selectedSubjects.length === 0) {
-            return;
-        }
-        setSubjectSearchLoading(true)
-        try {
-            const resp = await subjectSearchAPI.searchByIds({
-                subjectIds: selectedSubjects,
-                page: Math.max(0, pageNumber - 1),
-                size: subjectSearchResult?.pages.size ?? 12
-            })
-            if (resp.data) {
-                setSubjectSearchResult(resp.data)
-                setSubjectFilesPage(resp.data.files)
-                setSubjectPaging({
-                    pages: resp.data.pages.page ?? 0,
-                    galleries: resp.data.galleries.page ?? 0,
-                    files: resp.data.files.page ?? 0,
-                })
-            } else {
-                message.error(resp.error || 'Subject search failed')
-            }
-        } catch (err) {
-            message.error(err instanceof Error ? err.message : 'Subject search failed')
-        } finally {
-            setSubjectSearchLoading(false)
-        }
-    }, [selectedSubjects, subjectSearchResult])
+    const handleSubjectSearchAndClose = useCallback(() => {
+        handleSubjectSearch();
+        setSearchModalVisible(false);
+    }, [handleSubjectSearch]);
+
+    // React to subject tag clicks emitted from ShowSubjects
+    useEffect(() => {
+        const handler = (e: Event) => {
+            const detail = (e as CustomEvent<number[]>).detail;
+            if (!Array.isArray(detail) || detail.length === 0) return;
+            setSelectedSubjects(detail);
+            setActiveSection('search');
+            setSearchModalVisible(false);
+        };
+        window.addEventListener('subject-search-open', handler as EventListener);
+        return () => window.removeEventListener('subject-search-open', handler as EventListener);
+    }, []);
 
     useEffect(() => {
         if (hasInitialized.current) {
@@ -394,7 +301,7 @@ function App() {
         }
         hasInitialized.current = true
         handleLoadSection('pages')
-        loadDirectories()
+        void loadDirectories()
         // Load main view with index page content when app starts
         void loadPageContent(DEFAULT_PAGE_PATH)
     }, [handleLoadSection, loadDirectories, loadPageContent])
@@ -475,7 +382,7 @@ function App() {
 
             if (embed.type === 'gallery' && embed.galleryId) {
                 segments.push(
-                        <GalleryEmbed key={`gallery-${embed.galleryId}-${index}`} galleryId={embed.galleryId}/>
+                        <GalleryLoader key={`gallery-${embed.galleryId}-${index}`} galleryId={embed.galleryId}/>
                 );
             }
 
@@ -503,146 +410,15 @@ function App() {
                                 Julkaistu {new Date(pageContent.published).toLocaleString()} - {pageContent.creator}
                             </Paragraph>
                     )}
-                    <ShowSubjects subjects={pageContent.subjects} max={10}/>
+                    <ShowSubjects subjects={pageContent.subjects}/>
                     {renderPageBody(pageContent.body, pageContent.embeds)}
                 </div>
         )
     }
 
     function renderSearchResults() {
-        if (!freeTextResult.length && !subjectSearchResult) {
-            return <Empty description="No search results"/>;
-        }
-
-        const pagesToShow = subjectSearchResult ? subjectSearchResult.pages.content : freeTextResult;
-        const galleriesToShow = subjectSearchResult ? subjectSearchResult.galleries.content : [];
-
-        const sections: Array<{
-            key: 'pages' | 'galleries' | 'files';
-            title: string;
-            items: unknown[];
-            render: () => React.ReactNode;
-        }> = [];
-
-        if (galleriesToShow.length > 0) {
-            sections.push({
-                key: 'galleries',
-                title: 'Galleries',
-                items: galleriesToShow,
-                render: () => (
-                        <>
-                            <Row gutter={[16, 16]}>
-                                {galleriesToShow.map((gallery) => (
-                                        <Col key={`search-gallery-${gallery.id}`} span={24}>
-                                            <a href="#" onClick={(e) => {
-                                                e.preventDefault();
-                                                setSearchActiveGalleryId(gallery.galleryId);
-                                            }}>
-                                                <Title level={4} style={{marginBottom: 4}}>{gallery.shortname || `Gallery #${gallery.galleryId}`}</Title>
-                                                <Paragraph>{gallery.description}</Paragraph>
-                                                <ShowSubjects subjects={gallery.subjects ?? []} max={8}/>
-                                            </a>
-                                        </Col>
-                                ))}
-                            </Row>
-                            {subjectSearchResult && (
-                                    <Pagination
-                                            style={{marginTop: 12}}
-                                            current={(subjectPaging.galleries ?? 0) + 1}
-                                            pageSize={subjectSearchResult.galleries.size}
-                                            total={subjectSearchResult.galleries.total_elements}
-                                            showSizeChanger={false}
-                                            onChange={(pageNumber) => handleSubjectPageChange(pageNumber)}
-                                    />
-                            )}
-                            {searchActiveGalleryId && (
-                                    <div style={{marginTop: 12}}>
-                                        <GalleryEmbed galleryId={searchActiveGalleryId}/>
-                                    </div>
-                            )}
-                        </>
-                ),
-            });
-        }
-
-        if (subjectSearchResult && subjectFilesPage) {
-            sections.push({
-                key: 'files',
-                title: 'Files',
-                items: subjectFilesPage.content,
-                render: () => (
-                        <GalleryEmbed
-                                initialPage={{...subjectFilesPage, gallerySubjects: []}}
-                                fetchPageFn={async (page, size) => {
-                                    const resp = await subjectSearchAPI.searchByIds({subjectIds: selectedSubjects, page, size});
-                                    if (resp.data) {
-                                        setSubjectSearchResult(resp.data);
-                                        setSubjectPaging({
-                                            pages: resp.data.pages.page ?? 0,
-                                            galleries: resp.data.galleries.page ?? 0,
-                                            files: resp.data.files.page ?? 0,
-                                        });
-                                        setSubjectFilesPage(resp.data.files);
-                                        return {...resp.data.files, gallerySubjects: []};
-                                    }
-                                    return null;
-                                }}
-                        />
-                ),
-            });
-        }
-
-        if (pagesToShow.length > 0) {
-            sections.push({
-                key: 'pages',
-                title: 'Pages',
-                items: pagesToShow,
-                render: () => (
-                        <>
-                            <Row gutter={[16, 16]}>
-                                {pagesToShow.map((page) => (
-                                        <Col key={`search-page-${page.id}`} span={24}>
-                                            <a href="#" onClick={(e) => {
-                                                e.preventDefault();
-                                                setPageContent(null);
-                                                setActiveSection('pages');
-                                                void loadPageContent(page.path);
-                                            }}>
-                                                <Title level={4} style={{marginBottom: 4}}>{page.title}</Title>
-                                                <Paragraph type="secondary">{page.path}</Paragraph>
-                                                <ShowSubjects subjects={page.subjects ?? []} max={6}/>
-                                            </a>
-                                        </Col>
-                                ))}
-                            </Row>
-                            {subjectSearchResult && (
-                                    <Pagination
-                                            style={{marginTop: 12}}
-                                            current={(subjectPaging.pages ?? 0) + 1}
-                                            pageSize={subjectSearchResult.pages.size}
-                                            total={subjectSearchResult.pages.total_elements}
-                                            showSizeChanger={false}
-                                            onChange={(pageNumber) => handleSubjectPageChange(pageNumber)}
-                                    />
-                            )}
-                        </>
-                ),
-            });
-        }
-
-        // Order sections by descending item count
-        sections.sort((a, b) => b.items.length - a.items.length);
-
         return (
-                <div className="content-section">
-                    <Title level={3}>Search results</Title>
-                    {sections.map((section) => (
-                            <div key={`search-section-${section.key}`} style={{marginTop: 12}}>
-                                <Divider orientation="horizontal">{section.title}</Divider>
-                                {section.render()}
-                            </div>
-                    ))}
-                </div>
+                <SubjectSearchLoader subjectIdList={selectedSubjects}/>
         );
     }
 
@@ -676,7 +452,7 @@ function App() {
                                             <Title level={4}>{page.title}</Title>
                                             <Paragraph type="secondary">{page.path}</Paragraph>
                                             <Paragraph ellipsis={{rows: 3}}>{page.header}</Paragraph>
-                                            {page.subjects && <ShowSubjects subjects={page.subjects} max={5}/>}
+                                            {page.subjects && <ShowSubjects subjects={page.subjects}/>}
                                             {page.aclId && <Paragraph type="warning">Pääsy rajoitettu</Paragraph>}
                                         </div>
                                     </Col>
@@ -705,7 +481,7 @@ function App() {
                                             <Title level={4}>{file.path}</Title>
                                             <Paragraph type="secondary">{file.mimetype}</Paragraph>
                                             <Paragraph>{file.aclId ?? 'Julkinen'}</Paragraph>
-                                            <ShowSubjects subjects={file.subjects} max={4}/>
+                                            <ShowSubjects subjects={file.subjects}/>
                                         </div>
                                     </Col>
                             ))}
@@ -723,8 +499,9 @@ function App() {
                                     <div className="card">
                                         <Title level={4}>{gallery.shortname || `Gallery #${gallery.galleryId}`}</Title>
                                         <Paragraph>{gallery.description || 'No description available'}</Paragraph>
-                                        <ShowSubjects subjects={gallery.subjects} max={6}/>
+                                        <ShowSubjects subjects={gallery.subjects}/>
                                     </div>
+                                    <GalleryLoader galleryId={gallery.galleryId}/>
                                 </Col>
                         ))}
                     </Row>
@@ -759,14 +536,9 @@ function App() {
                 <div className="app-main">
                     <Sider trigger={null}
                            collapsible
-                           collapsed={collapsed}
+                           collapsed={false}
                            className="app-sider"
                     >
-                        <Button
-                                type="text"
-                                icon={collapsed ? <MenuUnfoldOutlined/> : <MenuFoldOutlined/>}
-                                onClick={() => setCollapsed(!collapsed)}
-                        />
                         <Tooltip title={siteConfig.description}>
                             <div className="logo">{siteConfig.name}</div>
                         </Tooltip>
@@ -822,7 +594,7 @@ function App() {
                     </div>
                 </Modal>
                 <Modal
-                        title="Search"
+                        title="Etsi"
                         open={searchModalVisible}
                         onCancel={() => setSearchModalVisible(false)}
                         footer={null}
@@ -832,38 +604,32 @@ function App() {
                             defaultActiveKey="free"
                             items={[
                                 {
-                                    key: 'free',
-                                    label: 'Free text',
-                                    children: (
-                                            <div style={{display: 'flex', gap: 8, alignItems: 'center'}}>
-                                                <Input
-                                                        placeholder="Search pages"
-                                                        value={freeTextQuery}
-                                                        onChange={(e) => setFreeTextQuery(e.target.value)}
-                                                        onPressEnter={handleFreeTextSearch}
-                                                />
-                                                <Button type="primary" loading={freeTextLoading} onClick={handleFreeTextSearch}>Search</Button>
-                                            </div>
-                                    )
-                                },
-                                {
                                     key: 'subjects',
-                                    label: 'Subjects',
+                                    label: 'Tunnisteet',
                                     children: (
                                             <div style={{display: 'flex', flexDirection: 'column', gap: 8}}>
+                                                <Space
+                                                        orientation={"horizontal"}
+                                                        size={8}
+                                                        style={{marginBottom: 8, width: '100%', display: 'flex', gap: 8}}
+                                                >
                                                 <Select
                                                         mode="multiple"
-                                                        placeholder="Type at least 3 letters"
+                                                        placeholder="Kirjoita vähintään 3 kirjainta etsiäksesi tunnisteita"
                                                         showSearch={{onSearch: handleSubjectAutocomplete, filterOption: false}}
                                                         value={selectedSubjects}
                                                         onChange={(vals) => setSelectedSubjects(vals as number[])}
                                                         options={subjectOptions.map((s) => ({label: s.subject, value: s.id}))}
-                                                        style={{width: '100%'}}
+                                                        style={{flex: 1, minWidth: 400}}
                                                 />
-                                                <Button type="primary" loading={subjectSearchLoading} onClick={handleSubjectSearch}
-                                                        disabled={selectedSubjects.length === 0}>
-                                                    Search by subjects
+                                                    <Button
+                                                            type="primary"
+                                                            onClick={handleSubjectSearchAndClose}
+                                                            disabled={selectedSubjects.length === 0}
+                                                    >
+                                                        Etsi tunnisteiden mukaan
                                                 </Button>
+                                                </Space>
                                             </div>
                                     )
                                 }
