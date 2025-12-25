@@ -126,6 +126,17 @@ jobs:
         env:
           baseVersion: ${{ steps.basemain.outputs.baseVersion }}
 
+      - name: Copy VERSION into frontend
+        shell: bash
+        run: |
+          if [ -f VERSION ]; then
+            cp VERSION frontend/VERSION
+            echo "Copied VERSION into frontend/VERSION"
+          else
+            echo "VERSION file not found in repo root" >&2
+            exit 1
+          fi
+
       - name: Set new package version
         working-directory: frontend
         run: |
@@ -164,17 +175,6 @@ jobs:
           mainVersion: ${{ steps.basemain.outputs.mainVersion }}
           baseVersion: ${{ steps.basemain.outputs.baseVersion }}
           newVersion: ${{ steps.newVer.outputs.newVersion }}
-
-      - name: Copy VERSION into frontend
-        shell: bash
-        run: |
-          if [ -f VERSION ]; then
-            cp VERSION frontend/VERSION
-            echo "Copied VERSION into frontend/VERSION"
-          else
-            echo "VERSION file not found in repo root" >&2
-            exit 1
-          fi
 
       - name: Build and push frontend image
         shell: bash
