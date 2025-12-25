@@ -153,7 +153,7 @@ jobs:
       - name: Build and push backend image
         shell: bash
         run: |
-          docker build --progress=plain --secret id=vempain_token,env=VEMPAIN_ACTION_TOKEN -f backend/Dockerfile -t $BACKEND_IMAGE:latest backend
+          docker build --progress=plain -f backend/Dockerfile -t $BACKEND_IMAGE:latest backend
           echo "Tagging backend image with versions: ${{ steps.basemain.outputs.mainVersion }}, ${{ steps.basemain.outputs.baseVersion }}, ${{ steps.newVer.outputs.newVersion }}"
           docker tag $BACKEND_IMAGE:latest $BACKEND_IMAGE:${{ steps.basemain.outputs.mainVersion }}
           docker tag $BACKEND_IMAGE:latest $BACKEND_IMAGE:${{ steps.basemain.outputs.baseVersion }}
@@ -168,7 +168,7 @@ jobs:
       - name: Build and push frontend image
         shell: bash
         run: |
-          docker build --progress=plain --secret id=vempain_token,env=VEMPAIN_ACTION_TOKEN -f frontend/Dockerfile -t $FRONTEND_IMAGE:latest frontend
+          docker build --progress=plain --secret id=VEMPAIN_ACTION_TOKEN,env=VEMPAIN_ACTION_TOKEN -f frontend/Dockerfile -t $FRONTEND_IMAGE:latest frontend
           echo "Tagging frontend image with versions: ${mainVersion}, ${baseVersion}, ${newVersion}"
           docker tag $FRONTEND_IMAGE:latest $FRONTEND_IMAGE:${mainVersion}
           docker tag $FRONTEND_IMAGE:latest $FRONTEND_IMAGE:${baseVersion}
