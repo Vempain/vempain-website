@@ -12,6 +12,8 @@ env:
   FRONTEND_IMAGE: ghcr.io/vempain/vempain-site-frontend
 
 concurrency: build
+permissions:
+  contents: read
 
 jobs:
   backend-tests:
@@ -82,6 +84,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [ backend-tests, frontend-tests ]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    permissions:
+      contents: write
     env:
       VEMPAIN_ACTION_TOKEN: ${{ secrets.VEMPAIN_ACTION_TOKEN }}
     steps:
