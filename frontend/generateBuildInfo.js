@@ -8,7 +8,7 @@ import {fileURLToPath} from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const versionFilePath = path.resolve(__dirname, '../VERSION');
+const versionFilePath = path.resolve(__dirname, './VERSION');
 const baseVersion = fs.readFileSync(versionFilePath, 'utf8').trim();
 
 function computeNewVersion(baseVersion) {
