@@ -211,7 +211,12 @@ function App() {
 
     const ensureIndexPageLoadedForPath = useCallback(async (path: string) => {
         const indexPathFromTree = findIndexPathInTree(path)
-        const targetPath = indexPathFromTree ?? `${trimSlashes(path)}/index`
+        const normalized = trimSlashes(path)
+        const targetPath = indexPathFromTree
+                ? indexPathFromTree
+                : normalized === 'index' || normalized.endsWith('/index')
+                        ? normalized
+                        : `${normalized}/index`
         await loadPageContent(targetPath)
     }, [findIndexPathInTree, loadPageContent])
 
