@@ -75,11 +75,11 @@ export function GalleryBlock({title, siteFileList, totalFiles, gallerySubjects, 
             {label: 'Kuvausaika', value: (activeFile.originalDateTime !== null ? activeFile.originalDateTime : "")},
             {label: 'Oikeuksien haltija', value: activeFile.rightsHolder},
             {label: 'Käyttöehdot', value: activeFile.rightsTerms},
-            {label: 'Oikeuksien URL', value: activeFile.rightsUrl},
+            {label: 'Oikeuksien verkko-osoite', value: activeFile.rightsUrl},
             {label: 'Tekijä', value: activeFile.creatorName},
             {label: 'Tekijän sähköposti', value: activeFile.creatorEmail},
             {label: 'Tekijän maa', value: activeFile.creatorCountry},
-            {label: 'Tekijän URL', value: activeFile.creatorUrl},
+            {label: 'Tekijän verkko-osoite', value: activeFile.creatorUrl},
         ];
 
         return rawEntries.flatMap((entry) => {

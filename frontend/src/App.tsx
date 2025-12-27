@@ -1,13 +1,13 @@
-import {useCallback, useEffect, useRef, useState} from 'react';
-import {Button, Col, Form, Input, Layout, Menu, type MenuProps, message, Modal, Pagination, Row, Select, Space, Tabs, Tooltip, Tree, Typography} from 'antd';
+import {Button, Col, Form, Input, Layout, Menu, type MenuProps, message, Modal, Row, Select, Space, Tabs, Tooltip, Tree, Typography} from 'antd';
 import type {DataNode} from 'antd/es/tree';
 import {SearchOutlined} from '@ant-design/icons';
 import './App.css';
 import {useAuth} from './context/AuthContextInstance';
-import {BottomFooter, GalleryLoader, ShowSubjects, SubjectSearchLoader} from './components';
+import {BottomFooter, GalleryLoader, PageView, ShowSubjects, SubjectSearchLoader} from './components';
 import type {DirectoryNode, WebSiteFile, WebSiteGallery, WebSitePage, WebSitePageContent, WebSitePageDirectory, WebSiteSubject} from "./models";
 import {galleryAPI, pageAPI, subjectSearchAPI, webSiteConfigurationAPI} from "./services";
 import {toPathSegment, trimSlashes} from "./tools";
+import {useCallback, useEffect, useRef, useState} from 'react';
 
 const {Header, Sider, Content} = Layout
 const {Title, Paragraph} = Typography
@@ -62,10 +62,12 @@ function App() {
     const [searchModalVisible, setSearchModalVisible] = useState(false)
     const [subjectOptions, setSubjectOptions] = useState<WebSiteSubject[]>([])
     const [selectedSubjects, setSelectedSubjects] = useState<number[]>([])
+    const [pageError, setPageError] = useState<string | null>(null)
+    const [pageStatus, setPageStatus] = useState<number | null>(null)
     const hasInitialized = useRef(false)
 
     const menuBarItems: MenuItem[] = [
-        ...directories.map((dir) => ({
+        ...directories.map((dir: WebSitePageDirectory) => ({
             key: `dir-${dir.name}`,
             label: <a href="#" onClick={(e) => {
                 e.preventDefault();
@@ -184,21 +186,50 @@ function App() {
         }
     }, [])
 
-    async function loadTree(directory: string) {
-        const response = await pageAPI.getDirectoryTree(directory)
-        if (response.data) {
-            setTreeData(buildTreeNodes(response.data, directory))
-        } else {
-            setTreeData([])
+    // Helpers
+    const findIndexPathInTree = useCallback((path: string): string | null => {
+        console.log('Finding index path in tree for:', path)
+        const normalized = trimSlashes(path)
+        const segments = normalized.split('/')
+        // Walk the tree to locate the node matching the path prefix, then see if index child exists
+        let level: DirectoryTreeNode[] = treeData
+        let foundNode: DirectoryTreeNode | null = null
+
+        for (const seg of segments) {
+            const next = level.find((n) => trimSlashes(n.fullPath).endsWith(seg))
+            if (!next) return null
+            foundNode = next
+            level = (next.children as DirectoryTreeNode[]) ?? []
         }
-    }
+        return foundNode?.indexPagePath ?? null
+    }, [treeData])
 
     const loadPageContent = useCallback(async (path: string) => {
+        setPageError(null)
+        setPageStatus(null)
         const response = await pageAPI.getPageContent(path)
         if (response.data) {
             setPageContent(response.data)
+        } else {
+            setPageContent(null)
+            setPageError(response.error ?? null)
+            setPageStatus(response.status ?? null)
+            if (response.status === 401) {
+                showLogin()
+            }
         }
-    }, [])
+    }, [showLogin])
+
+    const ensureIndexPageLoadedForPath = useCallback(async (path: string) => {
+        const indexPathFromTree = findIndexPathInTree(path)
+        const normalized = trimSlashes(path)
+        const targetPath = indexPathFromTree
+                ? indexPathFromTree
+                : normalized === 'index' || normalized.endsWith('/index')
+                        ? normalized
+                        : `${normalized}/index`
+        await loadPageContent(targetPath)
+    }, [findIndexPathInTree, loadPageContent])
 
     async function handleDirectoryClick(directory: string) {
         setSelectedDirectory(directory)
@@ -206,22 +237,30 @@ function App() {
         setLoading(true)
         setError('')
         try {
-            const response = await pageAPI.getPublicPages({directory, page: 0})
-            if (response.data) {
-                setPages(response.data.content)
+            const [pagesResp, treeResp] = await Promise.all([
+                pageAPI.getPublicPages({directory, page: 0}),
+                pageAPI.getDirectoryTree(directory),
+            ])
+
+            if (pagesResp.data) {
+                setPages(pagesResp.data.content)
                 setPagination({
-                    page: response.data.page,
-                    size: response.data.size,
-                    total_elements: response.data.total_elements,
+                    page: pagesResp.data.page,
+                    size: pagesResp.data.size,
+                    total_elements: pagesResp.data.total_elements,
                 })
-                setPageContent(null)
-                await loadTree(directory)
-                const indexPage = response.data.content.find((page: WebSitePage) => page.path === `${directory}/index`)
-                if (indexPage) {
-                    await loadPageContent(indexPage.path)
-                }
             } else {
-                setError(response.error || 'Failed to load pages')
+                setError(pagesResp.error || 'Failed to load pages')
+            }
+
+            if (treeResp.data) {
+                console.log("Looking for tree nodes in directory:", directory, treeResp.data)
+                setTreeData(buildTreeNodes(treeResp.data, directory))
+                await ensureIndexPageLoadedForPath(directory)
+            } else {
+                console.log("No tree data received for directory:", directory)
+                setTreeData([])
+                setPageContent(null)
             }
         } catch (err) {
             const messageText = err instanceof Error ? err.message : 'Failed to load data'
@@ -245,19 +284,19 @@ function App() {
         await loadPageContent(targetPath)
     }
 
-    function handleGlobalSearch(value: string) {
+    const handleGlobalSearch = useCallback((value: string) => {
         setSearchInput(value)
         setSearch(value)
         handleLoadSection('pages', {page: 1, search: value, directory: selectedDirectory})
-    }
+    }, [handleLoadSection, selectedDirectory])
 
-    function handleSearchSubmit() {
+    const handleSearchSubmit = useCallback(() => {
         if (!searchInput.trim()) {
             return
         }
 
         handleGlobalSearch(searchInput)
-    }
+    }, [handleGlobalSearch, searchInput])
 
     const handleSubjectAutocomplete = useCallback(async (term: string) => {
         if (term.length < 3) {
@@ -302,9 +341,8 @@ function App() {
         hasInitialized.current = true
         handleLoadSection('pages')
         void loadDirectories()
-        // Load main view with index page content when app starts
-        void loadPageContent(DEFAULT_PAGE_PATH)
-    }, [handleLoadSection, loadDirectories, loadPageContent])
+        void ensureIndexPageLoadedForPath(DEFAULT_PAGE_PATH)
+    }, [handleLoadSection, loadDirectories, ensureIndexPageLoadedForPath])
 
     useEffect(() => {
         let isMounted = true
@@ -337,85 +375,6 @@ function App() {
         }
     }, [pageContent, siteConfig.name])
 
-    function renderPageBody(body: string, embeds: WebSitePageContent['embeds']) {
-        if (!body) return null
-
-        // If no explicit embeds provided, try to detect placeholders directly in body
-        let resolvedEmbeds = embeds
-        if ((!resolvedEmbeds || resolvedEmbeds.length === 0) && body) {
-            const placeholderPattern = /<!--\s*vps:embed:(?<type>[a-z0-9_-]+):(?<payload>[^\s>]+)\s*-->/ig
-            const matches: Array<{ type: string; galleryId?: number; placeholder: string }> = []
-            let m: RegExpExecArray | null
-            while ((m = placeholderPattern.exec(body)) !== null) {
-                const type = (m.groups?.type ?? '').toLowerCase()
-                const payload = m.groups?.payload ?? ''
-                if (type === 'gallery' && /^\d+$/.test(payload)) {
-                    matches.push({type: 'gallery', galleryId: Number(payload), placeholder: m[0]})
-                }
-            }
-            if (matches.length > 0) {
-                resolvedEmbeds = matches.map((x) => ({type: x.type, galleryId: x.galleryId as number, placeholder: x.placeholder}))
-            }
-        }
-
-        if (!resolvedEmbeds || resolvedEmbeds.length === 0) {
-            return <div dangerouslySetInnerHTML={{__html: body}}/>
-        }
-
-        const segments: React.ReactNode[] = []
-        let cursor = 0
-
-        resolvedEmbeds.forEach((embed, index) => {
-            const placeholder = embed.placeholder ?? `<!--vps:embed:${embed.type}:${embed.galleryId}-->`
-            const placeholderIndex = body.indexOf(placeholder, cursor)
-
-            if (placeholderIndex === -1) {
-                return
-            }
-
-            const beforeHtml = body.slice(cursor, placeholderIndex)
-            if (beforeHtml.trim()) {
-                segments.push(
-                        <div key={`html-${index}`} dangerouslySetInnerHTML={{__html: beforeHtml}}/>
-                )
-            }
-
-            if (embed.type === 'gallery' && embed.galleryId) {
-                segments.push(
-                        <GalleryLoader key={`gallery-${embed.galleryId}-${index}`} galleryId={embed.galleryId}/>
-                );
-            }
-
-            cursor = placeholderIndex + placeholder.length;
-        });
-
-        const tail = body.slice(cursor);
-        if (tail.trim()) {
-            segments.push(<div key="html-tail" dangerouslySetInnerHTML={{__html: tail}}/>);
-        }
-
-        return <>{segments}</>;
-    }
-
-    function renderPageDetail() {
-        if (!pageContent) {
-            return null
-        }
-
-        return (
-                <div className="content-section page-detail">
-                    <Title level={2}>{pageContent.title}</Title>
-                    {pageContent.published && (
-                            <Paragraph type="secondary">
-                                Julkaistu {new Date(pageContent.published).toLocaleString()} - {pageContent.creator}
-                            </Paragraph>
-                    )}
-                    <ShowSubjects subjects={pageContent.subjects}/>
-                    {renderPageBody(pageContent.body, pageContent.embeds)}
-                </div>
-        )
-    }
-
     function renderSearchResults() {
         return (
                 <SubjectSearchLoader subjectIdList={selectedSubjects}/>
@@ -428,45 +387,18 @@ function App() {
         }
 
         if (activeSection === 'pages') {
-            if (pageContent) {
-                return renderPageDetail()
-            }
-
             return (
-                    <div className="content-section">
-                        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                            <Title level={3}>Sivut</Title>
-                            <Input.Search
-                                    placeholder="Search pages"
-                                    value={searchInput}
-                                    onChange={(e) => setSearchInput(e.target.value)}
-                                    onSearch={handleSearchSubmit}
-                                    style={{maxWidth: 300}}
-                            />
-                        </div>
-                        <Paragraph>Viimeisimmät sivut</Paragraph>
-                        <Row gutter={[16, 16]} className="card-grid">
-                            {pages.map((page) => (
-                                    <Col key={page.id} xs={24} sm={12} lg={8} xl={6} className="card-column">
-                                        <div className="card">
-                                            <Title level={4}>{page.title}</Title>
-                                            <Paragraph type="secondary">{page.path}</Paragraph>
-                                            <Paragraph ellipsis={{rows: 3}}>{page.header}</Paragraph>
-                                            {page.subjects && <ShowSubjects subjects={page.subjects}/>}
-                                            {page.aclId && <Paragraph type="warning">Pääsy rajoitettu</Paragraph>}
-                                        </div>
-                                    </Col>
-                            ))}
-                        </Row>
-                        <Pagination
-                                current={pagination.page + 1}
-                                pageSize={pagination.size}
-                                total={pagination.total_elements}
-                                onChange={(pageNumber) => handleLoadSection('pages', {page: pageNumber - 1})}
-                                pageSizeOptions={[10, 20, 30, 40, 50]}
-                                showSizeChanger={false}
-                        />
-                    </div>
+                    <PageView
+                            pageContent={pageContent}
+                            pages={pages}
+                            pagination={pagination}
+                            searchInput={searchInput}
+                            onSearchInputChange={setSearchInput}
+                            onSearchSubmit={handleSearchSubmit}
+                            onPageChange={(pageNumber) => handleLoadSection('pages', {page: pageNumber})}
+                            pageError={pageError}
+                            pageStatus={pageStatus}
+                    />
             )
         }
 
@@ -494,7 +426,7 @@ function App() {
                 <div className="content-section">
                     <Title level={3}>Kuvastot</Title>
                     <Row gutter={[16, 16]} className="card-grid">
-                        {galleries.map((gallery) => (
+                        {galleries.map((gallery: WebSiteGallery) => (
                                 <Col key={gallery.id} xs={24} sm={12} lg={8} xl={6} className="card-column">
                                     <div className="card">
                                         <Title level={4}>{gallery.shortname || `Gallery #${gallery.galleryId}`}</Title>
@@ -619,7 +551,7 @@ function App() {
                                                         showSearch={{onSearch: handleSubjectAutocomplete, filterOption: false}}
                                                         value={selectedSubjects}
                                                         onChange={(vals) => setSelectedSubjects(vals as number[])}
-                                                        options={subjectOptions.map((s) => ({label: s.subject, value: s.id}))}
+                                                        options={subjectOptions.map((s: WebSiteSubject) => ({label: s.subject, value: s.id}))}
                                                         style={{flex: 1, minWidth: 400}}
                                                 />
                                                     <Button

@@ -8,6 +8,7 @@ use Slim\App;
 use Slim\Routing\RouteContext;
 use Vempain\VempainWebsite\Application\Auth\AuthService;
 use Vempain\VempainWebsite\Application\Service\PageService;
+use Vempain\VempainWebsite\Application\Service\ResourceAccessService;
 use Vempain\VempainWebsite\Application\Service\SubjectSearchService;
 use Vempain\VempainWebsite\Application\Transformer\SubjectTransformer;
 use Vempain\VempainWebsite\Domain\Repository\WebSiteConfigurationRepository;
@@ -170,6 +171,8 @@ class Routes
             $subjectRepo = $app->getContainer()->get(WebSiteSubjectRepository::class);
             /** @var SubjectTransformer $subjectTransformer */
             $subjectTransformer = $app->getContainer()->get(SubjectTransformer::class);
+            /** @var ResourceAccessService $resourceAccessService */
+            $resourceAccessService = $app->getContainer()->get(ResourceAccessService::class);
 
             $params = $request->getQueryParams();
             $page = isset($params['page']) ? (int)$params['page'] : 0;
@@ -177,6 +180,13 @@ class Routes
             $size = max(1, min(50, $size));
 
             $all = $galleryRepo->findAll();
+            // Check which of the galleries are accessible
+            $all = array_filter($all, function ($gallery) use ($request, $resourceAccessService) {
+                $claims = $request->getAttribute('jwt');
+                $deniedStatus = $resourceAccessService->getDeniedStatus($gallery->getAclId(), $claims);
+                return $deniedStatus === null;
+            });
+
             $total = count($all);
             $offset = $page * $size;
             $slice = array_slice($all, $offset, $size);
@@ -232,7 +242,9 @@ class Routes
             }
 
             /** @var \Vempain\VempainWebsite\Domain\Repository\WebSiteGalleryRepository $galleryRepo */
-            $galleryRepo = $app->getContainer()->get(\Vempain\VempainWebsite\Domain\Repository\WebSiteGalleryRepository::class);
+            $galleryRepo = $app->getContainer()->get(
+                \Vempain\VempainWebsite\Domain\Repository\WebSiteGalleryRepository::class
+            );
             /** @var WebSiteSubjectRepository $subjectRepo */
             $subjectRepo = $app->getContainer()->get(WebSiteSubjectRepository::class);
             /** @var SubjectTransformer $subjectTransformer */
@@ -305,8 +317,34 @@ class Routes
             $sortDirection = strtolower($params['sortDir'] ?? 'desc') === 'asc' ? 'asc' : 'desc';
             $search = $params['search'] ?? '';
             $pathPrefix = $params['directory'] ?? null;
+            $claims = $request->getAttribute('jwt');
+            $userId = -1;
+            if (is_array($claims)) {
+                if (isset($claims['sub'])) {
+                    $userId = (int)$claims['sub'];
+                } elseif (isset($claims['id'])) {
+                    $userId = (int)$claims['id'];
+                }
+            }
 
-            $payload = $pageService->listPages($page, $perPage, $sortDirection, $search, $pathPrefix);
+            try {
+                $logger = $app->getContainer()->get(\Psr\Log\LoggerInterface::class);
+                $logger->debug('User ID retrieved', [
+                    'userId' => $userId,
+                    'path' => $request->getUri()->getPath(),
+                ]);
+            } catch (\Throwable $e) {
+                // ignore logging failure
+            }
+
+            $payload = $pageService->listPages(
+                $page,
+                $perPage,
+                $sortDirection,
+                $search,
+                $pathPrefix,
+                $userId
+            );
             $response->getBody()->write(json_encode($payload));
 
             return $response->withHeader('Content-Type', 'application/json');
@@ -319,22 +357,44 @@ class Routes
             return $response->withHeader('Content-Type', 'application/json');
         });
 
-        $app->get('/api/public/page-directories/{directory}/tree', function (Request $request, Response $response) use ($app) {
-            /** @var PageService $pageService */
-            $pageService = $app->getContainer()->get(PageService::class);
+        $app->get(
+            '/api/public/page-directories/{directory}/tree',
+            function (Request $request, Response $response) use ($app) {
+                /** @var PageService $pageService */
+                $pageService = $app->getContainer()->get(PageService::class);
+                $claims = $request->getAttribute('jwt');
+                $userId = -1;
+                if (is_array($claims)) {
+                    if (isset($claims['sub'])) {
+                        $userId = (int)$claims['sub'];
+                    } elseif (isset($claims['id'])) {
+                        $userId = (int)$claims['id'];
+                    }
+                }
 
-            $routeContext = RouteContext::fromRequest($request);
-            $route = $routeContext->getRoute();
-            $directory = $route?->getArgument('directory');
+                try {
+                    $logger = $app->getContainer()->get(\Psr\Log\LoggerInterface::class);
+                    $logger->debug('User ID retrieved', [
+                        'userId' => $userId,
+                        'path' => $request->getUri()->getPath(),
+                    ]);
+                } catch (\Throwable $e) {
+                    // ignore logging failure
+                }
 
-            if ($directory === null || $directory === '') {
-                return $response->withStatus(400);
+                $route = RouteContext::fromRequest($request)->getRoute();
+                $directory = $route?->getArgument('directory') ?? '';
+
+                if ($directory === '') {
+                    return $response->withStatus(400);
+                }
+
+                $tree = $pageService->getDirectoryTree($directory, $userId);
+                $response->getBody()->write(json_encode($tree));
+
+                return $response->withHeader('Content-Type', 'application/json');
             }
-
-            $tree = $pageService->getDirectoryTree($directory);
-            $response->getBody()->write(json_encode($tree));
-            return $response->withHeader('Content-Type', 'application/json');
-        });
+        );
 
         $app->get('/api/public/page-content', function (Request $request, Response $response) use ($app) {
             $path = $request->getQueryParams()['path'] ?? '';
@@ -344,10 +404,15 @@ class Routes
 
             /** @var PageService $pageService */
             $pageService = $app->getContainer()->get(PageService::class);
-            $content = $pageService->getPageContent($path);
+            $claims = $request->getAttribute('jwt');
+            $content = $pageService->getPageContent($path, $claims);
 
             if ($content === null) {
                 return $response->withStatus(404);
+            }
+
+            if ($content instanceof Response) {
+                return $content;
             }
 
             $response

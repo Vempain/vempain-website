@@ -13,13 +13,21 @@ class AclService
     ) {
     }
 
+    /**
+     * Whether the given ACL id exists and therefore requires authentication.
+     */
+    public function aclRequiresAuth(int $aclId): bool
+    {
+        return $this->aclRepository->aclRequiresAuth($aclId);
+    }
+
     public function canAccess(?int $aclId, ?array $claims): bool
     {
         if ($aclId === null || $aclId === 0) {
             return true;
         }
 
-        if (!$this->aclRepository->aclRequiresAuth($aclId)) {
+        if (!$this->aclRequiresAuth($aclId)) {
             return true;
         }
 

@@ -21,6 +21,7 @@ use Vempain\VempainWebsite\Application\Service\FileService;
 use Vempain\VempainWebsite\Application\Service\LegacyEmbedParser;
 use Vempain\VempainWebsite\Application\Service\PageCacheEvaluator;
 use Vempain\VempainWebsite\Application\Service\PageService;
+use Vempain\VempainWebsite\Application\Service\ResourceAccessService;
 use Vempain\VempainWebsite\Application\Transformer\SubjectTransformer;
 use Vempain\VempainWebsite\Domain\Repository\UserRepository;
 use Vempain\VempainWebsite\Domain\Repository\WebSiteAclRepository;
@@ -60,16 +61,25 @@ $containerBuilder->addDefinitions([
     LoggerInterface::class => function () {
         $logger = new Logger('vempain');
         $logPath = $_ENV['ENV_VEMPAIN_SITE_LOG_VOLUME'] ?? '/var/log/vempain';
+
         if (!is_dir($logPath)) {
             mkdir($logPath, 0775, true);
         }
-        $logger->pushHandler(new StreamHandler($logPath . '/backend.log', Level::Info));
-        $logger->pushHandler(new StreamHandler('php://stdout', Level::Info));
+
+        $logger->pushHandler(new StreamHandler($logPath . '/backend.log', Level::Debug));
+        $logger->pushHandler(new StreamHandler('php://stdout', Level::Debug));
         return $logger;
     },
     // Alias for legacy code that expects 'logger' service name
     'logger' => DI\get(LoggerInterface::class),
-    JwtService::class => DI\autowire(JwtService::class),
+    JwtService::class => function ($container) {
+        return new JwtService(
+            $container->get(WebSiteJwtTokenRepository::class),
+            null, // defer to env JWT_SECRET at runtime
+            (int)($_ENV['JWT_TTL_SECONDS'] ?? 1200),
+            $container->get(LoggerInterface::class)
+        );
+    },
     UserRepository::class => DI\autowire(UserRepository::class),
     WebSitePageRepository::class => DI\autowire(WebSitePageRepository::class),
     WebSiteFileRepository::class => DI\autowire(WebSiteFileRepository::class),
@@ -90,7 +100,7 @@ $containerBuilder->addDefinitions([
             $container->get(WebSiteSubjectRepository::class),
             $container->get(SubjectTransformer::class),
             $_ENV['VEMPAIN_WEBSITE_WEB_ROOT'] ?? '/files',
-            $container->get(AclService::class)
+            $container->get(ResourceAccessService::class)
         );
     },
     PageCacheEvaluator::class => DI\autowire(PageCacheEvaluator::class),
@@ -100,17 +110,21 @@ $containerBuilder->addDefinitions([
             $container->get(WebSitePageRepository::class),
             $container->get(WebSiteSubjectRepository::class),
             $container->get(SubjectTransformer::class),
-            $container->get(AclService::class),
             $container->get(PageCacheEvaluator::class),
             $container->get(LoggerInterface::class),
+            $container->get(ResourceAccessService::class)
         );
     },
+    ResourceAccessService::class => DI\autowire(ResourceAccessService::class),
     CorsMiddleware::class => function (): CorsMiddleware {
         $rawOrigins = $_ENV['ENV_VEMPAIN_CORS_ALLOW_ORIGINS']
             ?? $_SERVER['ENV_VEMPAIN_CORS_ALLOW_ORIGINS']
             ?? getenv('ENV_VEMPAIN_CORS_ALLOW_ORIGINS')
             ?? '';
         $origins = array_filter(array_map('trim', explode(',', $rawOrigins)));
+        if (empty($origins)) {
+            $origins = ['*'];
+        }
         return new CorsMiddleware($origins);
     },
     ResourceResolverMiddleware::class => DI\autowire(ResourceResolverMiddleware::class),
@@ -132,9 +146,9 @@ $app->add(
         true
     )
 );
-$app->add(ResourceResolverMiddleware::class);
-$app->add(JwtMiddleware::class);
 $app->add(CorsMiddleware::class);
+$app->add(JwtMiddleware::class);
+$app->add(ResourceResolverMiddleware::class);
 
 Routes::register($app);
 
