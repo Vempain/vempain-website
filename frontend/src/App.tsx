@@ -62,6 +62,8 @@ function App() {
     const [searchModalVisible, setSearchModalVisible] = useState(false)
     const [subjectOptions, setSubjectOptions] = useState<WebSiteSubject[]>([])
     const [selectedSubjects, setSelectedSubjects] = useState<number[]>([])
+    const [pageError, setPageError] = useState<string | null>(null)
+    const [pageStatus, setPageStatus] = useState<number | null>(null)
     const hasInitialized = useRef(false)
 
     const menuBarItems: MenuItem[] = [
@@ -186,11 +188,13 @@ function App() {
 
     // Helpers
     const findIndexPathInTree = useCallback((path: string): string | null => {
+        console.log('Finding index path in tree for:', path)
         const normalized = trimSlashes(path)
         const segments = normalized.split('/')
         // Walk the tree to locate the node matching the path prefix, then see if index child exists
         let level: DirectoryTreeNode[] = treeData
         let foundNode: DirectoryTreeNode | null = null
+
         for (const seg of segments) {
             const next = level.find((n) => trimSlashes(n.fullPath).endsWith(seg))
             if (!next) return null
@@ -201,13 +205,20 @@ function App() {
     }, [treeData])
 
     const loadPageContent = useCallback(async (path: string) => {
+        setPageError(null)
+        setPageStatus(null)
         const response = await pageAPI.getPageContent(path)
         if (response.data) {
             setPageContent(response.data)
         } else {
             setPageContent(null)
+            setPageError(response.error ?? null)
+            setPageStatus(response.status ?? null)
+            if (response.status === 401) {
+                showLogin()
+            }
         }
-    }, [])
+    }, [showLogin])
 
     const ensureIndexPageLoadedForPath = useCallback(async (path: string) => {
         const indexPathFromTree = findIndexPathInTree(path)
@@ -243,9 +254,11 @@ function App() {
             }
 
             if (treeResp.data) {
+                console.log("Looking for tree nodes in directory:", directory, treeResp.data)
                 setTreeData(buildTreeNodes(treeResp.data, directory))
                 await ensureIndexPageLoadedForPath(directory)
             } else {
+                console.log("No tree data received for directory:", directory)
                 setTreeData([])
                 setPageContent(null)
             }
@@ -383,6 +396,8 @@ function App() {
                             onSearchInputChange={setSearchInput}
                             onSearchSubmit={handleSearchSubmit}
                             onPageChange={(pageNumber) => handleLoadSection('pages', {page: pageNumber})}
+                            pageError={pageError}
+                            pageStatus={pageStatus}
                     />
             )
         }

@@ -17,7 +17,7 @@ class FileService
         private readonly WebSiteSubjectRepository $subjectRepository,
         private readonly SubjectTransformer $subjectTransformer,
         private readonly string $filesRoot,
-        private readonly AclService $aclService,
+        private readonly ResourceAccessService $resourceAccessService,
     ) {
     }
 
@@ -36,8 +36,9 @@ class FileService
         }
 
         $claims = $request->getAttribute('jwt');
-        if (!$this->aclService->canAccess($fileData['aclId'], $claims)) {
-            return $this->forbiddenResponse();
+        $denied = $this->resourceAccessService->getDeniedStatus($fileData['aclId'], $claims);
+        if ($denied !== null) {
+            return $this->denyResponse($denied);
         }
 
         return $this->streamFile($request, $fileData);
@@ -83,6 +84,14 @@ class FileService
     {
         $response = new Response(403);
         $response->getBody()->write(json_encode(['error' => 'Forbidden']));
+        return $response->withHeader('Content-Type', 'application/json');
+    }
+
+    private function denyResponse(int $status): ResponseInterface
+    {
+        $response = new Response($status);
+        $message = $status === 401 ? 'Authentication required' : 'Forbidden';
+        $response->getBody()->write(json_encode(['error' => $message]));
         return $response->withHeader('Content-Type', 'application/json');
     }
 

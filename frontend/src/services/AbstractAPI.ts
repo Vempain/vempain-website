@@ -75,7 +75,7 @@ export abstract class AbstractAPI {
             }
 
             // Successful response
-            return {data: response.data} as ApiResponse<T>;
+            return {data: response.data, status: response.status} as ApiResponse<T>;
         } catch (err) {
             if (isAxiosError(err)) {
                 // Try to extract server-provided error message
@@ -100,7 +100,7 @@ export abstract class AbstractAPI {
                         message = resp.statusText || (err.message ?? String(err));
                     }
 
-                    return {error: String(message)};
+                    return {error: String(message), status: resp.status};
                 }
                 return {error: err.message};
             }

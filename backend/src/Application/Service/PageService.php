@@ -19,9 +19,9 @@ class PageService
         private readonly WebSitePageRepository $pageRepository,
         private readonly WebSiteSubjectRepository $subjectRepository,
         private readonly SubjectTransformer $subjectTransformer,
-        private readonly AclService $aclService,
         private readonly PageCacheEvaluator $pageCacheEvaluator,
         private readonly LoggerInterface $logger,
+        private readonly ResourceAccessService $resourceAccessService,
     ) {
     }
 
@@ -45,8 +45,9 @@ class PageService
         }
 
         $claims = $request->getAttribute('jwt');
-        if (!$this->aclService->canAccess($page->getAclId(), $claims)) {
-            return $this->forbiddenResponse();
+        $denied = $this->resourceAccessService->getDeniedStatus($page->getAclId(), $claims);
+        if ($denied !== null) {
+            return $this->denyResponse($denied);
         }
 
         $body = $this->pageCacheEvaluator->render($page);
@@ -69,10 +70,11 @@ class PageService
         return $response->withHeader('Content-Type', 'application/json');
     }
 
-    private function forbiddenResponse(): ResponseInterface
+    private function denyResponse(int $status): ResponseInterface
     {
-        $response = new Response(403);
-        $response->getBody()->write(json_encode(['error' => 'Forbidden']));
+        $response = new Response($status);
+        $message = $status === 401 ? 'Authentication required' : 'Forbidden';
+        $response->getBody()->write(json_encode(['error' => $message]));
         return $response->withHeader('Content-Type', 'application/json');
     }
 
@@ -88,7 +90,8 @@ class PageService
         int $perPage,
         string $sortDirection,
         string $search,
-        ?string $pathPrefix
+        ?string $pathPrefix,
+        int $userId
     ): array {
         $page = max(0, $page);
         $perPage = max(1, min(self::MAX_PER_PAGE, $perPage));
@@ -96,9 +99,16 @@ class PageService
 
         $searchTerms = $this->tokenizeSearch($search);
 
-        $pages = $this->pageRepository->findPublicPages($page, $perPage, $searchTerms, $sortDirection, $pathPrefix);
+        $pages = $this->pageRepository->findAccessiblePages(
+            $page,
+            $perPage,
+            $searchTerms,
+            $sortDirection,
+            $pathPrefix,
+            $userId
+        );
         $this->subjectRepository->eagerLoadForPages($pages);
-        $total = $this->pageRepository->countPublicPages($searchTerms, $pathPrefix);
+        $total = $this->pageRepository->countPublicPages($searchTerms, $pathPrefix, $userId);
         $totalPages = $perPage > 0 ? (int)ceil($total / $perPage) : 0;
 
         return [
@@ -150,10 +160,16 @@ class PageService
         );
     }
 
-    public function getDirectoryTree(string $directory): array
+    public function getDirectoryTree(string $directory, int $userId): array
     {
-        $pages = $this->pageRepository->findByDirectory($directory);
+        $pages = $this->pageRepository->findByDirectory($directory, $userId);
+        $this->subjectRepository->eagerLoadForPages($pages);
 
+        return $this->buildDirectoryTree($pages, $directory);
+    }
+
+    private function buildDirectoryTree(array $pages, string $directory): array
+    {
         $tree = [];
         foreach ($pages as $page) {
             $relativePath = substr($page->getPath(), strlen($directory) + 1);
@@ -189,13 +205,18 @@ class PageService
         $tree[] = $child;
     }
 
-    public function getPageContent(string $path): ?array
+    public function getPageContent(string $path, ?array $claims = null): array|ResponseInterface|null
     {
         $page = $this->pageRepository->findByPath($path);
 
         if (!$page) {
             $this->logger->warning("Did not find page content for path: {$path}");
             return null;
+        }
+
+        $denied = $this->resourceAccessService->getDeniedStatus($page->getAclId(), $claims);
+        if ($denied !== null) {
+            return $this->denyResponse($denied);
         }
 
         $body = $this->pageCacheEvaluator->render($page);

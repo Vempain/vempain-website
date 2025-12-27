@@ -70,30 +70,36 @@ SQL;
         return array_values(array_filter($result));
     }
 
-    public function findByDirectory(string $directory): array
+    public function findByDirectory(string $directory, int $userId): array
     {
         $qb = $this->entityManager->createQueryBuilder();
-        return $qb
+        $qb
             ->select('p')
             ->from(WebSitePage::class, 'p')
-            ->where($qb->expr()->like('p.path', ':pattern'))
-            ->setParameter('pattern', $directory . '/%')
-            ->orderBy('p.path', 'ASC')
-            ->getQuery()
-            ->getResult();
+            ->leftJoin('Vempain\VempainWebsite\Domain\Entity\WebSiteAcl', 'a', 'WITH', 'a.aclId = p.aclId')
+            ->andWhere($qb->expr()->orX('p.aclId IS NULL', 'a.userId = :userId'))
+            ->setParameter('userId', $userId)
+            ->andWhere('p.path LIKE :dirPrefix')
+            ->setParameter('dirPrefix', $directory . '%');
+
+        return $qb->getQuery()->getResult();
     }
 
-    public function findPublicPages(
+    public function findAccessiblePages(
         int $page,
         int $perPage,
         array $searchTerms,
         string $sortDirection,
-        ?string $pathPrefix
+        ?string $pathPrefix,
+        int $userId
     ): array {
         $qb = $this->entityManager->createQueryBuilder();
         $qb
             ->select('p')
-            ->from(WebSitePage::class, 'p');
+            ->from(WebSitePage::class, 'p')
+            ->leftJoin('Vempain\VempainWebsite\Domain\Entity\WebSiteAcl', 'a', 'WITH', 'a.aclId = p.aclId')
+            ->andWhere($qb->expr()->orX('p.aclId IS NULL', 'a.userId = :userId'))
+            ->setParameter('userId', $userId);
 
         $this->applyPathPrefixFilter($qb, $pathPrefix);
         $this->applySearchFilters($qb, $searchTerms);
@@ -141,12 +147,15 @@ SQL;
         $qb->andWhere(call_user_func_array([$qb->expr(), 'orX'], $expressions));
     }
 
-    public function countPublicPages(array $searchTerms, ?string $pathPrefix): int
+    public function countPublicPages(array $searchTerms, ?string $pathPrefix, int $userId): int
     {
         $qb = $this->entityManager->createQueryBuilder();
         $qb
             ->select('COUNT(p.id)')
-            ->from(WebSitePage::class, 'p');
+            ->from(WebSitePage::class, 'p')
+            ->leftJoin('Vempain\VempainWebsite\Domain\Entity\WebSiteAcl', 'a', 'WITH', 'a.aclId = p.aclId')
+            ->andWhere($qb->expr()->orX('p.aclId IS NULL', 'a.userId = :userId'))
+            ->setParameter('userId', $userId);
 
         $this->applyPathPrefixFilter($qb, $pathPrefix);
         $this->applySearchFilters($qb, $searchTerms);

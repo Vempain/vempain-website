@@ -13,9 +13,11 @@ interface PageViewProps {
     onSearchInputChange: (value: string) => void;
     onSearchSubmit: () => void;
     onPageChange: (pageNumber: number) => void;
+    pageError?: string | null;
+    pageStatus?: number | null;
 }
 
-function PageView({pageContent, pages, pagination, searchInput, onSearchInputChange, onSearchSubmit, onPageChange}: PageViewProps) {
+function PageView({pageContent, pages, pagination, searchInput, onSearchInputChange, onSearchSubmit, onPageChange, pageError, pageStatus}: PageViewProps) {
     function renderPageBody(body: string, embeds: WebSitePageContent['embeds']) {
         if (!body) return null;
 
@@ -133,6 +135,16 @@ function PageView({pageContent, pages, pagination, searchInput, onSearchInputCha
 
     if (pageContent) {
         return renderPageDetail();
+    }
+
+    if (pageStatus === 401) {
+        return <div className="content-section"><Paragraph type="warning">Kirjaudu nähdäksesi tämän sivun.</Paragraph></div>;
+    }
+    if (pageStatus === 403) {
+        return <div className="content-section"><Paragraph type="danger">Pääsy kielletty.</Paragraph></div>;
+    }
+    if (pageError) {
+        return <div className="content-section"><Paragraph type="danger">{pageError}</Paragraph></div>;
     }
 
     return pageList;
