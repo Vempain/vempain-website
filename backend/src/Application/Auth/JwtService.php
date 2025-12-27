@@ -4,14 +4,16 @@ namespace Vempain\VempainWebsite\Application\Auth;
 
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
+use Psr\Log\LoggerInterface;
 use Vempain\VempainWebsite\Domain\Repository\WebSiteJwtTokenRepository;
 
 class JwtService
 {
     public function __construct(
         private readonly WebSiteJwtTokenRepository $tokenRepository,
-        private readonly string $secret = '',
-        private readonly int $ttl = 1200
+        private readonly ?string $secret = null,
+        private readonly int $ttl = 1200,
+        private readonly ?LoggerInterface $logger = null,
     ) {
     }
 
@@ -30,7 +32,12 @@ class JwtService
 
     public function issueToken(int $userId, string $username): string
     {
-        $secret = $this->secret ?: ($_ENV['JWT_SECRET'] ?? 'secret');
+        $secret = $this->resolveSecret();
+
+        $this->logger?->debug('Issuing JWT', [
+            'secret_length' => strlen($secret),
+        ]);
+
         $ttl = $this->ttl ?: (int)($_ENV['JWT_TTL_SECONDS'] ?? 1200);
         $issuedAt = time();
         $payload = [
@@ -48,9 +55,28 @@ class JwtService
 
     public function validate(string $token): array
     {
-        $secret = $this->secret ?: ($_ENV['JWT_SECRET'] ?? 'secret');
+        $secret = $this->resolveSecret();
         $claims = (array)JWT::decode($token, new Key($secret, 'HS256'));
         $claims['token'] = $token;
         return $claims;
+    }
+
+    private function resolveSecret(): string
+    {
+        $candidates = [
+            $this->secret,
+            $_ENV['JWT_SECRET'] ?? null,
+            $_SERVER['JWT_SECRET'] ?? null,
+            getenv('JWT_SECRET') ?: null,
+        ];
+
+        foreach ($candidates as $candidate) {
+            $candidate = trim((string)($candidate ?? ''));
+            if ($candidate !== '' && $candidate !== 'secret') {
+                return $candidate;
+            }
+        }
+
+        return 'secret';
     }
 }
