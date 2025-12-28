@@ -4,12 +4,15 @@ namespace Vempain\VempainWebsite\Domain\Repository;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\QueryBuilder;
+use Psr\Log\LoggerInterface;
 use Vempain\VempainWebsite\Domain\Entity\WebSitePage;
 
 class WebSitePageRepository
 {
-    public function __construct(private readonly EntityManagerInterface $entityManager)
-    {
+    public function __construct(
+        private readonly EntityManagerInterface $entityManager,
+        private readonly LoggerInterface $logger
+    ) {
     }
 
     public function findAll(): array
@@ -77,9 +80,10 @@ SQL;
             ->select('p')
             ->from(WebSitePage::class, 'p')
             ->leftJoin('Vempain\VempainWebsite\Domain\Entity\WebSiteAcl', 'a', 'WITH', 'a.aclId = p.aclId')
-            ->andWhere($qb->expr()->orX('p.aclId IS NULL', 'a.userId = :userId'))
+            ->andWhere($qb->expr()->orX('a.aclId IS NULL', 'a.userId = :userId'))
             ->setParameter('userId', $userId)
             ->andWhere('p.path LIKE :dirPrefix')
+            ->orderBy('p.path', 'ASC')
             ->setParameter('dirPrefix', $directory . '%');
 
         return $qb->getQuery()->getResult();

@@ -81,7 +81,12 @@ $containerBuilder->addDefinitions([
         );
     },
     UserRepository::class => DI\autowire(UserRepository::class),
-    WebSitePageRepository::class => DI\autowire(WebSitePageRepository::class),
+    WebSitePageRepository::class => function ($container) {
+        return new WebSitePageRepository(
+            $container->get(EntityManagerInterface::class),
+            $container->get(LoggerInterface::class)
+        );
+    },
     WebSiteFileRepository::class => DI\autowire(WebSiteFileRepository::class),
     WebSiteGalleryRepository::class => DI\autowire(WebSiteGalleryRepository::class),
     WebSiteSubjectRepository::class => DI\autowire(WebSiteSubjectRepository::class),

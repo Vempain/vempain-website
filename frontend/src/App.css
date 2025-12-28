@@ -29,6 +29,10 @@ body, html {
     justify-content: center;
 }
 
+.app-sider {
+    background: #9090FF !important;
+}
+
 .app-header {
     display: flex;
     align-items: center;

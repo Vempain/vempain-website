@@ -58,9 +58,10 @@ SQL,
         int $externalGalleryId,
         int $page,
         int $perPage,
+        int $userId,
         string $orderBy = 'sort_order',
         string $direction = 'asc',
-        array $searchTerms = []
+        array $searchTerms = [],
     ): array {
         $page = max(1, $page);
         $perPage = max(1, $perPage);
@@ -76,7 +77,11 @@ SQL,
 FROM web_site_gallery g
 JOIN web_site_gallery_file gf ON gf.gallery_id = g.id
 JOIN web_site_file f ON f.id = gf.file_id
-WHERE g.gallery_id = :externalGalleryId
+LEFT JOIN web_site_acl a
+       ON a.acl_id = f.acl_id
+WHERE (a.user_id = :userId
+   OR a.acl_id IS NULL)
+   AND g.gallery_id = :externalGalleryId
 SQL;
 
         // Stub search: currently no filtering, but placeholder for future use
@@ -86,7 +91,11 @@ SQL;
         }
 
         $countSql = 'SELECT COUNT(*) ' . $baseSql;
-        $total = (int)$conn->fetchOne($countSql, ['externalGalleryId' => $externalGalleryId]);
+        $total = (int)$conn->fetchOne(
+            $countSql,
+            ['externalGalleryId' => $externalGalleryId, 'userId' => $userId],
+            ['externalGalleryId' => ParameterType::INTEGER, 'userId' => ParameterType::INTEGER]
+        );
 
         $offset = ($page - 1) * $perPage;
         $limitSql = sprintf(
@@ -97,7 +106,8 @@ SQL;
             $direction
         );
         $stmt = $conn->prepare($limitSql);
-        $stmt->bindValue('externalGalleryId', $externalGalleryId);
+        $stmt->bindValue('externalGalleryId', $externalGalleryId, ParameterType::INTEGER);
+        $stmt->bindValue('userId', $userId, ParameterType::INTEGER);
         $stmt->bindValue('limit', $perPage, ParameterType::INTEGER);
         $stmt->bindValue('offset', $offset, ParameterType::INTEGER);
         $items = $stmt->executeQuery()->fetchAllAssociative();
@@ -108,14 +118,28 @@ SQL;
     /**
      * Return internal gallery id (g.id) for the given external gallery_id, or null if not found.
      */
-    public function findInternalIdByExternalGalleryId(int $externalGalleryId): ?int
+    public function findInternalIdByExternalGalleryId(int $externalGalleryId, int $userId): ?int
     {
         $conn = $this->entityManager->getConnection();
-        $sql = 'SELECT id FROM web_site_gallery WHERE gallery_id = :externalGalleryId LIMIT 1';
-        $row = $conn->fetchAssociative($sql, ['externalGalleryId' => $externalGalleryId]);
+        $sql = <<< 'SQL'
+SELECT g.id
+FROM web_site_gallery g
+LEFT JOIN web_site_acl a
+       ON a.acl_id = g.acl_id
+WHERE (a.user_id = :userId
+   OR a.acl_id IS NULL)
+   AND g.gallery_id = :externalGalleryId
+LIMIT 1
+SQL;
+        $row = $conn->fetchAssociative(
+            $sql,
+            ['externalGalleryId' => $externalGalleryId, 'userId' => $userId],
+            ['externalGalleryId' => ParameterType::INTEGER, 'userId' => ParameterType::INTEGER]
+        );
         if (!$row) {
             return null;
         }
+
         return isset($row['id']) ? (int)$row['id'] : null;
     }
 

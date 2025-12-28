@@ -168,7 +168,7 @@ export function SubjectSearchLoader({subjectIdList}: SubjectSearchProps) {
     }
 
     if (sections.length === 0) {
-        return <Empty description="No results"/>;
+        return <Empty description="Ei hakutuloksia"/>;
     }
 
     return (

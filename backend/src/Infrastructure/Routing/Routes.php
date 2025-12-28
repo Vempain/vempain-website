@@ -113,7 +113,9 @@ class Routes
             $subjectRepo = $app->getContainer()->get(WebSiteSubjectRepository::class);
             /** @var SubjectTransformer $subjectTransformer */
             $subjectTransformer = $app->getContainer()->get(SubjectTransformer::class);
-            $files = $fileRepo->findAll();
+            $userId = self::getUserId($request);
+
+            $files = $fileRepo->findAllFilesForUser($userId);
 
             $fileIds = array_map(static fn($file) => $file->getId(), $files);
             $subjectsByFile = $subjectRepo->findByFileIds($fileIds);
@@ -226,11 +228,13 @@ class Routes
             $route = $routeContext->getRoute();
             $galleryIdArg = $route?->getArgument('galleryId');
             $galleryId = is_numeric($galleryIdArg) ? (int)$galleryIdArg : 0;
+            $userId = self::getUserId($request);
 
             try {
                 $logger = $app->getContainer()->get(\Psr\Log\LoggerInterface::class);
                 $logger->debug('Gallery files route hit', [
                     'galleryId' => $galleryId,
+                    'userId' => $userId,
                     'path' => $request->getUri()->getPath(),
                 ]);
             } catch (\Throwable $e) {
@@ -249,8 +253,13 @@ class Routes
             $subjectRepo = $app->getContainer()->get(WebSiteSubjectRepository::class);
             /** @var SubjectTransformer $subjectTransformer */
             $subjectTransformer = $app->getContainer()->get(SubjectTransformer::class);
-            $internalGalleryId = $galleryRepo->findInternalIdByExternalGalleryId($galleryId);
+            $internalGalleryId = $galleryRepo->findInternalIdByExternalGalleryId($galleryId, $userId);
 
+            $logger->debug('Internal gallery ID lookup', [
+                'userId' => $userId,
+                'externalGalleryId' => $galleryId,
+                'internalGalleryId' => $internalGalleryId,
+            ]);
             if ($internalGalleryId === null) {
                 return $response->withStatus(404);
             }
@@ -268,6 +277,7 @@ class Routes
                 $galleryId,
                 $page + 1,
                 $size,
+                $userId,
                 $order,
                 $direction,
                 $searchTerms ?? []
@@ -317,15 +327,7 @@ class Routes
             $sortDirection = strtolower($params['sortDir'] ?? 'desc') === 'asc' ? 'asc' : 'desc';
             $search = $params['search'] ?? '';
             $pathPrefix = $params['directory'] ?? null;
-            $claims = $request->getAttribute('jwt');
-            $userId = -1;
-            if (is_array($claims)) {
-                if (isset($claims['sub'])) {
-                    $userId = (int)$claims['sub'];
-                } elseif (isset($claims['id'])) {
-                    $userId = (int)$claims['id'];
-                }
-            }
+            $userId = self::getUserId($request);
 
             try {
                 $logger = $app->getContainer()->get(\Psr\Log\LoggerInterface::class);
@@ -362,19 +364,11 @@ class Routes
             function (Request $request, Response $response) use ($app) {
                 /** @var PageService $pageService */
                 $pageService = $app->getContainer()->get(PageService::class);
-                $claims = $request->getAttribute('jwt');
-                $userId = -1;
-                if (is_array($claims)) {
-                    if (isset($claims['sub'])) {
-                        $userId = (int)$claims['sub'];
-                    } elseif (isset($claims['id'])) {
-                        $userId = (int)$claims['id'];
-                    }
-                }
+                $userId = self::getUserId($request);
 
                 try {
                     $logger = $app->getContainer()->get(\Psr\Log\LoggerInterface::class);
-                    $logger->debug('User ID retrieved', [
+                    $logger->debug('User ID for tree retrieved', [
                         'userId' => $userId,
                         'path' => $request->getUri()->getPath(),
                     ]);
@@ -467,8 +461,9 @@ class Routes
             $page = isset($params['page']) ? (int)$params['page'] : 0;
             $size = isset($params['perPage']) ? (int)$params['perPage'] : 12;
             $size = max(1, min(50, $size));
+            $userId = self::getUserId($request);
 
-            $allFiles = $fileRepo->findAll();
+            $allFiles = $fileRepo->findAllFilesForUser($userId);
             $total = count($allFiles);
             $offset = $page * $size;
             $files = array_slice($allFiles, $offset, $size);
@@ -546,8 +541,9 @@ class Routes
             $size = isset($body['size']) ? (int)$body['size'] : 12;
             $sortBy = $body['sort_by'] ?? 'id';
             $direction = strtolower($body['direction'] ?? 'asc') === 'desc' ? 'desc' : 'asc';
+            $userId = self::getUserId($request);
 
-            $payload = $service->searchBySubjectIds($subjectIds, $page, $size, $sortBy, $direction);
+            $payload = $service->searchBySubjectIds($userId, $subjectIds, $page, $size, $sortBy, $direction);
             $response->getBody()->write(json_encode($payload));
             return $response->withHeader('Content-Type', 'application/json');
         });
@@ -592,5 +588,24 @@ class Routes
         }
 
         return $response->withHeader('Set-Cookie', implode('; ', $cookieParts));
+    }
+
+    /**
+     * @param mixed $claims
+     * @return int
+     */
+    private static function getUserId(Request $request): int
+    {
+        $claims = $request->getAttribute('jwt');
+        $userId = -1;
+
+        if (is_array($claims)) {
+            if (isset($claims['sub'])) {
+                $userId = (int)$claims['sub'];
+            } elseif (isset($claims['id'])) {
+                $userId = (int)$claims['id'];
+            }
+        }
+        return $userId;
     }
 }

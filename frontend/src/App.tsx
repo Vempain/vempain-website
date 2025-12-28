@@ -466,21 +466,28 @@ function App() {
                     />
                 </Header>
                 <div className="app-main">
-                    <Sider trigger={null}
-                           collapsible
-                           collapsed={false}
-                           className="app-sider"
+                    <Sider
+                            trigger={null}
+                            collapsible
+                            collapsed={false}
+                            width="auto"
+                            style={{flex: '0 0 auto', minWidth: 320, maxWidth: 720}}
+                            className="app-sider"
                     >
                         <Tooltip title={siteConfig.description}>
                             <div className="logo">{siteConfig.name}</div>
                         </Tooltip>
                         {selectedDirectory && (
-                                <Tree
-                                        showLine={false}
-                                        treeData={treeData}
-                                        defaultExpandAll
-                                        onSelect={handleTreeSelect}
-                                />
+                                <div style={{overflowX: 'auto'}}>
+                                    <Tree
+                                            showLine={false}
+                                            treeData={treeData}
+                                            defaultExpandAll
+                                            onSelect={handleTreeSelect}
+                                            // ensure tree rows don't wrap and can scroll horizontally if needed
+                                            style={{whiteSpace: 'nowrap'}}
+                                    />
+                                </div>
                         )}
                     </Sider>
                     <Content className="app-content">
@@ -545,22 +552,22 @@ function App() {
                                                         size={8}
                                                         style={{marginBottom: 8, width: '100%', display: 'flex', gap: 8}}
                                                 >
-                                                <Select
-                                                        mode="multiple"
-                                                        placeholder="Kirjoita vähintään 3 kirjainta etsiäksesi tunnisteita"
-                                                        showSearch={{onSearch: handleSubjectAutocomplete, filterOption: false}}
-                                                        value={selectedSubjects}
-                                                        onChange={(vals) => setSelectedSubjects(vals as number[])}
-                                                        options={subjectOptions.map((s: WebSiteSubject) => ({label: s.subject, value: s.id}))}
-                                                        style={{flex: 1, minWidth: 400}}
-                                                />
+                                                    <Select
+                                                            mode="multiple"
+                                                            placeholder="Kirjoita vähintään 3 kirjainta etsiäksesi tunnisteita"
+                                                            showSearch={{onSearch: handleSubjectAutocomplete, filterOption: false}}
+                                                            value={selectedSubjects}
+                                                            onChange={(vals) => setSelectedSubjects(vals as number[])}
+                                                            options={subjectOptions.map((s: WebSiteSubject) => ({label: s.subject, value: s.id}))}
+                                                            style={{flex: 1, minWidth: 400}}
+                                                    />
                                                     <Button
                                                             type="primary"
                                                             onClick={handleSubjectSearchAndClose}
                                                             disabled={selectedSubjects.length === 0}
                                                     >
                                                         Etsi tunnisteiden mukaan
-                                                </Button>
+                                                    </Button>
                                                 </Space>
                                             </div>
                                     )
