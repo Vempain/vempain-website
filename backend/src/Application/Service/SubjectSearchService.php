@@ -46,7 +46,7 @@ class SubjectSearchService
         ];
     }
 
-    public function searchBySubjectIds(array $subjectIds, int $page, int $size, string $sortBy, string $direction): array
+    public function searchBySubjectIds(int $userId, array $subjectIds, int $page, int $size, string $sortBy, string $direction): array
     {
         $subjectIds = array_values(array_filter(array_map('intval', $subjectIds)));
         if ($subjectIds === []) {
@@ -63,9 +63,9 @@ class SubjectSearchService
         $sortBy = in_array($sortBy, ['id', 'path', 'title', 'shortname'], true) ? $sortBy : 'id';
 
         return [
-            'pages' => $this->searchPagesBySubjectIds($subjectIds, $page, $size, $sortBy, $direction),
-            'galleries' => $this->searchGalleriesBySubjectIds($subjectIds, $page, $size, $sortBy, $direction),
-            'files' => $this->searchFilesBySubjectIds($subjectIds, $page, $size, $sortBy, $direction),
+            'pages' => $this->searchPagesBySubjectIds($userId, $subjectIds, $page, $size, $sortBy, $direction),
+            'galleries' => $this->searchGalleriesBySubjectIds($userId, $subjectIds, $page, $size, $sortBy, $direction),
+            'files' => $this->searchFilesBySubjectIds($userId, $subjectIds, $page, $size, $sortBy, $direction),
         ];
     }
 
@@ -282,7 +282,7 @@ SQL;
         ];
     }
 
-    private function searchPagesBySubjectIds(array $subjectIds, int $page, int $size, string $sortBy, string $direction): array
+    private function searchPagesBySubjectIds(int $userId, array $subjectIds, int $page, int $size, string $sortBy, string $direction): array
     {
         $conn = $this->entityManager->getConnection();
         $orderColumn = match ($sortBy) {
@@ -296,13 +296,17 @@ SELECT COUNT(*) FROM (
     SELECT p.id
     FROM web_site_page p
     JOIN web_site_page_subject wps ON wps.page_id = p.id
-    WHERE wps.subject_id IN (:subject_ids)
+    LEFT JOIN web_site_acl a
+        ON a.acl_id = p.acl_id
+    WHERE (a.user_id = :user_id
+       OR a.acl_id IS NULL)
+      AND wps.subject_id IN (:subject_ids)
     GROUP BY p.id
     HAVING COUNT(DISTINCT wps.subject_id) = :need
 ) t
 SQL;
-        $params = ['subject_ids' => $subjectIds, 'need' => count($subjectIds)];
-        $types = ['subject_ids' => ArrayParameterType::INTEGER, 'need' => ParameterType::INTEGER];
+        $params = ['user_id' => $userId, 'subject_ids' => $subjectIds, 'need' => count($subjectIds)];
+        $types = ['user_id' => ParameterType::INTEGER, 'subject_ids' => ArrayParameterType::INTEGER, 'need' => ParameterType::INTEGER];
         $total = (int)$conn->executeQuery($countSql, $params, $types)->fetchOne();
 
         $offset = $page * $size;
@@ -310,13 +314,17 @@ SQL;
 SELECT p.id
 FROM web_site_page p
 JOIN web_site_page_subject wps ON wps.page_id = p.id
-WHERE wps.subject_id IN (:subject_ids)
+LEFT JOIN web_site_acl a
+    ON a.acl_id = p.acl_id
+WHERE (a.user_id = :user_id
+   OR a.acl_id IS NULL)
+  AND wps.subject_id IN (:subject_ids)
 GROUP BY p.id
 HAVING COUNT(DISTINCT wps.subject_id) = :need
 ORDER BY $orderColumn {$direction}
 LIMIT :limit OFFSET :offset
 SQL;
-        $listParams = $params + ['limit' => $size, 'offset' => $offset];
+        $listParams = $params + [ 'limit' => $size, 'offset' => $offset];
         $listTypes = $types + ['limit' => ParameterType::INTEGER, 'offset' => ParameterType::INTEGER];
         $pageIds = array_map('intval', $conn->executeQuery($listSql, $listParams, $listTypes)->fetchFirstColumn());
 
@@ -354,7 +362,7 @@ SQL;
         ];
     }
 
-    private function searchGalleriesBySubjectIds(array $subjectIds, int $page, int $size, string $sortBy, string $direction): array
+    private function searchGalleriesBySubjectIds(int $userId, array $subjectIds, int $page, int $size, string $sortBy, string $direction): array
     {
         $conn = $this->entityManager->getConnection();
         $orderColumn = match ($sortBy) {
@@ -367,13 +375,17 @@ SELECT COUNT(*) FROM (
     SELECT g.id
     FROM web_site_gallery g
     JOIN web_site_gallery_subject wgs ON wgs.gallery_id = g.id
-    WHERE wgs.subject_id IN (:subject_ids)
+    LEFT JOIN web_site_acl a
+        ON a.acl_id = g.acl_id
+    WHERE (a.user_id = :user_id
+       OR a.acl_id IS NULL)
+      AND wgs.subject_id IN (:subject_ids)
     GROUP BY g.id
     HAVING COUNT(DISTINCT wgs.subject_id) = :need
 ) t
 SQL;
-        $params = ['subject_ids' => $subjectIds, 'need' => count($subjectIds)];
-        $types = ['subject_ids' => ArrayParameterType::INTEGER, 'need' => ParameterType::INTEGER];
+        $params = ['user_id' => $userId, 'subject_ids' => $subjectIds, 'need' => count($subjectIds)];
+        $types = ['user_id' => ParameterType::INTEGER, 'subject_ids' => ArrayParameterType::INTEGER, 'need' => ParameterType::INTEGER];
         $total = (int)$conn->executeQuery($countSql, $params, $types)->fetchOne();
 
         $offset = $page * $size;
@@ -381,14 +393,18 @@ SQL;
 SELECT g.id
 FROM web_site_gallery g
 JOIN web_site_gallery_subject wgs ON wgs.gallery_id = g.id
-WHERE wgs.subject_id IN (:subject_ids)
+LEFT JOIN web_site_acl a
+    ON a.acl_id = g.acl_id
+WHERE (a.user_id = :user_id
+   OR a.acl_id IS NULL)
+  AND wgs.subject_id IN (:subject_ids)
 GROUP BY g.id
 HAVING COUNT(DISTINCT wgs.subject_id) = :need
 ORDER BY $orderColumn {$direction}
 LIMIT :limit OFFSET :offset
 SQL;
-        $listParams = $params + ['limit' => $size, 'offset' => $offset];
-        $listTypes = $types + ['limit' => ParameterType::INTEGER, 'offset' => ParameterType::INTEGER];
+        $listParams = $params + ['user_id' => $userId, 'limit' => $size, 'offset' => $offset];
+        $listTypes = $types + ['user_id' => ParameterType::INTEGER, 'limit' => ParameterType::INTEGER, 'offset' => ParameterType::INTEGER];
         $galleryIds = array_map('intval', $conn->executeQuery($listSql, $listParams, $listTypes)->fetchFirstColumn());
 
         $entities = $this->galleryRepository->findByIds($galleryIds);
@@ -420,7 +436,7 @@ SQL;
         ];
     }
 
-    private function searchFilesBySubjectIds(array $subjectIds, int $page, int $size, string $sortBy, string $direction): array
+    private function searchFilesBySubjectIds(int $userId, array $subjectIds, int $page, int $size, string $sortBy, string $direction): array
     {
         $conn = $this->entityManager->getConnection();
         $orderColumn = match ($sortBy) {
@@ -433,13 +449,17 @@ SELECT COUNT(*) FROM (
     SELECT f.id
     FROM web_site_file f
     JOIN web_site_file_subject wfs ON wfs.file_id = f.id
-    WHERE wfs.subject_id IN (:subject_ids)
+    LEFT JOIN web_site_acl a
+        ON a.acl_id = f.acl_id
+    WHERE (a.user_id = :user_id
+       OR a.acl_id IS NULL)
+      AND wfs.subject_id IN (:subject_ids)
     GROUP BY f.id
     HAVING COUNT(DISTINCT wfs.subject_id) = :need
 ) t
 SQL;
-        $params = ['subject_ids' => $subjectIds, 'need' => count($subjectIds)];
-        $types = ['subject_ids' => ArrayParameterType::INTEGER, 'need' => ParameterType::INTEGER];
+        $params = [':user_id' => $userId, 'subject_ids' => $subjectIds, 'need' => count($subjectIds)];
+        $types = ['user_id' => ParameterType::INTEGER, 'subject_ids' => ArrayParameterType::INTEGER, 'need' => ParameterType::INTEGER];
         $total = (int)$conn->executeQuery($countSql, $params, $types)->fetchOne();
 
         $offset = $page * $size;
@@ -447,7 +467,11 @@ SQL;
 SELECT f.id
 FROM web_site_file f
 JOIN web_site_file_subject wfs ON wfs.file_id = f.id
-WHERE wfs.subject_id IN (:subject_ids)
+LEFT JOIN web_site_acl a
+    ON a.acl_id = f.acl_id
+WHERE (a.user_id = :user_id
+   OR a.acl_id IS NULL)
+  AND wfs.subject_id IN (:subject_ids)
 GROUP BY f.id
 HAVING COUNT(DISTINCT wfs.subject_id) = :need
 ORDER BY $orderColumn {$direction}
@@ -516,56 +540,5 @@ SQL;
             'last' => true,
             'empty' => true,
         ];
-    }
-
-    private function countPages(string $searchTerm, bool $caseSensitive, string $like): int
-    {
-        $conn = $this->entityManager->getConnection();
-        $where = $searchTerm === '' ? '' : ($caseSensitive ? 'WHERE s.subject LIKE :term' : 'WHERE LOWER(s.subject) LIKE :term');
-        $sql = <<<SQL
-SELECT COUNT(DISTINCT p.id)
-FROM web_site_page p
-JOIN web_site_page_subject wps ON wps.page_id = p.id
-JOIN web_site_subject s ON s.id = wps.subject_id $where
-SQL;
-        $stmt = $conn->prepare($sql);
-        if ($searchTerm !== '') {
-            $stmt->bindValue('term', $like);
-        }
-        return (int)$stmt->executeQuery()->fetchOne();
-    }
-
-    private function countGalleries(string $searchTerm, bool $caseSensitive, string $like): int
-    {
-        $conn = $this->entityManager->getConnection();
-        $where = $searchTerm === '' ? '' : ($caseSensitive ? 'WHERE s.subject LIKE :term' : 'WHERE LOWER(s.subject) LIKE :term');
-        $sql = <<<SQL
-SELECT COUNT(DISTINCT g.id)
-FROM web_site_gallery g
-JOIN web_site_gallery_subject wgs ON wgs.gallery_id = g.id
-JOIN web_site_subject s ON s.id = wgs.subject_id $where
-SQL;
-        $stmt = $conn->prepare($sql);
-        if ($searchTerm !== '') {
-            $stmt->bindValue('term', $like);
-        }
-        return (int)$stmt->executeQuery()->fetchOne();
-    }
-
-    private function countFiles(string $searchTerm, bool $caseSensitive, string $like): int
-    {
-        $conn = $this->entityManager->getConnection();
-        $where = $searchTerm === '' ? '' : ($caseSensitive ? 'WHERE s.subject LIKE :term' : 'WHERE LOWER(s.subject) LIKE :term');
-        $sql = <<<SQL
-SELECT COUNT(DISTINCT f.id)
-FROM web_site_file f
-JOIN web_site_file_subject wfs ON wfs.file_id = f.id
-JOIN web_site_subject s ON s.id = wfs.subject_id $where
-SQL;
-        $stmt = $conn->prepare($sql);
-        if ($searchTerm !== '') {
-            $stmt->bindValue('term', $like);
-        }
-        return (int)$stmt->executeQuery()->fetchOne();
     }
 }

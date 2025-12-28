@@ -91,7 +91,11 @@ SQL;
         }
 
         $countSql = 'SELECT COUNT(*) ' . $baseSql;
-        $total = (int)$conn->fetchOne($countSql, ['externalGalleryId' => $externalGalleryId, 'userId' => $userId]);
+        $total = (int)$conn->fetchOne(
+            $countSql,
+            ['externalGalleryId' => $externalGalleryId, 'userId' => $userId],
+            ['externalGalleryId' => ParameterType::INTEGER, 'userId' => ParameterType::INTEGER]
+        );
 
         $offset = ($page - 1) * $perPage;
         $limitSql = sprintf(
@@ -102,8 +106,8 @@ SQL;
             $direction
         );
         $stmt = $conn->prepare($limitSql);
-        $stmt->bindValue('externalGalleryId', $externalGalleryId);
-        $stmt->bindValue('userId', $userId);
+        $stmt->bindValue('externalGalleryId', $externalGalleryId, ParameterType::INTEGER);
+        $stmt->bindValue('userId', $userId, ParameterType::INTEGER);
         $stmt->bindValue('limit', $perPage, ParameterType::INTEGER);
         $stmt->bindValue('offset', $offset, ParameterType::INTEGER);
         $items = $stmt->executeQuery()->fetchAllAssociative();
@@ -127,12 +131,16 @@ WHERE (a.user_id = :userId
    AND g.gallery_id = :externalGalleryId
 LIMIT 1
 SQL;
-        $row = $conn->fetchAssociative($sql, ['externalGalleryId' => $externalGalleryId, 'userId' => $userId]);
+        $row = $conn->fetchAssociative(
+            $sql,
+            ['externalGalleryId' => $externalGalleryId, 'userId' => $userId],
+            ['externalGalleryId' => ParameterType::INTEGER, 'userId' => ParameterType::INTEGER]
+        );
         if (!$row) {
             return null;
         }
 
-        return isset($row['g.id']) ? (int)$row['id'] : null;
+        return isset($row['id']) ? (int)$row['id'] : null;
     }
 
     /**

@@ -541,8 +541,9 @@ class Routes
             $size = isset($body['size']) ? (int)$body['size'] : 12;
             $sortBy = $body['sort_by'] ?? 'id';
             $direction = strtolower($body['direction'] ?? 'asc') === 'desc' ? 'desc' : 'asc';
+            $userId = self::getUserId($request);
 
-            $payload = $service->searchBySubjectIds($subjectIds, $page, $size, $sortBy, $direction);
+            $payload = $service->searchBySubjectIds($userId, $subjectIds, $page, $size, $sortBy, $direction);
             $response->getBody()->write(json_encode($payload));
             return $response->withHeader('Content-Type', 'application/json');
         });

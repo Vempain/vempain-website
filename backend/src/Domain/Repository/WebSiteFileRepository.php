@@ -21,6 +21,7 @@ class WebSiteFileRepository
             ->andWhere($qb->expr()->orX('p.aclId IS NULL', 'a.userId = :userId'))
             ->setParameter('userId', $userId)
             ->orderBy('f.createdAt', 'DESC');
+
         return $qb->getQuery()->getResult();
     }
 
