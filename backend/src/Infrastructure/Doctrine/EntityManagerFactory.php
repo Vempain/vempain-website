@@ -3,9 +3,13 @@
 namespace Vempain\VempainWebsite\Infrastructure\Doctrine;
 
 use Doctrine\DBAL\DriverManager;
+use Doctrine\DBAL\Logging\Middleware as DbalLoggingMiddleware;
 use Doctrine\DBAL\Types\Type;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\ORMSetup;
+use Monolog\Handler\StreamHandler;
+use Monolog\Level;
+use Monolog\Logger;
 use Vempain\VempainWebsite\Infrastructure\Doctrine\Type\FlexibleDateTimeTzImmutableType;
 
 class EntityManagerFactory
@@ -18,6 +22,19 @@ class EntityManagerFactory
         $config = ORMSetup::createAttributeMetadataConfig([
             __DIR__ . '/../../Domain'
         ], (bool)($_ENV['APP_DEBUG'] ?? false));
+
+        // Configure logger once
+        $logger = new Logger('vempain');
+        $logPath = $_ENV['ENV_VEMPAIN_SITE_LOG_VOLUME'] ?? '/var/log/vempain';
+        if (!is_dir($logPath)) {
+            mkdir($logPath, 0775, true);
+        }
+        $logger->pushHandler(new StreamHandler($logPath . '/backend.log', Level::Debug));
+        $logger->pushHandler(new StreamHandler('php://stdout', Level::Debug));
+
+        // Attach DBAL logging middleware BEFORE creating the connection
+        $config->setMiddlewares([new DbalLoggingMiddleware($logger)]);
+
         $config->setProxyDir($proxyDir);
         $config->setProxyNamespace('Vempain\\VempainWebsite\\Proxies');
         if (!is_dir($proxyDir)) {

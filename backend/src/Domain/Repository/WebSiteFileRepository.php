@@ -11,11 +11,17 @@ class WebSiteFileRepository
     {
     }
 
-    public function findAll(): array
+    public function findAllFilesForUser(int $userId): array
     {
-        return $this->entityManager
-            ->getRepository(WebSiteFile::class)
-            ->findAll();
+        $qb = $this->entityManager->createQueryBuilder();
+        $qb
+            ->select('f')
+            ->from(WebSiteFile::class, 'f')
+            ->leftJoin('Vempain\VempainWebsite\Domain\Entity\WebSiteAcl', 'a', 'WITH', 'a.aclId = f.aclId')
+            ->andWhere($qb->expr()->orX('p.aclId IS NULL', 'a.userId = :userId'))
+            ->setParameter('userId', $userId)
+            ->orderBy('f.createdAt', 'DESC');
+        return $qb->getQuery()->getResult();
     }
 
     public function findById(int $id): ?WebSiteFile
