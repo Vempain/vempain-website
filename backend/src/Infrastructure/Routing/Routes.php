@@ -364,6 +364,7 @@ class Routes
                 $pageService = $app->getContainer()->get(PageService::class);
                 $claims = $request->getAttribute('jwt');
                 $userId = -1;
+
                 if (is_array($claims)) {
                     if (isset($claims['sub'])) {
                         $userId = (int)$claims['sub'];
@@ -374,7 +375,7 @@ class Routes
 
                 try {
                     $logger = $app->getContainer()->get(\Psr\Log\LoggerInterface::class);
-                    $logger->debug('User ID retrieved', [
+                    $logger->debug('User ID for tree retrieved', [
                         'userId' => $userId,
                         'path' => $request->getUri()->getPath(),
                     ]);
