@@ -55,10 +55,10 @@ SQL,
      * @return array{items: array<int, array<string,mixed>>, total:int}
      */
     public function paginateFilesByGalleryExternalId(
+        int $userId,
         int $externalGalleryId,
         int $page,
         int $perPage,
-        int $userId,
         string $orderBy = 'sort_order',
         string $direction = 'asc',
         array $searchTerms = [],
@@ -133,8 +133,8 @@ LIMIT 1
 SQL;
         $row = $conn->fetchAssociative(
             $sql,
-            ['externalGalleryId' => $externalGalleryId, 'userId' => $userId],
-            ['externalGalleryId' => ParameterType::INTEGER, 'userId' => ParameterType::INTEGER]
+            ['userId' => $userId, 'externalGalleryId' => $externalGalleryId],
+            ['userId' => ParameterType::INTEGER, 'externalGalleryId' => ParameterType::INTEGER]
         );
         if (!$row) {
             return null;

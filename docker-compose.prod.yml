@@ -35,7 +35,7 @@ services:
   vempain-site-backend:
     image: vempain-site-backend:0.0.1
     environment:
-      APP_ENV: ${APP_ENV:-production}
+      APP_ENV: ${APP_ENV:-prod}
       APP_DEBUG: ${APP_DEBUG:-false}
       ENV_VEMPAIN_SITE_DB_HOST: ${ENV_VEMPAIN_SITE_DB_HOST}
       ENV_VEMPAIN_SITE_DB_PORT: ${ENV_VEMPAIN_SITE_DB_PORT}

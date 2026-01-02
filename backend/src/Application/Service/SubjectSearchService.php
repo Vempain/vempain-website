@@ -458,7 +458,7 @@ SELECT COUNT(*) FROM (
     HAVING COUNT(DISTINCT wfs.subject_id) = :need
 ) t
 SQL;
-        $params = [':user_id' => $userId, 'subject_ids' => $subjectIds, 'need' => count($subjectIds)];
+        $params = ['user_id' => $userId, 'subject_ids' => $subjectIds, 'need' => count($subjectIds)];
         $types = ['user_id' => ParameterType::INTEGER, 'subject_ids' => ArrayParameterType::INTEGER, 'need' => ParameterType::INTEGER];
         $total = (int)$conn->executeQuery($countSql, $params, $types)->fetchOne();
 

@@ -245,9 +245,9 @@ class Routes
                 return $response->withStatus(400);
             }
 
-            /** @var \Vempain\VempainWebsite\Domain\Repository\WebSiteGalleryRepository $galleryRepo */
+            /** @var WebSiteGalleryRepository $galleryRepo */
             $galleryRepo = $app->getContainer()->get(
-                \Vempain\VempainWebsite\Domain\Repository\WebSiteGalleryRepository::class
+                WebSiteGalleryRepository::class
             );
             /** @var WebSiteSubjectRepository $subjectRepo */
             $subjectRepo = $app->getContainer()->get(WebSiteSubjectRepository::class);
@@ -274,14 +274,24 @@ class Routes
             $searchTerms = $search !== '' ? preg_split('/\s+/', trim($search)) : [];
 
             $result = $galleryRepo->paginateFilesByGalleryExternalId(
+                $userId,
                 $galleryId,
                 $page + 1,
                 $size,
-                $userId,
                 $order,
                 $direction,
                 $searchTerms ?? []
             );
+
+            $logger->debug('Paginated gallery files result', [
+                'userId' => $userId,
+                'externalGalleryId' => $galleryId,
+                'page' => $page,
+                'size' => $size,
+                'order' => $order,
+                'direction' => $direction,
+                'searchTerms' => $searchTerms,
+            ]);
 
             if ($result['total'] === 0) {
                 return $response->withStatus(404);
@@ -591,7 +601,7 @@ class Routes
     }
 
     /**
-     * @param mixed $claims
+     * @param Request $request
      * @return int
      */
     private static function getUserId(Request $request): int
