@@ -6,6 +6,7 @@ use Laminas\Diactoros\StreamFactory;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Log\LoggerInterface;
 use Slim\Psr7\Response;
 use Vempain\VempainWebsite\Application\Transformer\SubjectTransformer;
 use Vempain\VempainWebsite\Domain\Repository\WebSiteFileRepository;
@@ -19,6 +20,7 @@ class FileService
         private readonly SubjectTransformer $subjectTransformer,
         private readonly string $filesRoot,
         private readonly ResourceAccessService $resourceAccessService,
+        private readonly LoggerInterface $logger,
     ) {
     }
 
@@ -52,6 +54,7 @@ class FileService
 
         $relativePathEncoded = ltrim(substr($path, strlen('/file/')), '/');
         $relativePath = rawurldecode($relativePathEncoded);
+        $this->logger->info("XXXXXXXXX Fetching file with path", ['userId' => $userId, 'relativePath' => $relativePath]);
         $fileData = $this->getFileByPath($userId, $relativePath);
 
         if (!$fileData) {
@@ -60,7 +63,9 @@ class FileService
 
         $claims = $request->getAttribute('jwt');
         $denied = $this->resourceAccessService->getDeniedStatus($fileData['aclId'], $claims);
+
         if ($denied !== null) {
+            $this->logger->info("XXXXXXXXX Resource access denied", ['userId' => $userId, 'relativePath' => $relativePath, 'deniedStatus' => $denied]);
             return $this->denyResponse($denied);
         }
 
