@@ -32,8 +32,18 @@ class WebSiteFileRepository
             ->find($id);
     }
 
-    public function findByPath(string $path): ?WebSiteFile
+    public function findByPath(int $userId, string $path): ?WebSiteFile
     {
+        $qb = $this->entityManager->createQueryBuilder();
+        $qb
+            ->select('f')
+            ->from(WebSiteFile::class, 'f')
+            ->leftJoin('Vempain\VempainWebsite\Domain\Entity\WebSiteAcl', 'a', 'WITH', 'a.aclId = f.aclId')
+            ->andWhere($qb->expr()->orX('p.aclId IS NULL', 'a.userId = :userId'))
+            ->setParameter('userId', $userId)
+            ->andWhere('f.path = :path')
+            ->setParameter('path', $path);
+
         return $this->entityManager
             ->getRepository(WebSiteFile::class)
             ->findOneBy(['path' => $path]);
