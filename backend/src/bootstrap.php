@@ -60,7 +60,7 @@ $containerBuilder->addDefinitions([
     },
     LoggerInterface::class => function () {
         $logger = new Logger('vempain');
-        $logPath = $_ENV['ENV_VEMPAIN_SITE_LOG_VOLUME'] ?? '/var/log/vempain';
+        $logPath = getenv('ENV_VEMPAIN_SITE_LOG_VOLUME') ?? '/var/log/vempain';
 
         if (!is_dir($logPath)) {
             mkdir($logPath, 0775, true);
@@ -82,7 +82,7 @@ $containerBuilder->addDefinitions([
         return new JwtService(
             $container->get(WebSiteJwtTokenRepository::class),
             null, // defer to env JWT_SECRET at runtime
-            (int)($_ENV['JWT_TTL_SECONDS'] ?? 1200),
+            (int)(getenv('JWT_TTL_SECONDS')),
             $container->get(LoggerInterface::class)
         );
     },
@@ -110,8 +110,9 @@ $containerBuilder->addDefinitions([
             $container->get(WebSiteFileRepository::class),
             $container->get(WebSiteSubjectRepository::class),
             $container->get(SubjectTransformer::class),
-            $_ENV['VEMPAIN_WEBSITE_WEB_ROOT'] ?? '/files',
-            $container->get(ResourceAccessService::class)
+            getenv('VEMPAIN_WEBSITE_WEB_ROOT') ?? '/files',
+            $container->get(ResourceAccessService::class),
+            $container->get(LoggerInterface::class)
         );
     },
     PageCacheEvaluator::class => DI\autowire(PageCacheEvaluator::class),
@@ -128,10 +129,7 @@ $containerBuilder->addDefinitions([
     },
     ResourceAccessService::class => DI\autowire(ResourceAccessService::class),
     CorsMiddleware::class => function (): CorsMiddleware {
-        $rawOrigins = $_ENV['ENV_VEMPAIN_CORS_ALLOW_ORIGINS']
-            ?? $_SERVER['ENV_VEMPAIN_CORS_ALLOW_ORIGINS']
-            ?? getenv('ENV_VEMPAIN_CORS_ALLOW_ORIGINS')
-            ?? '';
+        $rawOrigins = getenv('ENV_VEMPAIN_CORS_ALLOW_ORIGINS');
         $origins = array_filter(array_map('trim', explode(',', $rawOrigins)));
         if (empty($origins)) {
             $origins = ['*'];
