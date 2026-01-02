@@ -28,7 +28,8 @@ class FileService
             return null;
         }
 
-        $relativePath = ltrim(substr($path, strlen('/file/')), '/');
+        $relativePathEncoded = ltrim(substr($path, strlen('/file/')), '/');
+        $relativePath = rawurldecode($relativePathEncoded);
         $fileData = $this->getFileByPath($relativePath);
 
         if (!$fileData) {
