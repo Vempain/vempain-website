@@ -5,6 +5,7 @@ namespace Vempain\VempainWebsite\Application\Service;
 use Laminas\Diactoros\StreamFactory;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Psr7\Response;
 use Vempain\VempainWebsite\Application\Transformer\SubjectTransformer;
 use Vempain\VempainWebsite\Domain\Repository\WebSiteFileRepository;
@@ -21,6 +22,25 @@ class FileService
     ) {
     }
 
+    /**
+     * @param Request $request
+     * @return int
+     */
+    private static function getUserId(Request $request): int
+    {
+        $claims = $request->getAttribute('jwt');
+        $userId = -1;
+
+        if (is_array($claims)) {
+            if (isset($claims['sub'])) {
+                $userId = (int)$claims['sub'];
+            } elseif (isset($claims['id'])) {
+                $userId = (int)$claims['id'];
+            }
+        }
+        return $userId;
+    }
+
     public function handleFileRequest(ServerRequestInterface $request): ?ResponseInterface
     {
         $path = $request->getUri()->getPath();
@@ -28,9 +48,11 @@ class FileService
             return null;
         }
 
+        $userId = self::getUserId($request);
+
         $relativePathEncoded = ltrim(substr($path, strlen('/file/')), '/');
         $relativePath = rawurldecode($relativePathEncoded);
-        $fileData = $this->getFileByPath($relativePath);
+        $fileData = $this->getFileByPath($userId, $relativePath);
 
         if (!$fileData) {
             return $this->forbiddenResponse();
@@ -45,14 +67,14 @@ class FileService
         return $this->streamFile($request, $fileData);
     }
 
-    private function getFileByPath(string $path): ?array
+    private function getFileByPath(int $userId, string $path): ?array
     {
         $filesystemRelativePath = $path;
-        $fileEntity = $this->fileRepository->findByPath($path);
+        $fileEntity = $this->fileRepository->findByPath($userId, $path);
 
         if (!$fileEntity && str_contains($path, '/.thumb/')) {
             $fallbackPath = preg_replace('#/\.thumb/#', '/', $path, 1);
-            $fileEntity = $this->fileRepository->findByPath($fallbackPath);
+            $fileEntity = $this->fileRepository->findByPath($userId, $fallbackPath);
             if ($fileEntity) {
                 $filesystemRelativePath = $path;
             }
