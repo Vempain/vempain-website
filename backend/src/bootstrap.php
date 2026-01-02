@@ -66,8 +66,14 @@ $containerBuilder->addDefinitions([
             mkdir($logPath, 0775, true);
         }
 
-        $logger->pushHandler(new StreamHandler($logPath . '/backend.log', Level::Debug));
-        $logger->pushHandler(new StreamHandler('php://stdout', Level::Debug));
+        if (getenv('APP_ENV') === 'prod') {
+            $logger->pushHandler(new StreamHandler($logPath . '/backend.log', Level::Info));
+            $logger->pushHandler(new StreamHandler('php://stdout', Level::Info));
+        } else {
+            $logger->pushHandler(new StreamHandler($logPath . '/backend.log', Level::Debug));
+            $logger->pushHandler(new StreamHandler('php://stdout', Level::Debug));
+        }
+
         return $logger;
     },
     // Alias for legacy code that expects 'logger' service name
