@@ -146,14 +146,14 @@ $app->add(
     new ErrorMiddleware(
         $app->getCallableResolver(),
         $app->getResponseFactory(),
-        (bool)($_ENV['APP_DEBUG'] ?? false),
+        (bool)(getenv('APP_DEBUG') ?? false),
         true,
         true
     )
 );
 $app->add(CorsMiddleware::class);
-$app->add(JwtMiddleware::class);
 $app->add(ResourceResolverMiddleware::class);
+$app->add(JwtMiddleware::class);
 
 Routes::register($app);
 
