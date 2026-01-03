@@ -56,13 +56,16 @@ class FileService
         $relativePath = rawurldecode($relativePathEncoded);
         $this->logger->info("XXXXXXXXX Fetching file with path", ['userId' => $userId, 'relativePath' => $relativePath]);
         $fileData = $this->getFileByPath($userId, $relativePath);
+        $this->logger->info("XXXXXXXXX File data retrieval result", ['fileDataFound' => $fileData !== null]);
 
         if (!$fileData) {
+            $this->logger->info("XXXXXXXXX Did not find file from path", ['userId' => $userId, 'relativePath' => $relativePath]);
             return $this->forbiddenResponse();
         }
 
         $claims = $request->getAttribute('jwt');
         $denied = $this->resourceAccessService->getDeniedStatus($fileData['aclId'], $claims);
+        $this->logger->info("XXXXXXXXX Got denied status for resource", ['userId' => $userId, 'relativePath' => $relativePath, 'deniedStatus' => $denied]);
 
         if ($denied !== null) {
             $this->logger->info("XXXXXXXXX Resource access denied", ['userId' => $userId, 'relativePath' => $relativePath, 'deniedStatus' => $denied]);
@@ -74,13 +77,20 @@ class FileService
 
     private function getFileByPath(int $userId, string $path): ?array
     {
+        $this->logger->info("XXXXXXXXX Looking up file by path", ['userId' => $userId, 'path' => $path]);
         $filesystemRelativePath = $path;
         $fileEntity = $this->fileRepository->findByPath($userId, $path);
+        $this->logger->info("XXXXXXXXX Database search result", ['fileEntityFound' => $fileEntity !== null]);
 
         if (!$fileEntity && str_contains($path, '/.thumb/')) {
+            $this->logger->info("XXXXXXXXX Detected thumbnail path, attempting fallback", ['path' => $path]);
             $fallbackPath = preg_replace('#/\.thumb/#', '/', $path, 1);
+            $this->logger->info("XXXXXXXXX Searching for fallback path", ['fallbackPath' => $fallbackPath]);
             $fileEntity = $this->fileRepository->findByPath($userId, $fallbackPath);
+            $this->logger->info("XXXXXXXXX Found fallback file entity", ['fileEntityFound' => $fileEntity !== null]);
+
             if ($fileEntity) {
+                $this->logger->info("XXXXXXXXX Updating filesystem relative path for thumbnail", ['originalPath' => $path, 'newPath' => $fallbackPath]);
                 $filesystemRelativePath = $path;
             }
         }
@@ -90,8 +100,10 @@ class FileService
         }
 
         $fullPath = rtrim($this->filesRoot, '/') . '/' . ltrim($filesystemRelativePath, '/');
+        $this->logger->info("XXXXXXXXX Trimmed full path", ['fullPath' => $fullPath]);
 
         if (!file_exists($fullPath) || !is_readable($fullPath)) {
+            $this->logger->info("XXXXXXXXX Did not find or cannot read file at path", ['fullPath' => $fullPath]);
             return null;
         }
 

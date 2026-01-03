@@ -10,6 +10,8 @@ class AclService
     public function __construct(
         private readonly WebSiteAclRepository $aclRepository,
         private readonly WebSiteJwtTokenRepository $tokenRepository,
+        private readonly LoggerInterface $logger
+
     ) {
     }
 
@@ -23,6 +25,11 @@ class AclService
 
     public function canAccess(?int $aclId, ?array $claims): bool
     {
+        $this->logger->debug('XXXXXXXXX Checking if ACL service can access for ACL ID:', [
+            'aclId' => $aclId,
+            'claims' => $claims,
+        ]);
+
         if ($aclId === null || $aclId === 0) {
             return true;
         }
