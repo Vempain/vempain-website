@@ -60,11 +60,7 @@ $containerBuilder->addDefinitions([
     },
     LoggerInterface::class => function () {
         $logger = new Logger('vempain');
-        $logPath = getenv('ENV_VEMPAIN_SITE_LOG_VOLUME') ?? '/var/log/vempain';
-
-        if (!is_dir($logPath)) {
-            mkdir($logPath, 0775, true);
-        }
+        $logPath = '/var/log/vempain';
 
         if (getenv('APP_ENV') === 'prod') {
             $logger->pushHandler(new StreamHandler($logPath . '/backend.log', Level::Info));
