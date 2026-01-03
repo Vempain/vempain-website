@@ -9,8 +9,10 @@ use Psr\Http\Server\RequestHandlerInterface;
 
 class JwtMiddleware implements MiddlewareInterface
 {
-    public function __construct(private readonly JwtService $jwtService)
-    {
+    public function __construct(
+        private readonly JwtService $jwtService,
+        private readonly LoggerInterface $logger
+    ) {
     }
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
@@ -21,15 +23,13 @@ class JwtMiddleware implements MiddlewareInterface
             return $handler->handle($request);
         }
 
-        // Robust detection of API and public API segments — handle duplicate prefixes like /api/api/public
-        // Match '/api/public' as a path segment (either end or followed by '/').
-        $isPublicApi = preg_match('#(^|/)api/public(/|$)#', $path) === 1;
-        $hasApiSegment = preg_match('#(^|/)api(/|$)#', $path) === 1;
         // NOTE: do not enforce auth here; resource layer decides based on ACL.
+        $this->logger->debug("XXXXXXXXX Extracting token from request for path: $path");
 
         $token = $this->extractToken($request);
         $claims = null;
         if ($token !== null) {
+            $this->logger->debug("XXXXXXXXX Token is not null, validating");
             try {
                 // Try to validate token; if invalid, swallow error and treat as unauthenticated.
                 $claims = $this->jwtService->validate($token);
@@ -40,12 +40,14 @@ class JwtMiddleware implements MiddlewareInterface
         }
 
         if ($claims !== null) {
+            $this->logger->debug("XXXXXXXXX Adding claims to request attributes", ['claims' => $claims]);
             $request = $request->withAttribute('jwt', $claims);
         }
 
         $response = $handler->handle($request);
 
         if ($claims !== null) {
+            $this->logger->debug("XXXXXXXXX Adding refreshed token to response headers and cookies");
             $newToken = $this->jwtService->refreshToken($claims);
             $response = $response->withHeader('X-Auth-Token', $newToken);
             $response = $this->setAuthCookie($response, $newToken);
@@ -56,15 +58,22 @@ class JwtMiddleware implements MiddlewareInterface
 
     private function extractToken(ServerRequestInterface $request): ?string
     {
+        $this->logger->debug("XXXXXXXXX Extracting JWT from request", ['request' => $request]);
+
         $authorizationHeader = $request->getHeaderLine('Authorization');
         if ($authorizationHeader !== '') {
+            $this->logger->debug("XXXXXXXXX Found authorization header", ['authorizationHeader' => $authorizationHeader]);
             $parts = explode(' ', $authorizationHeader);
+
             if (count($parts) === 2 && strcasecmp($parts[0], 'Bearer') === 0) {
                 return $parts[1];
             }
         }
 
+        $this->logger->debug("XXXXXXXXX Looking for cookie 'jwt'");
         $cookies = $request->getCookieParams();
+        $this->logger->debug("XXXXXXXXX Got cookies", ['cookies' => $cookies]);
+
         if (isset($cookies['jwt'])) {
             return $cookies['jwt'];
         }

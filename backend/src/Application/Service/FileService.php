@@ -28,19 +28,24 @@ class FileService
      * @param Request $request
      * @return int
      */
-    private static function getUserId(Request $request): int
+    private static function getUserId(ServerRequestInterface $request): int
     {
         $claims = $request->getAttribute('jwt');
-        $userId = -1;
 
-        if (is_array($claims)) {
-            if (isset($claims['sub'])) {
-                $userId = (int)$claims['sub'];
-            } elseif (isset($claims['id'])) {
-                $userId = (int)$claims['id'];
-            }
+        if (!is_array($claims)) {
+            return -1;
         }
-        return $userId;
+
+        // Try 'sub' first (standard JWT claim), then 'id' as fallback
+        $userId = $claims['sub'] ?? $claims['id'] ?? null;
+
+        if ($userId === null) {
+            return -1;
+        }
+
+        // Ensure it's a positive integer
+        $userId = filter_var($userId, FILTER_VALIDATE_INT, FILTER_FLAG_ALLOW_OCTAL | FILTER_FLAG_ALLOW_HEX);
+        return $userId !== false && $userId > 0 ? $userId : -1;
     }
 
     public function handleFileRequest(ServerRequestInterface $request): ?ResponseInterface
