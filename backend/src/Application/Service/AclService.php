@@ -2,6 +2,7 @@
 
 namespace Vempain\VempainWebsite\Application\Service;
 
+use Psr\Log\LoggerInterface;
 use Vempain\VempainWebsite\Domain\Repository\WebSiteAclRepository;
 use Vempain\VempainWebsite\Domain\Repository\WebSiteJwtTokenRepository;
 
