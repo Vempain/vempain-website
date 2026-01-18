@@ -5,3 +5,4 @@ export {galleryAPI} from './GalleryAPI';
 export {pageAPI} from './PageAPI'
 export {webSiteConfigurationAPI} from './WebSiteConfigurationAPI';
 export {subjectSearchAPI} from './SubjectSearchAPI';
+export {themeAPI} from './ThemeAPI';

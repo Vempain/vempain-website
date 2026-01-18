@@ -10,13 +10,13 @@ class FileAPI extends AbstractAPI {
         return await this.request<WebSiteFile[]>('/public');
     }
 
-    getFileUrl(path: string): string {
+    getFileUrl(filePath: string): string {
         const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
-        return `${API_BASE_URL}/file/${path}`;
+        return `${API_BASE_URL}/file/${filePath}`;
     }
 
     getFileThumbUrl(mainPath: string): string {
-        // Replace the last occurence of '/' with '/.thumb/'
+        // Replace the last occurrence of '/' with '/.thumb/'
         const lastSlashIndex = mainPath.lastIndexOf('/');
         return `${mainPath.substring(0, lastSlashIndex)}/.thumb/${mainPath.substring(lastSlashIndex + 1)}`;
     }

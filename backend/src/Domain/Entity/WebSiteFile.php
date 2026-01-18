@@ -25,8 +25,8 @@ class WebSiteFile
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $comment = null;
 
-    #[ORM\Column(type: 'string', length: 512)]
-    private string $path;
+    #[ORM\Column(name: 'file_path', type: 'string', length: 512)]
+    private string $filePath;
 
     #[ORM\Column(type: 'string', length: 255)]
     private string $mimetype;
@@ -104,9 +104,9 @@ class WebSiteFile
         return $this->aclId;
     }
 
-    public function getPath(): string
+    public function getFilePath(): string
     {
-        return $this->path;
+        return $this->filePath;
     }
 
     public function getMimetype(): string

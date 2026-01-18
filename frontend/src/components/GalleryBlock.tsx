@@ -145,7 +145,7 @@ export function GalleryBlock({title, siteFileList, totalFiles, gallerySubjects, 
                             >
                                 <div style={columnsStyle}>
                                     {siteFileList.map((siteFile, idx) => {
-                                        const imagePath = fileAPI.getFileUrl(siteFile.path);
+                                        const imagePath = fileAPI.getFileUrl(siteFile.filePath);
                                         const thumbPath = fileAPI.getFileThumbUrl(imagePath);
                                         return (
                                                 <Tooltip
@@ -155,7 +155,7 @@ export function GalleryBlock({title, siteFileList, totalFiles, gallerySubjects, 
                                                         title={
                                                             <img
                                                                     src={thumbPath}
-                                                                    alt={siteFile.path}
+                                                                    alt={siteFile.filePath}
                                                                     style={{
                                                                         maxWidth: THUMB_TOOLTIP_MAX_WIDTH,
                                                                         maxHeight: THUMB_TOOLTIP_MAX_HEIGHT,
@@ -173,7 +173,7 @@ export function GalleryBlock({title, siteFileList, totalFiles, gallerySubjects, 
                                                     >
                                                         <Image
                                                                 src={thumbPath}
-                                                                alt={siteFile.path}
+                                                                alt={siteFile.filePath}
                                                                 style={THUMBNAIL_IMAGE_STYLE}
                                                                 preview={{src: imagePath}}
                                                         />

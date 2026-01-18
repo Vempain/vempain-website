@@ -34,7 +34,7 @@ class SubjectSearchService
         $page = max(0, $page);
         $size = max(1, min(50, $size));
         $direction = strtolower($direction) === 'desc' ? 'desc' : 'asc';
-        $sortBy = in_array($sortBy, ['id', 'path', 'title', 'shortname'], true) ? $sortBy : 'id';
+        $sortBy = in_array($sortBy, ['id', 'file_path', 'title', 'shortname'], true) ? $sortBy : 'id';
 
         $searchTerm = trim($search);
         $like = $caseSensitive ? '%' . $searchTerm . '%' : '%' . mb_strtolower($searchTerm) . '%';
@@ -60,7 +60,7 @@ class SubjectSearchService
         $page = max(0, $page);
         $size = max(1, min(50, $size));
         $direction = strtolower($direction) === 'desc' ? 'desc' : 'asc';
-        $sortBy = in_array($sortBy, ['id', 'path', 'title', 'shortname'], true) ? $sortBy : 'id';
+        $sortBy = in_array($sortBy, ['id', 'file_path', 'title', 'shortname'], true) ? $sortBy : 'id';
 
         return [
             'pages' => $this->searchPagesBySubjectIds($userId, $subjectIds, $page, $size, $sortBy, $direction),
@@ -74,7 +74,7 @@ class SubjectSearchService
         $conn = $this->entityManager->getConnection();
         $orderColumn = match ($sortBy) {
             'title' => 'p.title',
-            'path' => 'p.path',
+            'file_path' => 'p.file_path',
             default => 'p.id',
         };
         $where = $searchTerm === ''
@@ -122,7 +122,7 @@ SQL;
                 'pageId' => $pageEntity->getPageId(),
                 'title' => $pageEntity->getTitle(),
                 'header' => $pageEntity->getHeader(),
-                'path' => $pageEntity->getPath(),
+                'file_path' => $pageEntity->getFilePath(),
                 'secure' => $pageEntity->isSecure(),
                 'aclId' => $pageEntity->getAclId(),
                 'published' => $pageEntity->getPublished()?->format('c'),
@@ -217,7 +217,7 @@ SQL;
     {
         $conn = $this->entityManager->getConnection();
         $orderColumn = match ($sortBy) {
-            'path' => 'f.path',
+            'file_path' => 'f.file_path',
             default => 'f.id',
         };
         $where = $searchTerm === ''
@@ -262,7 +262,7 @@ SQL;
             return [
                 'id' => $file->getId(),
                 'fileId' => $file->getFileId(),
-                'path' => $file->getPath(),
+                'file_path' => $file->getFilePath(),
                 'mimetype' => $file->getMimetype(),
                 'aclId' => $file->getAclId(),
                 'subjects' => $this->subjectTransformer->manyFromEntities($file->getSubjects()),
@@ -287,7 +287,7 @@ SQL;
         $conn = $this->entityManager->getConnection();
         $orderColumn = match ($sortBy) {
             'title' => 'p.title',
-            'path' => 'p.path',
+            'file_path' => 'p.file_path',
             default => 'p.id',
         };
 
@@ -340,7 +340,7 @@ SQL;
                 'pageId' => $pageEntity->getPageId(),
                 'title' => $pageEntity->getTitle(),
                 'header' => $pageEntity->getHeader(),
-                'path' => $pageEntity->getPath(),
+                'file_path' => $pageEntity->getFilePath(),
                 'secure' => $pageEntity->isSecure(),
                 'aclId' => $pageEntity->getAclId(),
                 'published' => $pageEntity->getPublished()?->format('c'),
@@ -440,7 +440,7 @@ SQL;
     {
         $conn = $this->entityManager->getConnection();
         $orderColumn = match ($sortBy) {
-            'path' => 'f.path',
+            'file_path' => 'f.file_path',
             default => 'f.id',
         };
 
@@ -491,7 +491,7 @@ SQL;
             return [
                 'id' => $file->getId(),
                 'fileId' => $file->getFileId(),
-                'path' => $file->getPath(),
+                'file_path' => $file->getFilePath(),
                 'mimetype' => $file->getMimetype(),
                 'aclId' => $file->getAclId(),
                 'subjects' => $this->subjectTransformer->manyFromEntities($file->getSubjects()),

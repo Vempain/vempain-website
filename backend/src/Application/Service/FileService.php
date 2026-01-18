@@ -80,23 +80,23 @@ class FileService
         return $this->streamFile($request, $fileData);
     }
 
-    private function getFileByPath(int $userId, string $path): ?array
+    private function getFileByPath(int $userId, string $filePath): ?array
     {
-        $this->logger->info("XXXXXXXXX Looking up file by path", ['userId' => $userId, 'path' => $path]);
-        $filesystemRelativePath = $path;
-        $fileEntity = $this->fileRepository->findByPath($userId, $path);
+        $this->logger->info("XXXXXXXXX Looking up file by file path", ['userId' => $userId, 'file_path' => $filePath]);
+        $filesystemRelativePath = $filePath;
+        $fileEntity = $this->fileRepository->findByFilePath($userId, $filePath);
         $this->logger->info("XXXXXXXXX Database search result", ['fileEntityFound' => $fileEntity !== null]);
 
-        if (!$fileEntity && str_contains($path, '/.thumb/')) {
-            $this->logger->info("XXXXXXXXX Detected thumbnail path, attempting fallback", ['path' => $path]);
-            $fallbackPath = preg_replace('#/\.thumb/#', '/', $path, 1);
-            $this->logger->info("XXXXXXXXX Searching for fallback path", ['fallbackPath' => $fallbackPath]);
-            $fileEntity = $this->fileRepository->findByPath($userId, $fallbackPath);
+        if (!$fileEntity && str_contains($filePath, '/.thumb/')) {
+            $this->logger->info("XXXXXXXXX Detected thumbnail path, attempting fallback", ['filePath' => $filePath]);
+            $fallbackPath = preg_replace('#/\.thumb/#', '/', $filePath, 1);
+            $this->logger->info("XXXXXXXXX Searching for fallback file path", ['fallbackPath' => $fallbackPath]);
+            $fileEntity = $this->fileRepository->findByFilePath($userId, $fallbackPath);
             $this->logger->info("XXXXXXXXX Found fallback file entity", ['fileEntityFound' => $fileEntity !== null]);
 
             if ($fileEntity) {
-                $this->logger->info("XXXXXXXXX Updating filesystem relative path for thumbnail", ['originalPath' => $path, 'newPath' => $fallbackPath]);
-                $filesystemRelativePath = $path;
+                $this->logger->info("XXXXXXXXX Updating filesystem relative path for thumbnail", ['originalPath' => $filePath, 'newPath' => $fallbackPath]);
+                $filesystemRelativePath = $filePath;
             }
         }
 
@@ -197,5 +197,40 @@ class FileService
         }
 
         return [$start, $end];
+    }
+
+    /**
+     * API helper: fetch a file by its `web_site_file.path` and return its content as-is.
+     */
+    public function getWebSiteFileByPath(ServerRequestInterface $request, string $path): ?ResponseInterface
+    {
+        $claims = $request->getAttribute('jwt');
+
+        $userId = self::getUserId($request);
+
+        $fileEntity = $this->fileRepository->findByFilePath($userId, $path);
+        if ($fileEntity === null) {
+            return null;
+        }
+
+        $denied = $this->resourceAccessService->getDeniedStatus($fileEntity->getAclId(), $claims);
+        if ($denied !== null) {
+            return $this->denyResponse($denied);
+        }
+
+        $fullPath = rtrim($this->filesRoot, '/') . '/' . ltrim($path, '/');
+        if (!file_exists($fullPath) || !is_readable($fullPath)) {
+            return null;
+        }
+
+        $mimetype = $fileEntity->getMimetype();
+
+        // Stream the response to support both text and binary files.
+        $stream = (new StreamFactory())->createStreamFromFile($fullPath, 'rb');
+        $response = new Response();
+        return $response
+            ->withHeader('Content-Type', $mimetype)
+            ->withHeader('Content-Length', (string)filesize($fullPath))
+            ->withBody($stream);
     }
 }

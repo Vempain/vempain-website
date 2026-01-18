@@ -29,11 +29,11 @@ class WebSitePageRepository
             ->find($id);
     }
 
-    public function findByPath(string $path): ?WebSitePage
+    public function findByFilePath(string $file_path): ?WebSitePage
     {
         return $this->entityManager
             ->getRepository(WebSitePage::class)
-            ->findOneBy(['path' => $path]);
+            ->findOneBy(['filePath' => $file_path]);
     }
 
     public function updateCache(WebSitePage $page, string $content): void
@@ -64,9 +64,9 @@ class WebSitePageRepository
     {
         $connection = $this->entityManager->getConnection();
         $sql = <<<'SQL'
-SELECT DISTINCT split_part(path, '/', 1) AS top_level_directory
+SELECT DISTINCT split_part(file_path, '/', 1) AS top_level_directory
 FROM web_site_page
-WHERE path LIKE '%/%'
+WHERE file_path LIKE '%/%'
 ORDER BY top_level_directory ASC
 SQL;
         $result = $connection->executeQuery($sql)->fetchFirstColumn();

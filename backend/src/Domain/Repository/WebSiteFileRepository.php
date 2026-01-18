@@ -18,9 +18,9 @@ class WebSiteFileRepository
             ->select('f')
             ->from(WebSiteFile::class, 'f')
             ->leftJoin('Vempain\VempainWebsite\Domain\Entity\WebSiteAcl', 'a', 'WITH', 'a.aclId = f.aclId')
-            ->andWhere($qb->expr()->orX('p.aclId IS NULL', 'a.userId = :userId'))
+            ->andWhere($qb->expr()->orX('f.aclId IS NULL', 'a.userId = :userId'))
             ->setParameter('userId', $userId)
-            ->orderBy('f.createdAt', 'DESC');
+            ->orderBy('f.id', 'DESC');
 
         return $qb->getQuery()->getResult();
     }
@@ -32,21 +32,19 @@ class WebSiteFileRepository
             ->find($id);
     }
 
-    public function findByPath(int $userId, string $path): ?WebSiteFile
+    public function findByFilePath(int $userId, string $file_path): ?WebSiteFile
     {
         $qb = $this->entityManager->createQueryBuilder();
         $qb
             ->select('f')
             ->from(WebSiteFile::class, 'f')
             ->leftJoin('Vempain\VempainWebsite\Domain\Entity\WebSiteAcl', 'a', 'WITH', 'a.aclId = f.aclId')
-            ->andWhere($qb->expr()->orX('p.aclId IS NULL', 'a.userId = :userId'))
+            ->andWhere($qb->expr()->orX('a.aclId IS NULL', 'a.userId = :userId'))
             ->setParameter('userId', $userId)
-            ->andWhere('f.path = :path')
-            ->setParameter('path', $path);
+            ->andWhere('f.filePath = :filePath')
+            ->setParameter('filePath', $file_path);
 
-        return $this->entityManager
-            ->getRepository(WebSiteFile::class)
-            ->findOneBy(['path' => $path]);
+        return $qb->getQuery()->getOneOrNullResult();
     }
 
     /**
