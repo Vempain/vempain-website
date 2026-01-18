@@ -173,7 +173,7 @@ class PageService
     {
         $tree = [];
         foreach ($pages as $page) {
-            $relativePath = substr($page->getPath(), strlen($directory) + 1);
+            $relativePath = substr($page->getFilePath(), strlen($directory) + 1);
             $segments = explode('/', $relativePath);
             $this->insertIntoTree($tree, $segments, $page);
         }
@@ -186,7 +186,7 @@ class PageService
         if (count($segments) === 1) {
             $tree[] = [
                 'title' => $segments[0],
-                'key' => $page->getPath(),
+                'key' => $page->getFilePath(),
                 'isLeaf' => true,
             ];
             return;

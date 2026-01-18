@@ -105,7 +105,7 @@ SQL;
             ->andWhere($qb->expr()->orX('a.aclId IS NULL', 'a.userId = :userId'))
             ->setParameter('userId', $userId);
 
-        $this->applyPathPrefixFilter($qb, $pathPrefix);
+        $this->applyFilePathPrefixFilter($qb, $pathPrefix);
         $this->applySearchFilters($qb, $searchTerms);
 
         $qb
@@ -116,15 +116,15 @@ SQL;
         return $qb->getQuery()->getResult();
     }
 
-    private function applyPathPrefixFilter(QueryBuilder $qb, ?string $pathPrefix): void
+    private function applyFilePathPrefixFilter(QueryBuilder $qb, ?string $filePathPrefix): void
     {
-        if ($pathPrefix === null || $pathPrefix === '') {
+        if ($filePathPrefix === null || $filePathPrefix === '') {
             return;
         }
 
         $qb
-            ->andWhere($qb->expr()->like('p.file_path', ':pathPrefix'))
-            ->setParameter('pathPrefix', $pathPrefix . '%');
+            ->andWhere($qb->expr()->like('p.filePath', ':filePathPrefix'))
+            ->setParameter('filePathPrefix', $filePathPrefix . '%');
     }
 
     private function applySearchFilters(QueryBuilder $qb, array $searchTerms): void
@@ -161,7 +161,7 @@ SQL;
             ->andWhere($qb->expr()->orX('a.aclId IS NULL', 'a.userId = :userId'))
             ->setParameter('userId', $userId);
 
-        $this->applyPathPrefixFilter($qb, $pathPrefix);
+        $this->applyFilePathPrefixFilter($qb, $pathPrefix);
         $this->applySearchFilters($qb, $searchTerms);
 
         return (int)$qb->getQuery()->getSingleScalarResult();

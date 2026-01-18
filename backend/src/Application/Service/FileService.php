@@ -6,6 +6,8 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Log\LoggerInterface;
+use Slim\Psr7\Factory\StreamFactory;
+use Slim\Psr7\Response;
 use Vempain\VempainWebsite\Application\Transformer\SubjectTransformer;
 use Vempain\VempainWebsite\Domain\Repository\WebSiteFileRepository;
 use Vempain\VempainWebsite\Domain\Repository\WebSiteSubjectRepository;
@@ -57,43 +59,43 @@ class FileService
 
         $relativePathEncoded = ltrim(substr($path, strlen('/file/')), '/');
         $relativePath = rawurldecode($relativePathEncoded);
-        $this->logger->debug('XXXXXXXXX  Fetching file with path", ['userId' => $userId, 'relativePath' => $relativePath]);
-        $fileData = $this->getFileByPath($userId, $relativePath);
-        $this->logger->debug('XXXXXXXXX  File data retrieval result", ['fileDataFound' => $fileData !== null]);
+        $this->logger->debug("XXXXXXXXX  Fetching file with path", ['userId' => $userId, 'relativePath' => $relativePath]);
+        $fileData = $this->getFileByFilePath($userId, $relativePath);
+        $this->logger->debug("XXXXXXXXX  File data retrieval result", ['fileDataFound' => $fileData !== null]);
 
         if (!$fileData) {
-            $this->logger->debug('XXXXXXXXX  Did not find file from path", ['userId' => $userId, 'relativePath' => $relativePath]);
+            $this->logger->debug("XXXXXXXXX  Did not find file from path", ['userId' => $userId, 'relativePath' => $relativePath]);
             return $this->forbiddenResponse();
         }
 
         $claims = $request->getAttribute('jwt');
         $denied = $this->resourceAccessService->getDeniedStatus($fileData['aclId'], $claims);
-        $this->logger->debug('XXXXXXXXX  Got denied status for resource", ['userId' => $userId, 'relativePath' => $relativePath, 'deniedStatus' => $denied]);
+        $this->logger->debug("XXXXXXXXX  Got denied status for resource", ['userId' => $userId, 'relativePath' => $relativePath, 'deniedStatus' => $denied]);
 
         if ($denied !== null) {
-            $this->logger->debug('XXXXXXXXX  Resource access denied", ['userId' => $userId, 'relativePath' => $relativePath, 'deniedStatus' => $denied]);
+            $this->logger->debug("XXXXXXXXX  Resource access denied", ['userId' => $userId, 'relativePath' => $relativePath, 'deniedStatus' => $denied]);
             return $this->denyResponse($denied);
         }
 
         return $this->streamFile($request, $fileData);
     }
 
-    private function getFileByPath(int $userId, string $filePath): ?array
+    private function getFileByFilePath(int $userId, string $filePath): ?array
     {
-        $this->logger->debug('XXXXXXXXX  Looking up file by file path", ['userId' => $userId, 'file_path' => $filePath]);
+        $this->logger->debug("XXXXXXXXX  Looking up file by file path", ['userId' => $userId, 'file_path' => $filePath]);
         $filesystemRelativePath = $filePath;
         $fileEntity = $this->fileRepository->findByFilePath($userId, $filePath);
-        $this->logger->debug('XXXXXXXXX  Database search result", ['fileEntityFound' => $fileEntity !== null]);
+        $this->logger->debug("XXXXXXXXX  Database search result", ['fileEntityFound' => $fileEntity !== null]);
 
-        if (!$fileEntity && str_contains($filePath, '/.thumb/')) {
-            $this->logger->debug('XXXXXXXXX  Detected thumbnail path, attempting fallback", ['filePath' => $filePath]);
+        if (!$fileEntity && str_contains($filePath, ' / . thumb / ')) {
+            $this->logger->debug("XXXXXXXXX  Detected thumbnail path, attempting fallback", ['filePath' => $filePath]);
             $fallbackPath = preg_replace('#/\.thumb/#', '/', $filePath, 1);
-            $this->logger->debug('XXXXXXXXX  Searching for fallback file path", ['fallbackPath' => $fallbackPath]);
+            $this->logger->debug("XXXXXXXXX  Searching for fallback file path", ['fallbackPath' => $fallbackPath]);
             $fileEntity = $this->fileRepository->findByFilePath($userId, $fallbackPath);
-            $this->logger->debug('XXXXXXXXX  Found fallback file entity", ['fileEntityFound' => $fileEntity !== null]);
+            $this->logger->debug("XXXXXXXXX  Found fallback file entity", ['fileEntityFound' => $fileEntity !== null]);
 
             if ($fileEntity) {
-                $this->logger->debug('XXXXXXXXX  Updating filesystem relative path for thumbnail", ['originalPath' => $filePath, 'newPath' => $fallbackPath]);
+                $this->logger->debug("XXXXXXXXX  Updating filesystem relative path for thumbnail", ['originalPath' => $filePath, 'newPath' => $fallbackPath]);
                 $filesystemRelativePath = $filePath;
             }
         }
@@ -103,10 +105,10 @@ class FileService
         }
 
         $fullPath = rtrim($this->filesRoot, '/') . '/' . ltrim($filesystemRelativePath, '/');
-        $this->logger->debug('XXXXXXXXX  Trimmed full path", ['fullPath' => $fullPath]);
+        $this->logger->debug("XXXXXXXXX  Trimmed full path", ['fullPath' => $fullPath]);
 
         if (!file_exists($fullPath) || !is_readable($fullPath)) {
-            $this->logger->debug('XXXXXXXXX  Did not find or cannot read file at path", ['fullPath' => $fullPath]);
+            $this->logger->debug("XXXXXXXXX  Did not find or cannot read file at path", ['fullPath' => $fullPath]);
             return null;
         }
 
@@ -127,7 +129,7 @@ class FileService
     {
         $response = new Response(403);
         $response->getBody()->write(json_encode(['error' => 'Forbidden']));
-        return $response->withHeader('Content-Type', 'application/json');
+        return $response->withHeader('Content - Type', 'application / json');
     }
 
     private function denyResponse(int $status): ResponseInterface
@@ -135,7 +137,7 @@ class FileService
         $response = new Response($status);
         $message = $status === 401 ? 'Authentication required' : 'Forbidden';
         $response->getBody()->write(json_encode(['error' => $message]));
-        return $response->withHeader('Content-Type', 'application/json');
+        return $response->withHeader('Content - Type', 'application / json');
     }
 
     private function streamFile($request, array $fileData): ResponseInterface
@@ -145,8 +147,8 @@ class FileService
         $rangeHeader = $request->getHeaderLine('Range');
 
         $response = new Response();
-        $response = $response->withHeader('Content-Type', $fileData['mimetype']);
-        $response = $response->withHeader('Accept-Ranges', 'bytes');
+        $response = $response->withHeader('Content - Type', $fileData['mimetype']);
+        $response = $response->withHeader('Accept - Ranges', 'bytes');
 
         if ($rangeHeader) {
             [$start, $end] = $this->parseRange($rangeHeader, $size);
@@ -157,26 +159,26 @@ class FileService
             $length = $end - $start + 1;
             $stream = fopen($fullPath, 'rb');
             fseek($stream, $start);
-            $body = (new StreamFactory())->createStream();
+            $body = new StreamFactory()->createStream();
             $body->write(stream_get_contents($stream, $length));
             fclose($stream);
 
             return $response
                 ->withStatus(206)
-                ->withHeader('Content-Range', sprintf('bytes %d-%d/%d', $start, $end, $size))
-                ->withHeader('Content-Length', (string)$length)
+                ->withHeader('Content - Range', sprintf('bytes % d - % d / % d', $start, $end, $size))
+                ->withHeader('Content - Length', (string)$length)
                 ->withBody($body);
         }
 
-        $stream = (new StreamFactory())->createStreamFromFile($fullPath, 'rb');
+        $stream = new StreamFactory()->createStreamFromFile($fullPath, 'rb');
         return $response
-            ->withHeader('Content-Length', (string)$size)
+            ->withHeader('Content - Length', (string)$size)
             ->withBody($stream);
     }
 
     private function parseRange(string $header, int $size): array
     {
-        if (!preg_match('/bytes=(\d*)-(\d*)/', $header, $matches)) {
+        if (!preg_match('#/ bytes = (\d *) - (\d *) /#', $header, $matches)) {
             return [null, null];
         }
 
@@ -216,7 +218,7 @@ class FileService
             return $this->denyResponse($denied);
         }
 
-        $fullPath = rtrim($this->filesRoot, '/') . '/' . ltrim($path, '/');
+        $fullPath = rtrim($this->filesRoot, ' /') . ' / ' . ltrim($path, ' /');
         if (!file_exists($fullPath) || !is_readable($fullPath)) {
             return null;
         }
@@ -224,11 +226,11 @@ class FileService
         $mimetype = $fileEntity->getMimetype();
 
         // Stream the response to support both text and binary files.
-        $stream = (new StreamFactory())->createStreamFromFile($fullPath, 'rb');
+        $stream = new StreamFactory()->createStreamFromFile($fullPath, 'rb');
         $response = new Response();
         return $response
-            ->withHeader('Content-Type', $mimetype)
-            ->withHeader('Content-Length', (string)filesize($fullPath))
+            ->withHeader('Content - Type', $mimetype)
+            ->withHeader('Content - Length', (string)filesize($fullPath))
             ->withBody($stream);
     }
 }
