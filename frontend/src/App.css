@@ -6,7 +6,7 @@ body, html {
     margin: 0;
     padding: 0;
     height: 100%;
-    background-color: #f0f2f5;
+    background-color: var(--color-background, #f0f2f5);
 }
 
 .app-layout {
@@ -22,7 +22,7 @@ body, html {
 .app-sider .logo {
     height: 32px;
     margin: 16px;
-    color: #fff;
+    color: var(--color-text, #fff);
     font-weight: bold;
     display: flex;
     align-items: center;
@@ -30,14 +30,14 @@ body, html {
 }
 
 .app-sider {
-    background: #9090FF !important;
+    background: var(--color-primary, #9090FF) !important;
 }
 
 .app-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: #fff;
+    background: var(--color-surface, #fff);
     padding: 0 24px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
@@ -76,7 +76,7 @@ body, html {
 .app-content {
     margin: 24px;
     padding: 24px;
-    background: #fff;
+    background: var(--color-surface, #fff);
     min-height: calc(100vh - 112px);
     border-radius: 12px;
     flex: 1;
@@ -100,9 +100,9 @@ body, html {
 
 .card {
     padding: 16px;
-    border: 1px solid #f0f0f0;
+    border: 1px solid var(--color-border, #f0f0f0);
     border-radius: 8px;
-    background: #fafafa;
+    background: var(--color-surface-alt, #fafafa);
     transition: box-shadow 0.2s ease;
 }
 
@@ -127,7 +127,7 @@ body, html {
 }
 
 .login-card {
-    background: #fff;
+    background: var(--color-surface, #fff);
     padding: 32px;
     border-radius: 16px;
     max-width: 400px;

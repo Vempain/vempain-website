@@ -1,8 +1,27 @@
-import {Button, Col, Form, Input, Layout, Menu, type MenuProps, message, Modal, Row, Select, Space, Tabs, Tooltip, Tree, Typography} from 'antd';
+import {
+    Button,
+    Col,
+    ConfigProvider,
+    Form,
+    Input,
+    Layout,
+    Menu,
+    type MenuProps,
+    message,
+    Modal,
+    Row,
+    Select,
+    Space,
+    Tabs,
+    Tooltip,
+    Tree,
+    Typography
+} from 'antd';
 import type {DataNode} from 'antd/es/tree';
 import {SearchOutlined} from '@ant-design/icons';
 import './App.css';
 import {useAuth} from './context/AuthContextInstance';
+import {useTheme} from './context/ThemeContextInstance';
 import {BottomFooter, GalleryLoader, PageView, ShowSubjects, SubjectSearchLoader} from './components';
 import type {DirectoryNode, WebSiteFile, WebSiteGallery, WebSitePage, WebSitePageContent, WebSitePageDirectory, WebSiteSubject} from "./models";
 import {galleryAPI, pageAPI, subjectSearchAPI, webSiteConfigurationAPI} from "./services";
@@ -43,6 +62,7 @@ const DEFAULT_SITE_CONFIG = {name: 'Vempain', description: 'Vempain'}
 
 function App() {
     const {isAuthenticated, login, logout, showLogin, hideLogin, loginVisible} = useAuth()
+    const {applyPageStyle, resetToDefault, antdTheme} = useTheme()
     const [activeSection, setActiveSection] = useState('pages')
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
@@ -375,6 +395,17 @@ function App() {
         }
     }, [pageContent, siteConfig.name])
 
+    useEffect(() => {
+        // Style policy:
+        // - If pageContent.style is null/undefined => reset to default style
+        // - Else => default style overloaded with page style overrides
+        if (!pageContent || pageContent.style === null || pageContent.style === undefined) {
+            resetToDefault()
+        } else {
+            applyPageStyle(pageContent.style)
+        }
+    }, [applyPageStyle, pageContent, resetToDefault])
+
     function renderSearchResults() {
         return (
                 <SubjectSearchLoader subjectIdList={selectedSubjects}/>
@@ -410,7 +441,7 @@ function App() {
                             {files.map((file: WebSiteFile) => (
                                     <Col key={file.id} xs={24} sm={12} lg={8} xl={6} className="card-column">
                                         <div className="card">
-                                            <Title level={4}>{file.path}</Title>
+                                            <Title level={4}>{file.filePath}</Title>
                                             <Paragraph type="secondary">{file.mimetype}</Paragraph>
                                             <Paragraph>{file.aclId ?? 'Julkinen'}</Paragraph>
                                             <ShowSubjects subjects={file.subjects}/>
@@ -442,6 +473,7 @@ function App() {
     }
 
     return (
+        <ConfigProvider theme={antdTheme}>
             <Layout className="app-layout">
                 <Header className="app-header"
                         style={{
@@ -454,7 +486,6 @@ function App() {
                             alignItems: "center",
                             justifyContent: "space-between",
                             padding: "0 0px",
-                            backgroundColor: "#191919",
                             maxWidth: "100%"
                         }}
                 >
@@ -576,6 +607,7 @@ function App() {
                     />
                 </Modal>
             </Layout>
+        </ConfigProvider>
     )
 }
 

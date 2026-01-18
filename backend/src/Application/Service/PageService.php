@@ -38,7 +38,7 @@ class PageService
             return null;
         }
 
-        $page = $this->pageRepository->findByPath($path);
+        $page = $this->pageRepository->findByFilePath($path);
 
         if (!$page) {
             return null;
@@ -63,6 +63,7 @@ class PageService
             'published' => $page->getPublished()?->format('c'),
             'embeds' => $page->getEmbeds(),
             'subjects' => $this->subjectTransformer->manyFromEntities($page->getSubjects()),
+            'style' => null,
         ];
 
         $response = new Response();
@@ -118,7 +119,7 @@ class PageService
                     'pageId' => $pageEntity->getPageId(),
                     'title' => $pageEntity->getTitle(),
                     'header' => $pageEntity->getHeader(),
-                    'path' => $pageEntity->getPath(),
+                    'file_path' => $pageEntity->getFilePath(),
                     'secure' => $pageEntity->isSecure(),
                     'aclId' => $pageEntity->getAclId(),
                     'published' => $pageEntity->getPublished()?->format('c'),
@@ -207,7 +208,7 @@ class PageService
 
     public function getPageContent(string $path, ?array $claims = null): array|ResponseInterface|null
     {
-        $page = $this->pageRepository->findByPath($path);
+        $page = $this->pageRepository->findByFilePath($path);
 
         if (!$page) {
             $this->logger->warning("Did not find page content for path: {$path}");
@@ -233,6 +234,7 @@ class PageService
             'published' => $page->getPublished()?->format('c'),
             'embeds' => $page->getEmbeds(),
             'subjects' => $this->subjectTransformer->manyFromEntities($page->getSubjects()),
+            'style' => null,
         ];
     }
 }

@@ -31,8 +31,8 @@ class PageAPI extends AbstractAPI {
         return await this.request<DirectoryNode[]>(`/page-directories/${directory}/tree`);
     }
 
-    async getPageContent(path: string): Promise<ApiResponse<WebSitePageContent>> {
-        const params = new URLSearchParams({path});
+    async getPageContent(file_path: string): Promise<ApiResponse<WebSitePageContent>> {
+        const params = new URLSearchParams({file_path});
         return await this.request<WebSitePageContent>(`/page-content?${params.toString()}`);
     }
 }

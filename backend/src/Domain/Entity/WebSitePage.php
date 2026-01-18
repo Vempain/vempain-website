@@ -34,8 +34,8 @@ class WebSitePage
     #[ORM\Column(name: 'parent_id', type: 'bigint', nullable: true)]
     private ?int $parentId;
 
-    #[ORM\Column(type: 'string', length: 255)]
-    private string $path;
+    #[ORM\Column(name: 'file_path', type: 'string', length: 255)]
+    private string $filePath;
 
     #[ORM\Column(type: 'boolean')]
     private bool $secure;
@@ -110,9 +110,9 @@ class WebSitePage
         return $this->parentId;
     }
 
-    public function getPath(): string
+    public function getFilePath(): string
     {
-        return $this->path;
+        return $this->filePath;
     }
 
     public function isSecure(): bool

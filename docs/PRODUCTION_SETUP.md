@@ -89,6 +89,23 @@ Then browse to `https://<host>/`.
 - Database backup via `docker compose exec db pg_dump ...`
 - Logs live under `/srv/vempain/logs`
 
+## Default site style (JSON theme)
+
+The frontend loads the default theme from the backend at:
+
+- `GET /api/public/files/document/site/default-style.json`
+
+This is served from the backend *files root* directory (the same volume used for `/file/...` resources) and must exist both:
+
+1. As a **real file** on the host filesystem (mounted into the backend files volume)
+2. As a **row in** `web_site_file` with `path = 'document/site/default-style.json'`
+
+A default version of the file is included in this repo at:
+
+- `deploy/document/site/default-style.json`
+
+Copy it into your host files directory under `document/site/default-style.json` (and insert/update the corresponding `web_site_file` record).
+
 ## Troubleshooting
 
 - Use `docker compose logs -f` to inspect services

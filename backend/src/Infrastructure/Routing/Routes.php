@@ -7,6 +7,7 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\App;
 use Slim\Routing\RouteContext;
 use Vempain\VempainWebsite\Application\Auth\AuthService;
+use Vempain\VempainWebsite\Application\Service\FileService;
 use Vempain\VempainWebsite\Application\Service\PageService;
 use Vempain\VempainWebsite\Application\Service\ResourceAccessService;
 use Vempain\VempainWebsite\Application\Service\SubjectSearchService;
@@ -65,7 +66,7 @@ class Routes
                     'id' => $page->getId(),
                     'pageId' => $page->getPageId(),
                     'title' => $page->getTitle(),
-                    'path' => $page->getPath(),
+                    'file_path' => $page->getFilePath(),
                     'header' => $page->getHeader(),
                     'body' => $page->getBody(),
                     'secure' => $page->isSecure(),
@@ -93,11 +94,11 @@ class Routes
                 'id' => $page->getId(),
                 'pageId' => $page->getPageId(),
                 'title' => $page->getTitle(),
-                'path' => $page->getPath(),
+                'file_path' => $page->getFilePath(),
                 'header' => $page->getHeader(),
                 'body' => $page->getBody(),
                 'secure' => $page->isSecure(),
-                'aclId' => $page->getAclId(),
+                'acl_id' => $page->getAclId(),
                 'subjects' => $subjectTransformer->manyFromEntities($page->getSubjects()),
             ];
 
@@ -126,7 +127,7 @@ class Routes
 
                 return [
                     'id' => $file->getId(),
-                    'path' => $file->getPath(),
+                    'filePath' => $file->getFilePath(),
                     'mimetype' => $file->getMimetype(),
                     'aclId' => $file->getAclId(),
                     'subjects' => $subjectTransformer->manyFromEntities($file->getSubjects()),
@@ -235,7 +236,7 @@ class Routes
                 $logger->debug('Gallery files route hit', [
                     'galleryId' => $galleryId,
                     'userId' => $userId,
-                    'path' => $request->getUri()->getPath(),
+                    'file_path' => $request->getUri()->getPath(),
                 ]);
             } catch (\Throwable $e) {
                 // ignore logging failure
@@ -343,7 +344,7 @@ class Routes
                 $logger = $app->getContainer()->get(\Psr\Log\LoggerInterface::class);
                 $logger->debug('User ID retrieved', [
                     'userId' => $userId,
-                    'path' => $request->getUri()->getPath(),
+                    'file_path' => $request->getUri()->getPath(),
                 ]);
             } catch (\Throwable $e) {
                 // ignore logging failure
@@ -380,7 +381,7 @@ class Routes
                     $logger = $app->getContainer()->get(\Psr\Log\LoggerInterface::class);
                     $logger->debug('User ID for tree retrieved', [
                         'userId' => $userId,
-                        'path' => $request->getUri()->getPath(),
+                        'file_path' => $request->getUri()->getPath(),
                     ]);
                 } catch (\Throwable $e) {
                     // ignore logging failure
@@ -401,15 +402,15 @@ class Routes
         );
 
         $app->get('/api/public/page-content', function (Request $request, Response $response) use ($app) {
-            $path = $request->getQueryParams()['path'] ?? '';
-            if ($path === '') {
+            $file_path = $request->getQueryParams()['file_path'] ?? '';
+            if ($file_path === '') {
                 return $response->withStatus(400);
             }
 
             /** @var PageService $pageService */
             $pageService = $app->getContainer()->get(PageService::class);
             $claims = $request->getAttribute('jwt');
-            $content = $pageService->getPageContent($path, $claims);
+            $content = $pageService->getPageContent($file_path, $claims);
 
             if ($content === null) {
                 return $response->withStatus(404);
@@ -436,20 +437,20 @@ class Routes
 
         // Debug endpoint: return cache and embeds for a page (dev-only)
         $app->get('/api/debug/page-cache', function (Request $request, Response $response) use ($app) {
-            $path = $request->getQueryParams()['path'] ?? '';
-            if ($path === '') {
+            $filePath = $request->getQueryParams()['file_path'] ?? '';
+            if ($filePath === '') {
                 return $response->withStatus(400);
             }
 
             /** @var WebSitePageRepository $pageRepo */
             $pageRepo = $app->getContainer()->get(WebSitePageRepository::class);
-            $page = $pageRepo->findByPath($path);
+            $page = $pageRepo->findByFilePath($filePath);
             if (!$page) {
                 return $response->withStatus(404);
             }
 
             $payload = [
-                'path' => $page->getPath(),
+                'file_path' => $page->getFilePath(),
                 'cache' => $page->getCache(),
                 'embeds' => $page->getEmbeds(),
                 'embeds_raw' => $page->getEmbedsRaw(),
@@ -487,7 +488,7 @@ class Routes
 
                 return [
                     'id' => $file->getId(),
-                    'path' => $file->getPath(),
+                    'file_path' => $file->getFilePath(),
                     'mimetype' => $file->getMimetype(),
                     'aclId' => $file->getAclId(),
                     'subjects' => $subjectTransformer->manyFromEntities($file->getSubjects()),
@@ -509,6 +510,26 @@ class Routes
 
             $response->getBody()->write(json_encode($payload));
             return $response->withHeader('Content-Type', 'application/json');
+        });
+
+        // Public file content API (JSON only)
+        $app->get('/api/public/files/{file_path:.*}', function (Request $request, Response $response) use ($app) {
+            $route = RouteContext::fromRequest($request)->getRoute();
+            $encoded = $route?->getArgument('file_path') ?? '';
+            $path = rawurldecode($encoded);
+            if ($path === '') {
+                return $response->withStatus(400);
+            }
+
+            /** @var FileService $fileService */
+            $fileService = $app->getContainer()->get(FileService::class);
+            $result = $fileService->getWebSiteFileByPath($request, $path);
+
+            if ($result === null) {
+                return $response->withStatus(404);
+            }
+
+            return $result;
         });
 
         $app->post('/api/public/subject-search', function (Request $request, Response $response) use ($app) {

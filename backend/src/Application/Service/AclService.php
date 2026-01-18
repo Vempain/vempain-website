@@ -12,7 +12,6 @@ class AclService
         private readonly WebSiteAclRepository $aclRepository,
         private readonly WebSiteJwtTokenRepository $tokenRepository,
         private readonly LoggerInterface $logger
-
     ) {
     }
 

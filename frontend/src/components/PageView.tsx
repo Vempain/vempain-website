@@ -2,6 +2,7 @@ import {Col, Input, Pagination, Row, Typography} from 'antd';
 import React, {useMemo} from 'react';
 import {GalleryLoader, ShowSubjects} from './index';
 import type {WebSitePage, WebSitePageContent} from '../models';
+import dayjs from "dayjs";
 
 const {Title, Paragraph} = Typography;
 
@@ -86,8 +87,8 @@ function PageView({pageContent, pages, pagination, searchInput, onSearchInputCha
                 <div className="content-section page-detail">
                     <Title level={2}>{pageContent.title}</Title>
                     {pageContent.published && (
-                            <Paragraph type="secondary">
-                                Julkaistu {new Date(pageContent.published).toLocaleString()} - {pageContent.creator}
+                            <Paragraph type={"secondary"}>
+                                Julkaistu {dayjs(pageContent.published).format("YYYY-MM-DD hh:mm")} - {pageContent.creator}
                             </Paragraph>
                     )}
                     <ShowSubjects subjects={pageContent.subjects}/>

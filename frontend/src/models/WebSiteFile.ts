@@ -5,7 +5,7 @@ export interface WebSiteFile {
     fileId: number;
     aclId: number | null;
     comment?: string | null;
-    path: string;
+    filePath: string;
     mimetype: string;
     originalDateTime: string | null;
     rightsHolder?: string | null;

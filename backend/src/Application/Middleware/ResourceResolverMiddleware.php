@@ -21,15 +21,15 @@ class ResourceResolverMiddleware implements MiddlewareInterface
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        $path = $request->getUri()->getPath();
+        $filePath = $request->getUri()->getPath();
 
         // Skip API and health endpoints so Slim routing handles them normally
-        if (str_starts_with($path, '/api') || str_starts_with($path, '/health')) {
-            $this->logger->debug('Skipping ResourceResolverMiddleware for API/health path', ['path' => $path]);
+        if (str_starts_with($filePath, '/api') || str_starts_with($filePath, '/health')) {
+            $this->logger->debug('Skipping ResourceResolverMiddleware for API/health file path', ['filePath' => $filePath]);
             return $handler->handle($request);
         }
 
-        if (str_starts_with($path, '/file/')) {
+        if (str_starts_with($filePath, '/file/')) {
             $this->logger->info("Request is processed with file service");
             $fileResponse = $this->fileService->handleFileRequest($request);
 

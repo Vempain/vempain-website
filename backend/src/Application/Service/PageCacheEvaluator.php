@@ -25,7 +25,7 @@ class PageCacheEvaluator
         }
 
         $pageInfo = [
-            'path' => $page->getPath(),
+            'file_path' => $page->getFilePath(),
             'page_id' => $page->getPageId(),
             'title' => $page->getTitle(),
             'header' => $page->getHeader(),
