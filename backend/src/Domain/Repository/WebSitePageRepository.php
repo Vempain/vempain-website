@@ -82,8 +82,8 @@ SQL;
             ->leftJoin('Vempain\VempainWebsite\Domain\Entity\WebSiteAcl', 'a', 'WITH', 'a.aclId = p.aclId')
             ->andWhere($qb->expr()->orX('a.aclId IS NULL', 'a.userId = :userId'))
             ->setParameter('userId', $userId)
-            ->andWhere('p.path LIKE :dirPrefix')
-            ->orderBy('p.path', 'ASC')
+            ->andWhere('p.filePath LIKE :dirPrefix')
+            ->orderBy('p.filePath', 'ASC')
             ->setParameter('dirPrefix', $directory . '%');
 
         return $qb->getQuery()->getResult();
@@ -102,7 +102,7 @@ SQL;
             ->select('p')
             ->from(WebSitePage::class, 'p')
             ->leftJoin('Vempain\VempainWebsite\Domain\Entity\WebSiteAcl', 'a', 'WITH', 'a.aclId = p.aclId')
-            ->andWhere($qb->expr()->orX('p.aclId IS NULL', 'a.userId = :userId'))
+            ->andWhere($qb->expr()->orX('a.aclId IS NULL', 'a.userId = :userId'))
             ->setParameter('userId', $userId);
 
         $this->applyPathPrefixFilter($qb, $pathPrefix);
@@ -123,7 +123,7 @@ SQL;
         }
 
         $qb
-            ->andWhere($qb->expr()->like('p.path', ':pathPrefix'))
+            ->andWhere($qb->expr()->like('p.file_path', ':pathPrefix'))
             ->setParameter('pathPrefix', $pathPrefix . '%');
     }
 
@@ -158,7 +158,7 @@ SQL;
             ->select('COUNT(p.id)')
             ->from(WebSitePage::class, 'p')
             ->leftJoin('Vempain\VempainWebsite\Domain\Entity\WebSiteAcl', 'a', 'WITH', 'a.aclId = p.aclId')
-            ->andWhere($qb->expr()->orX('p.aclId IS NULL', 'a.userId = :userId'))
+            ->andWhere($qb->expr()->orX('a.aclId IS NULL', 'a.userId = :userId'))
             ->setParameter('userId', $userId);
 
         $this->applyPathPrefixFilter($qb, $pathPrefix);
