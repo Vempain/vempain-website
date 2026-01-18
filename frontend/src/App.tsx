@@ -1,4 +1,22 @@
-import {Button, Col, Form, Input, Layout, Menu, type MenuProps, message, Modal, Row, Select, Space, Tabs, Tooltip, Tree, Typography} from 'antd';
+import {
+    Button,
+    Col,
+    ConfigProvider,
+    Form,
+    Input,
+    Layout,
+    Menu,
+    type MenuProps,
+    message,
+    Modal,
+    Row,
+    Select,
+    Space,
+    Tabs,
+    Tooltip,
+    Tree,
+    Typography
+} from 'antd';
 import type {DataNode} from 'antd/es/tree';
 import {SearchOutlined} from '@ant-design/icons';
 import './App.css';
@@ -44,7 +62,7 @@ const DEFAULT_SITE_CONFIG = {name: 'Vempain', description: 'Vempain'}
 
 function App() {
     const {isAuthenticated, login, logout, showLogin, hideLogin, loginVisible} = useAuth()
-    const {applyPageStyle, resetToDefault} = useTheme()
+    const {applyPageStyle, resetToDefault, antdTheme} = useTheme()
     const [activeSection, setActiveSection] = useState('pages')
     const [username, setUsername] = useState('')
     const [password, setPassword] = useState('')
@@ -455,6 +473,7 @@ function App() {
     }
 
     return (
+        <ConfigProvider theme={antdTheme}>
             <Layout className="app-layout">
                 <Header className="app-header"
                         style={{
@@ -467,7 +486,6 @@ function App() {
                             alignItems: "center",
                             justifyContent: "space-between",
                             padding: "0 0px",
-                            backgroundColor: "#191919",
                             maxWidth: "100%"
                         }}
                 >
@@ -589,6 +607,7 @@ function App() {
                     />
                 </Modal>
             </Layout>
+        </ConfigProvider>
     )
 }
 

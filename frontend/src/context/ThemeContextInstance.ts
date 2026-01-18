@@ -1,9 +1,11 @@
 import {createContext, useContext} from 'react';
+import type {ThemeConfig} from 'antd/es/config-provider/context';
 import type {WebSiteStyle} from '../models';
 
 export interface ThemeContextType {
     defaultStyle: WebSiteStyle | null;
     activeStyle: WebSiteStyle | null;
+    antdTheme: ThemeConfig;
     setDefaultStyle: (style: WebSiteStyle) => void;
     resetToDefault: () => void;
     applyPageStyle: (style: WebSiteStyle | null | undefined) => void;
@@ -18,4 +20,3 @@ export function useTheme(): ThemeContextType {
     }
     return ctx;
 }
-

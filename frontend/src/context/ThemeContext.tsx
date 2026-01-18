@@ -1,18 +1,27 @@
 import {type ReactNode, useCallback, useEffect, useMemo, useState} from 'react';
+import type {ThemeConfig} from 'antd/es/config-provider/context';
+import {theme as antdThemeUtil} from 'antd';
 import type {WebSiteStyle} from '../models';
 import {themeAPI} from '../services';
 import {deepMerge} from '../tools';
 import {ThemeContext} from './ThemeContextInstance';
 
+function toKebabCase(input: string): string {
+    return input
+        .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
+        .replace(/_/g, '-')
+        .toLowerCase();
+}
+
 function flattenToCssVars(style: WebSiteStyle, prefix: string[] = []): Record<string, string> {
     const vars: Record<string, string> = {};
 
     for (const [key, value] of Object.entries(style)) {
-        const nextPrefix = [...prefix, key];
+        const nextPrefix = [...prefix, toKebabCase(key)];
         if (value && typeof value === 'object' && !Array.isArray(value)) {
             Object.assign(vars, flattenToCssVars(value as WebSiteStyle, nextPrefix));
         } else if (value !== undefined && value !== null) {
-            const cssName = `--${nextPrefix.join('-')}`.replace(/[^a-zA-Z0-9-_]/g, '-');
+            const cssName = `--${nextPrefix.join('-')}`.replace(/[^a-z0-9-_]/gi, '-');
             vars[cssName] = String(value);
         }
     }
@@ -94,13 +103,67 @@ export function ThemeProvider({children}: {children: ReactNode}) {
         applyCssVariables(activeStyle);
     }, [activeStyle]);
 
+    function getString(obj: unknown, path: string[]): string | undefined {
+        let current: unknown = obj;
+        for (const key of path) {
+            if (!current || typeof current !== 'object') return undefined;
+            current = (current as Record<string, unknown>)[key];
+        }
+        return typeof current === 'string' ? current : undefined;
+    }
+
+    const antdTheme = useMemo<ThemeConfig>(() => {
+        // We keep this mapping intentionally small and safe.
+        // Any missing token falls back to AntD defaults.
+        const token: ThemeConfig['token'] = {};
+        console.log("Default token config:", JSON.stringify(token));
+
+        const bg = activeStyle ? getString(activeStyle, ['color', 'background']) : undefined;
+        const surface = activeStyle ? getString(activeStyle, ['color', 'surface']) : undefined;
+        const text = activeStyle ? getString(activeStyle, ['color', 'text']) : undefined;
+        const textMuted = activeStyle ? getString(activeStyle, ['color', 'textMuted']) : undefined;
+        const border = activeStyle ? getString(activeStyle, ['color', 'border']) : undefined;
+        const primary = activeStyle ? getString(activeStyle, ['color', 'primary']) : undefined;
+        const textSecondary = activeStyle ? getString(activeStyle, ['color', 'secondary']) : undefined;
+        const primaryHover = activeStyle ? getString(activeStyle, ['color', 'primaryHover']) : undefined;
+        const link = activeStyle ? getString(activeStyle, ['color', 'link']) : undefined;
+        const success = activeStyle ? getString(activeStyle, ['color', 'success']) : undefined;
+        const warning = activeStyle ? getString(activeStyle, ['color', 'warning']) : undefined;
+        const danger = activeStyle ? getString(activeStyle, ['color', 'danger']) : undefined;
+
+        if (primary) token.colorPrimary = primary;
+        if (textSecondary) token.colorTextSecondary = textSecondary;
+        if (textSecondary) token.colorFillSecondary = textSecondary;
+        if (primaryHover) token.colorPrimaryHover = primaryHover;
+        if (link) token.colorLink = link;
+        if (success) token.colorSuccess = success;
+        if (warning) token.colorWarning = warning;
+        if (danger) token.colorError = danger;
+
+        if (bg) token.colorBgBase = bg;
+        if (surface) token.colorBgContainer = surface;
+        if (border) token.colorBorder = border;
+        if (text) token.colorText = text;
+        if (textMuted) token.colorTextSecondary = textMuted;
+
+        return {
+            cssVar: {
+                key: 'vempain',
+                prefix: 'vempain',
+            },
+            algorithm: antdThemeUtil.darkAlgorithm,
+            token,
+        };
+    }, [activeStyle]);
+
     const value = useMemo(() => ({
         defaultStyle,
         activeStyle,
+        antdTheme,
         setDefaultStyle,
         resetToDefault,
         applyPageStyle,
-    }), [activeStyle, applyPageStyle, defaultStyle, resetToDefault, setDefaultStyle]);
+    }), [activeStyle, antdTheme, applyPageStyle, defaultStyle, resetToDefault, setDefaultStyle]);
 
     return (
         <ThemeContext.Provider value={value}>
@@ -108,4 +171,3 @@ export function ThemeProvider({children}: {children: ReactNode}) {
         </ThemeContext.Provider>
     );
 }
-
