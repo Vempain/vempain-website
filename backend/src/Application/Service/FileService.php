@@ -202,23 +202,29 @@ class FileService
     /**
      * API helper: fetch a file by its `web_site_file.path` and return its content as-is.
      */
-    public function getWebSiteFileByPath(ServerRequestInterface $request, string $path): ?ResponseInterface
+    public function getWebSiteFileByFilePath(ServerRequestInterface $request, string $filePath): ?ResponseInterface
     {
         $claims = $request->getAttribute('jwt');
 
         $userId = self::getUserId($request);
 
-        $fileEntity = $this->fileRepository->findByFilePath($userId, $path);
+        $fileEntity = $this->fileRepository->findByFilePath($userId, $filePath);
+
         if ($fileEntity === null) {
+            $this->logger->debug("XXXXXXXXX  Did not find file from path in API helper", ['userId' => $userId, 'path' => $filePath]);
             return null;
         }
 
         $denied = $this->resourceAccessService->getDeniedStatus($fileEntity->getAclId(), $claims);
+        $this->logger->debug("XXXXXXXXX  Checking if access is denied", ['userId' => $userId, 'denied' => $denied]);
+
         if ($denied !== null) {
             return $this->denyResponse($denied);
         }
 
-        $fullPath = rtrim($this->filesRoot, ' /') . ' / ' . ltrim($path, ' /');
+        $fullPath = rtrim($this->filesRoot, ' /') . '/' . ltrim($filePath, ' /');
+        $this->logger->debug("XXXXXXXXX  Full path for API helper", ['fullPath' => $fullPath]);
+
         if (!file_exists($fullPath) || !is_readable($fullPath)) {
             return null;
         }
@@ -229,8 +235,8 @@ class FileService
         $stream = new StreamFactory()->createStreamFromFile($fullPath, 'rb');
         $response = new Response();
         return $response
-            ->withHeader('Content - Type', $mimetype)
-            ->withHeader('Content - Length', (string)filesize($fullPath))
+            ->withHeader('Content-Type', $mimetype)
+            ->withHeader('Content-Length', (string)filesize($fullPath))
             ->withBody($stream);
     }
 }

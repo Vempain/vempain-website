@@ -32,7 +32,7 @@ class WebSiteFileRepository
             ->find($id);
     }
 
-    public function findByFilePath(int $userId, string $file_path): ?WebSiteFile
+    public function findByFilePath(int $userId, string $filePath): ?WebSiteFile
     {
         $qb = $this->entityManager->createQueryBuilder();
         $qb
@@ -42,7 +42,7 @@ class WebSiteFileRepository
             ->andWhere($qb->expr()->orX('a.aclId IS NULL', 'a.userId = :userId'))
             ->setParameter('userId', $userId)
             ->andWhere('f.filePath = :filePath')
-            ->setParameter('filePath', $file_path);
+            ->setParameter('filePath', $filePath);
 
         return $qb->getQuery()->getOneOrNullResult();
     }

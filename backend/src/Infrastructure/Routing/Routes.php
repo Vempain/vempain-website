@@ -4,6 +4,7 @@ namespace Vempain\VempainWebsite\Infrastructure\Routing;
 
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Log\LoggerInterface;
 use Slim\App;
 use Slim\Routing\RouteContext;
 use Vempain\VempainWebsite\Application\Auth\AuthService;
@@ -232,7 +233,7 @@ class Routes
             $userId = self::getUserId($request);
 
             try {
-                $logger = $app->getContainer()->get(\Psr\Log\LoggerInterface::class);
+                $logger = $app->getContainer()->get(LoggerInterface::class);
                 $logger->debug('Gallery files route hit', [
                     'galleryId' => $galleryId,
                     'userId' => $userId,
@@ -341,7 +342,7 @@ class Routes
             $userId = self::getUserId($request);
 
             try {
-                $logger = $app->getContainer()->get(\Psr\Log\LoggerInterface::class);
+                $logger = $app->getContainer()->get(LoggerInterface::class);
                 $logger->debug('User ID retrieved', [
                     'userId' => $userId,
                     'file_path' => $request->getUri()->getPath(),
@@ -378,7 +379,7 @@ class Routes
                 $userId = self::getUserId($request);
 
                 try {
-                    $logger = $app->getContainer()->get(\Psr\Log\LoggerInterface::class);
+                    $logger = $app->getContainer()->get(LoggerInterface::class);
                     $logger->debug('User ID for tree retrieved', [
                         'userId' => $userId,
                         'file_path' => $request->getUri()->getPath(),
@@ -516,14 +517,25 @@ class Routes
         $app->get('/api/public/files/{file_path:.*}', function (Request $request, Response $response) use ($app) {
             $route = RouteContext::fromRequest($request)->getRoute();
             $encoded = $route?->getArgument('file_path') ?? '';
-            $path = rawurldecode($encoded);
-            if ($path === '') {
+
+            $filePath = rawurldecode($encoded);
+
+            if ($filePath === '') {
                 return $response->withStatus(400);
             }
 
+            try {
+                $logger = $app->getContainer()->get(LoggerInterface::class);
+                $logger->debug('File path to retrieve', [
+                    'encoded' => $encoded,
+                    'filePath' => $filePath,
+                ]);
+            } catch (\Throwable $e) {
+                // ignore logging failure
+            }
             /** @var FileService $fileService */
             $fileService = $app->getContainer()->get(FileService::class);
-            $result = $fileService->getWebSiteFileByPath($request, $path);
+            $result = $fileService->getWebSiteFileByFilePath($request, $filePath);
 
             if ($result === null) {
                 return $response->withStatus(404);
