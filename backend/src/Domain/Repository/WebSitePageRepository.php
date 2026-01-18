@@ -82,8 +82,8 @@ SQL;
             ->leftJoin('Vempain\VempainWebsite\Domain\Entity\WebSiteAcl', 'a', 'WITH', 'a.aclId = p.aclId')
             ->andWhere($qb->expr()->orX('a.aclId IS NULL', 'a.userId = :userId'))
             ->setParameter('userId', $userId)
-            ->andWhere('p.path LIKE :dirPrefix')
-            ->orderBy('p.path', 'ASC')
+            ->andWhere('p.filePath LIKE :dirPrefix')
+            ->orderBy('p.filePath', 'ASC')
             ->setParameter('dirPrefix', $directory . '%');
 
         return $qb->getQuery()->getResult();
@@ -102,10 +102,10 @@ SQL;
             ->select('p')
             ->from(WebSitePage::class, 'p')
             ->leftJoin('Vempain\VempainWebsite\Domain\Entity\WebSiteAcl', 'a', 'WITH', 'a.aclId = p.aclId')
-            ->andWhere($qb->expr()->orX('p.aclId IS NULL', 'a.userId = :userId'))
+            ->andWhere($qb->expr()->orX('a.aclId IS NULL', 'a.userId = :userId'))
             ->setParameter('userId', $userId);
 
-        $this->applyPathPrefixFilter($qb, $pathPrefix);
+        $this->applyFilePathPrefixFilter($qb, $pathPrefix);
         $this->applySearchFilters($qb, $searchTerms);
 
         $qb
@@ -116,15 +116,15 @@ SQL;
         return $qb->getQuery()->getResult();
     }
 
-    private function applyPathPrefixFilter(QueryBuilder $qb, ?string $pathPrefix): void
+    private function applyFilePathPrefixFilter(QueryBuilder $qb, ?string $filePathPrefix): void
     {
-        if ($pathPrefix === null || $pathPrefix === '') {
+        if ($filePathPrefix === null || $filePathPrefix === '') {
             return;
         }
 
         $qb
-            ->andWhere($qb->expr()->like('p.path', ':pathPrefix'))
-            ->setParameter('pathPrefix', $pathPrefix . '%');
+            ->andWhere($qb->expr()->like('p.filePath', ':filePathPrefix'))
+            ->setParameter('filePathPrefix', $filePathPrefix . '%');
     }
 
     private function applySearchFilters(QueryBuilder $qb, array $searchTerms): void
@@ -158,10 +158,10 @@ SQL;
             ->select('COUNT(p.id)')
             ->from(WebSitePage::class, 'p')
             ->leftJoin('Vempain\VempainWebsite\Domain\Entity\WebSiteAcl', 'a', 'WITH', 'a.aclId = p.aclId')
-            ->andWhere($qb->expr()->orX('p.aclId IS NULL', 'a.userId = :userId'))
+            ->andWhere($qb->expr()->orX('a.aclId IS NULL', 'a.userId = :userId'))
             ->setParameter('userId', $userId);
 
-        $this->applyPathPrefixFilter($qb, $pathPrefix);
+        $this->applyFilePathPrefixFilter($qb, $pathPrefix);
         $this->applySearchFilters($qb, $searchTerms);
 
         return (int)$qb->getQuery()->getSingleScalarResult();
