@@ -274,11 +274,11 @@ function App() {
             }
 
             if (treeResp.data) {
-                console.log("Looking for tree nodes in directory:", directory, treeResp.data)
+                console.debug("Looking for tree nodes in directory:", directory, treeResp.data)
                 setTreeData(buildTreeNodes(treeResp.data, directory))
                 await ensureIndexPageLoadedForPath(directory)
             } else {
-                console.log("No tree data received for directory:", directory)
+                console.debug("No tree data received for directory:", directory)
                 setTreeData([])
                 setPageContent(null)
             }
