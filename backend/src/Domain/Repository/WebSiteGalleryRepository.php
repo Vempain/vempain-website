@@ -197,7 +197,7 @@ SQL;
             'fileId' => isset($row['file_id']) ? (int)$row['file_id'] : 0,
             'aclId' => isset($row['acl_id']) ? (int)$row['acl_id'] : 0,
             'comment' => $row['comment'] ?? '',
-            'file_path' => $row['file_path'] ?? '',
+            'filePath' => $row['file_path'] ?? '',
             'mimetype' => $row['mimetype'] ?? '',
             'originalDateTime' => $row['original_datetime'] ?? '',
             'rightsHolder' => $row['rights_holder'] ?? null,
