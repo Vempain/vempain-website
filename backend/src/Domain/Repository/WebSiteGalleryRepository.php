@@ -68,7 +68,7 @@ SQL,
         $direction = strtolower($direction) === 'desc' ? 'DESC' : 'ASC';
         $orderColumn = match ($orderBy) {
             'created' => 'f.original_datetime',
-            default => 'f.path',
+            default => 'f.file_path',
         };
 
         $conn = $this->entityManager->getConnection();
@@ -171,7 +171,7 @@ f.id,
 f.file_id,
 f.acl_id,
 f.comment,
-f.path,
+f.file_path,
 f.mimetype,
 f.original_datetime,
 f.rights_holder,
