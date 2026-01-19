@@ -491,7 +491,7 @@ SQL;
             return [
                 'id' => $file->getId(),
                 'fileId' => $file->getFileId(),
-                'file_path' => $file->getFilePath(),
+                'filePath' => $file->getFilePath(),
                 'mimetype' => $file->getMimetype(),
                 'aclId' => $file->getAclId(),
                 'subjects' => $this->subjectTransformer->manyFromEntities($file->getSubjects()),

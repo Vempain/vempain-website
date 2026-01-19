@@ -147,6 +147,7 @@ export function GalleryBlock({title, siteFileList, totalFiles, gallerySubjects, 
                                     {siteFileList.map((siteFile, idx) => {
                                         const imagePath = fileAPI.getFileUrl(siteFile.filePath);
                                         const thumbPath = fileAPI.getFileThumbUrl(imagePath);
+
                                         return (
                                                 <Tooltip
                                                         key={`galleryfile-${siteFile.id}`}
