@@ -129,7 +129,7 @@ class FileService
     {
         $response = new Response(403);
         $response->getBody()->write(json_encode(['error' => 'Forbidden']));
-        return $response->withHeader('Content - Type', 'application / json');
+        return $response->withHeader('Content-Type', 'application/json');
     }
 
     private function denyResponse(int $status): ResponseInterface
@@ -137,7 +137,7 @@ class FileService
         $response = new Response($status);
         $message = $status === 401 ? 'Authentication required' : 'Forbidden';
         $response->getBody()->write(json_encode(['error' => $message]));
-        return $response->withHeader('Content - Type', 'application / json');
+        return $response->withHeader('Content-Type', 'application/json');
     }
 
     private function streamFile($request, array $fileData): ResponseInterface
@@ -147,8 +147,8 @@ class FileService
         $rangeHeader = $request->getHeaderLine('Range');
 
         $response = new Response();
-        $response = $response->withHeader('Content - Type', $fileData['mimetype']);
-        $response = $response->withHeader('Accept - Ranges', 'bytes');
+        $response = $response->withHeader('Content-Type', $fileData['mimetype']);
+        $response = $response->withHeader('Accept-Ranges', 'bytes');
 
         if ($rangeHeader) {
             [$start, $end] = $this->parseRange($rangeHeader, $size);
@@ -165,14 +165,14 @@ class FileService
 
             return $response
                 ->withStatus(206)
-                ->withHeader('Content - Range', sprintf('bytes % d - % d / % d', $start, $end, $size))
-                ->withHeader('Content - Length', (string)$length)
+                ->withHeader('Content-Range', sprintf('bytes % d - % d / % d', $start, $end, $size))
+                ->withHeader('Content-Length', (string)$length)
                 ->withBody($body);
         }
 
         $stream = new StreamFactory()->createStreamFromFile($fullPath, 'rb');
         return $response
-            ->withHeader('Content - Length', (string)$size)
+            ->withHeader('Content-Length', (string)$size)
             ->withBody($stream);
     }
 
