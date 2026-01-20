@@ -116,7 +116,6 @@ export function ThemeProvider({children}: {children: ReactNode}) {
         // We keep this mapping intentionally small and safe.
         // Any missing token falls back to AntD defaults.
         const token: ThemeConfig['token'] = {};
-        console.log("Default token config:", JSON.stringify(token));
 
         const bg = activeStyle ? getString(activeStyle, ['color', 'background']) : undefined;
         const surface = activeStyle ? getString(activeStyle, ['color', 'surface']) : undefined;
