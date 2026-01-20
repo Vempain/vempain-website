@@ -87,7 +87,7 @@ class FileService
         $fileEntity = $this->fileRepository->findByFilePath($userId, $filePath);
         $this->logger->debug("XXXXXXXXX  Database search result", ['fileEntityFound' => $fileEntity !== null]);
 
-        if (!$fileEntity && str_contains($filePath, ' / . thumb / ')) {
+        if (!$fileEntity && str_contains($filePath, '/.thumb/')) {
             $this->logger->debug("XXXXXXXXX  Detected thumbnail path, attempting fallback", ['filePath' => $filePath]);
             $fallbackPath = preg_replace('#/\.thumb/#', '/', $filePath, 1);
             $this->logger->debug("XXXXXXXXX  Searching for fallback file path", ['fallbackPath' => $fallbackPath]);

@@ -2,6 +2,7 @@
 
 namespace Vempain\VempainWebsite\Domain\Repository;
 
+use Doctrine\DBAL\Exception;
 use Doctrine\DBAL\ParameterType;
 use Doctrine\ORM\EntityManagerInterface;
 use Vempain\VempainWebsite\Domain\Entity\WebSiteGallery;
@@ -53,6 +54,7 @@ SQL,
      * Fetch paged files for a gallery with optional ordering and search.
      * @param array<string> $searchTerms
      * @return array{items: array<int, array<string,mixed>>, total:int}
+     * @throws Exception
      */
     public function paginateFilesByGalleryExternalId(
         int $userId,

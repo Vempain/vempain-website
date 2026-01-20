@@ -208,7 +208,6 @@ function App() {
 
     // Helpers
     const findIndexPathInTree = useCallback((path: string): string | null => {
-        console.log('Finding index path in tree for:', path)
         const normalized = trimSlashes(path)
         const segments = normalized.split('/')
         // Walk the tree to locate the node matching the path prefix, then see if index child exists
@@ -274,7 +273,6 @@ function App() {
             }
 
             if (treeResp.data) {
-                console.debug("Looking for tree nodes in directory:", directory, treeResp.data)
                 setTreeData(buildTreeNodes(treeResp.data, directory))
                 await ensureIndexPageLoadedForPath(directory)
             } else {
