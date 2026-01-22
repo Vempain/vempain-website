@@ -23,7 +23,7 @@
   "dependencies": {
     "@ant-design/icons": "^6.1.0",
     "@vempain/vempain-auth-frontend": "^0.9.30",
-    "antd": "^6.2.0",
+    "antd": "^6.2.1",
     "axios": "^1.13.2",
     "corepack": "^0.34.5",
     "dayjs": "^1.11.19",
@@ -45,7 +45,7 @@
     "jest-environment-jsdom": "^30.2.0",
     "ts-jest": "^29.4.6",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.51.0",
+    "typescript-eslint": "^8.53.1",
     "vite": "^7.3.1"
   },
   "jest": {

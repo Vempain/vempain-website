@@ -59,21 +59,21 @@ class FileService
 
         $relativePathEncoded = ltrim(substr($path, strlen('/file/')), '/');
         $relativePath = rawurldecode($relativePathEncoded);
-        $this->logger->debug("XXXXXXXXX  Fetching file with path", ['userId' => $userId, 'relativePath' => $relativePath]);
+        $this->logger->debug("Fetching file with path", ['userId' => $userId, 'relativePath' => $relativePath]);
         $fileData = $this->getFileByFilePath($userId, $relativePath);
-        $this->logger->debug("XXXXXXXXX  File data retrieval result", ['fileDataFound' => $fileData !== null]);
+        $this->logger->debug("File data retrieval result", ['fileDataFound' => $fileData !== null]);
 
         if (!$fileData) {
-            $this->logger->debug("XXXXXXXXX  Did not find file from path", ['userId' => $userId, 'relativePath' => $relativePath]);
+            $this->logger->debug("Did not find file from path", ['userId' => $userId, 'relativePath' => $relativePath]);
             return $this->forbiddenResponse();
         }
 
         $claims = $request->getAttribute('jwt');
         $denied = $this->resourceAccessService->getDeniedStatus($fileData['aclId'], $claims);
-        $this->logger->debug("XXXXXXXXX  Got denied status for resource", ['userId' => $userId, 'relativePath' => $relativePath, 'deniedStatus' => $denied]);
+        $this->logger->debug("Got denied status for resource", ['userId' => $userId, 'relativePath' => $relativePath, 'deniedStatus' => $denied]);
 
         if ($denied !== null) {
-            $this->logger->debug("XXXXXXXXX  Resource access denied", ['userId' => $userId, 'relativePath' => $relativePath, 'deniedStatus' => $denied]);
+            $this->logger->debug("Resource access denied", ['userId' => $userId, 'relativePath' => $relativePath, 'deniedStatus' => $denied]);
             return $this->denyResponse($denied);
         }
 
@@ -82,20 +82,20 @@ class FileService
 
     private function getFileByFilePath(int $userId, string $filePath): ?array
     {
-        $this->logger->debug("XXXXXXXXX  Looking up file by file path", ['userId' => $userId, 'file_path' => $filePath]);
+        $this->logger->debug("Looking up file by file path", ['userId' => $userId, 'file_path' => $filePath]);
         $filesystemRelativePath = $filePath;
         $fileEntity = $this->fileRepository->findByFilePath($userId, $filePath);
-        $this->logger->debug("XXXXXXXXX  Database search result", ['fileEntityFound' => $fileEntity !== null]);
+        $this->logger->debug("Database search result", ['fileEntityFound' => $fileEntity !== null]);
 
         if (!$fileEntity && str_contains($filePath, '/.thumb/')) {
-            $this->logger->debug("XXXXXXXXX  Detected thumbnail path, attempting fallback", ['filePath' => $filePath]);
+            $this->logger->debug("Detected thumbnail path, attempting fallback", ['filePath' => $filePath]);
             $fallbackPath = preg_replace('#/\.thumb/#', '/', $filePath, 1);
-            $this->logger->debug("XXXXXXXXX  Searching for fallback file path", ['fallbackPath' => $fallbackPath]);
+            $this->logger->debug("Searching for fallback file path", ['fallbackPath' => $fallbackPath]);
             $fileEntity = $this->fileRepository->findByFilePath($userId, $fallbackPath);
-            $this->logger->debug("XXXXXXXXX  Found fallback file entity", ['fileEntityFound' => $fileEntity !== null]);
+            $this->logger->debug("Found fallback file entity", ['fileEntityFound' => $fileEntity !== null]);
 
             if ($fileEntity) {
-                $this->logger->debug("XXXXXXXXX  Updating filesystem relative path for thumbnail", ['originalPath' => $filePath, 'newPath' => $fallbackPath]);
+                $this->logger->debug("Updating filesystem relative path for thumbnail", ['originalPath' => $filePath, 'newPath' => $fallbackPath]);
                 $filesystemRelativePath = $filePath;
             }
         }
@@ -105,10 +105,10 @@ class FileService
         }
 
         $fullPath = rtrim($this->filesRoot, '/') . '/' . ltrim($filesystemRelativePath, '/');
-        $this->logger->debug("XXXXXXXXX  Trimmed full path", ['fullPath' => $fullPath]);
+        $this->logger->debug("Trimmed full path", ['fullPath' => $fullPath]);
 
         if (!file_exists($fullPath) || !is_readable($fullPath)) {
-            $this->logger->debug("XXXXXXXXX  Did not find or cannot read file at path", ['fullPath' => $fullPath]);
+            $this->logger->debug("Did not find or cannot read file at path", ['fullPath' => $fullPath]);
             return null;
         }
 
@@ -211,19 +211,19 @@ class FileService
         $fileEntity = $this->fileRepository->findByFilePath($userId, $filePath);
 
         if ($fileEntity === null) {
-            $this->logger->debug("XXXXXXXXX  Did not find file from path in API helper", ['userId' => $userId, 'path' => $filePath]);
+            $this->logger->debug("Did not find file from path in API helper", ['userId' => $userId, 'path' => $filePath]);
             return null;
         }
 
         $denied = $this->resourceAccessService->getDeniedStatus($fileEntity->getAclId(), $claims);
-        $this->logger->debug("XXXXXXXXX  Checking if access is denied", ['userId' => $userId, 'denied' => $denied]);
+        $this->logger->debug("Checking if access is denied", ['userId' => $userId, 'denied' => $denied]);
 
         if ($denied !== null) {
             return $this->denyResponse($denied);
         }
 
         $fullPath = rtrim($this->filesRoot, ' /') . '/' . ltrim($filePath, ' /');
-        $this->logger->debug("XXXXXXXXX  Full path for API helper", ['fullPath' => $fullPath]);
+        $this->logger->debug("Full path for API helper", ['fullPath' => $fullPath]);
 
         if (!file_exists($fullPath) || !is_readable($fullPath)) {
             return null;
