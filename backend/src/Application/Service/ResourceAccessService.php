@@ -22,13 +22,13 @@ class ResourceAccessService
             return null;
         }
 
-        $this->logger->debug('XXXXXXXXX Checking if ACL service is negative for ACL ID:', [
+        $this->logger->debug('Checking if ACL service is negative for ACL ID:', [
             'aclId' => $aclId,
             'claims' => $claims,
         ]);
 
         if (!$this->aclService->canAccess($aclId, $claims)) {
-            $this->logger->debug('XXXXXXXXX No access granted for ACL ID:', [
+            $this->logger->debug('No access granted for ACL ID:', [
                 'aclId' => $aclId,
                 'claims' => $claims,
                 'falling_back_to_status' => $claims === null ? 401 : 403,

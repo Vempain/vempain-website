@@ -25,7 +25,7 @@ class AclService
 
     public function canAccess(?int $aclId, ?array $claims): bool
     {
-        $this->logger->debug('XXXXXXXXX Checking if ACL service can access for ACL ID:', [
+        $this->logger->debug('Checking if ACL service can access for ACL ID:', [
             'aclId' => $aclId,
             'claims' => $claims,
         ]);
