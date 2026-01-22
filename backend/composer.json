@@ -15,7 +15,7 @@
     "php-di/slim-bridge": "^3.4",
     "laminas/laminas-diactoros": "^3.8",
     "ext-pdo": "*",
-    "symfony/var-exporter": "^v8.0.0"
+    "symfony/var-exporter": "^v7.4.0"
   },
   "require-dev": {
     "phpstan/phpstan": "^2.1",
