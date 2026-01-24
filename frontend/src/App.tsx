@@ -23,7 +23,7 @@ import './App.css';
 import {useAuth} from './context/AuthContextInstance';
 import {useTheme} from './context/ThemeContextInstance';
 import {BottomFooter, GalleryLoader, PageView, ShowSubjects, SubjectSearchLoader} from './components';
-import type {DirectoryNode, WebSiteFile, WebSiteGallery, WebSitePage, WebSitePageContent, WebSitePageDirectory, WebSiteSubject} from "./models";
+import type {DirectoryNode, WebSiteFile, WebSiteGallery, WebSitePage, WebSitePageDirectory, WebSiteSubject} from "./models";
 import {galleryAPI, pageAPI, subjectSearchAPI, webSiteConfigurationAPI} from "./services";
 import {toPathSegment, trimSlashes} from "./tools";
 import {useCallback, useEffect, useRef, useState} from 'react';
@@ -77,7 +77,7 @@ function App() {
     const [selectedDirectory, setSelectedDirectory] = useState<string | null>(null)
     const [loading, setLoading] = useState(false)
     const [treeData, setTreeData] = useState<DirectoryTreeNode[]>([])
-    const [pageContent, setPageContent] = useState<WebSitePageContent | null>(null)
+    const [pageContent, setPageContent] = useState<WebSitePage | null>(null)
     const [siteConfig, setSiteConfig] = useState(DEFAULT_SITE_CONFIG)
     const [searchModalVisible, setSearchModalVisible] = useState(false)
     const [subjectOptions, setSubjectOptions] = useState<WebSiteSubject[]>([])
@@ -397,10 +397,10 @@ function App() {
         // Style policy:
         // - If pageContent.style is null/undefined => reset to default style
         // - Else => default style overloaded with page style overrides
-        if (!pageContent || pageContent.style === null || pageContent.style === undefined) {
+        if (!pageContent || pageContent.page_style === null || pageContent.page_style === undefined) {
             resetToDefault()
         } else {
-            applyPageStyle(pageContent.style)
+            applyPageStyle(pageContent.page_style)
         }
     }, [applyPageStyle, pageContent, resetToDefault])
 

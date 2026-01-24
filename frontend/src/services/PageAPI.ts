@@ -1,5 +1,5 @@
 import {AbstractAPI} from './AbstractAPI.ts';
-import type {ApiResponse, DirectoryNode, WebSiteFile, WebSitePage, WebSitePageContent, WebSitePageDirectory} from '../models';
+import type {ApiResponse, DirectoryNode, WebSiteFile, WebSitePage, WebSitePageDirectory} from '../models';
 import type {PagedRequest, PagedResponse} from "@vempain/vempain-auth-frontend";
 
 class PageAPI extends AbstractAPI {
@@ -31,9 +31,9 @@ class PageAPI extends AbstractAPI {
         return await this.request<DirectoryNode[]>(`/page-directories/${directory}/tree`);
     }
 
-    async getPageContent(file_path: string): Promise<ApiResponse<WebSitePageContent>> {
+    async getPageContent(file_path: string): Promise<ApiResponse<WebSitePage>> {
         const params = new URLSearchParams({file_path});
-        return await this.request<WebSitePageContent>(`/page-content?${params.toString()}`);
+        return await this.request<WebSitePage>(`/page-content?${params.toString()}`);
     }
 }
 

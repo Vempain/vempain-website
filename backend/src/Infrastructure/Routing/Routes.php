@@ -65,14 +65,20 @@ class Routes
             $data = array_map(function ($page) use ($subjectTransformer) {
                 return [
                     'id' => $page->getId(),
-                    'pageId' => $page->getPageId(),
+                    'acl_id' => $page->getAclId(),
+                    'page_id' => $page->getPageId(),
+                    'header' => $page->getHeader(),
                     'title' => $page->getTitle(),
                     'file_path' => $page->getFilePath(),
-                    'header' => $page->getHeader(),
                     'body' => $page->getBody(),
-                    'secure' => $page->isSecure(),
-                    'aclId' => $page->getAclId(),
+                    'page_style' => $page->getPageStyle(),
+                    'embeds' => $page->getEmbeds(),
                     'subjects' => $subjectTransformer->manyFromEntities($page->getSubjects()),
+                    'creator' => $page->getCreator(),
+                    'created' => $page->getCreated()->format('c'),
+                    'modifier' => $page->getModifier(),
+                    'modified' => $page->getModified()?->format('c'),
+                    'secure' => $page->isSecure()
                 ];
             }, $pages);
 
@@ -93,14 +99,20 @@ class Routes
 
             $data = [
                 'id' => $page->getId(),
-                'pageId' => $page->getPageId(),
+                'acl_id' => $page->getAclId(),
+                'page_id' => $page->getPageId(),
+                'header' => $page->getHeader(),
                 'title' => $page->getTitle(),
                 'file_path' => $page->getFilePath(),
-                'header' => $page->getHeader(),
                 'body' => $page->getBody(),
-                'secure' => $page->isSecure(),
-                'acl_id' => $page->getAclId(),
+                'page_style' => $page->getPageStyle(),
+                'embeds' => $page->getEmbeds(),
                 'subjects' => $subjectTransformer->manyFromEntities($page->getSubjects()),
+                'creator' => $page->getCreator(),
+                'created' => $page->getCreated()->format('c'),
+                'modifier' => $page->getModifier(),
+                'modified' => $page->getModified()?->format('c'),
+                'secure' => $page->isSecure()
             ];
 
             $response->getBody()->write(json_encode($data));

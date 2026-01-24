@@ -56,14 +56,21 @@ class PageService
         }
 
         $payload = [
-            'body' => $body,
+            'id' => $page->getId(),
+            'acl_id' => $page->getAclId(),
+            'page_id' => $page->getPageId(),
             'header' => $page->getHeader(),
             'title' => $page->getTitle(),
-            'creator' => $page->getCreator(),
-            'published' => $page->getPublished()?->format('c'),
+            'file_path' => $page->getFilePath(),
+            'body' => $body,
+            'page_style' => $page->getPageStyle(),
             'embeds' => $page->getEmbeds(),
             'subjects' => $this->subjectTransformer->manyFromEntities($page->getSubjects()),
-            'style' => null,
+            'creator' => $page->getCreator(),
+            'created' => $page->getCreated()->format('c'),
+            'modifier' => $page->getModifier(),
+            'modified' => $page->getModified()?->format('c'),
+            'secure' => $page->isSecure()
         ];
 
         $response = new Response();
@@ -227,14 +234,21 @@ class PageService
         }
 
         return [
-            'body' => $body,
+            'id' => $page->getId(),
+            'acl_id' => $page->getAclId(),
+            'page_id' => $page->getPageId(),
             'header' => $page->getHeader(),
             'title' => $page->getTitle(),
-            'creator' => $page->getCreator(),
-            'published' => $page->getPublished()?->format('c'),
+            'file_path' => $page->getFilePath(),
+            'body' => $body,
+            'page_style' => $page->getPageStyle(),
             'embeds' => $page->getEmbeds(),
             'subjects' => $this->subjectTransformer->manyFromEntities($page->getSubjects()),
-            'style' => null,
+            'creator' => $page->getCreator(),
+            'created' => $page->getCreated()->format('c'),
+            'modifier' => $page->getModifier(),
+            'modified' => $page->getModified()?->format('c'),
+            'secure' => $page->isSecure()
         ];
     }
 }

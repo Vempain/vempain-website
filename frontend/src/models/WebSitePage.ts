@@ -1,4 +1,6 @@
 import type {WebSiteSubject} from "./WebSiteSubject";
+import type {PageEmbed} from "./PageEmbed.ts";
+import type {WebSiteStyle} from "./WebSiteStyle.ts";
 
 export interface WebSitePage {
     id: number;
@@ -6,10 +8,14 @@ export interface WebSitePage {
     title: string;
     path: string;
     header: string;
-    body: string | null;
+    body: string;
+    page_style: WebSiteStyle | null;
     secure: boolean;
     aclId: number | null;
-    published?: string | null;
-    embeds?: unknown;
+    creator: string;
+    created?: string | null;
+    modifier?: string | null;
+    modified?: string | null;
+    embeds?: PageEmbed[];
     subjects?: WebSiteSubject[];
 }

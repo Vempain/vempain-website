@@ -5,7 +5,6 @@ export type {PageEmbed} from './PageEmbed.ts';
 export type {WebSiteConfiguration} from './WebSiteConfiguration.ts';
 export type {WebSiteFile} from './WebSiteFile.ts';
 export type {WebSiteGallery} from './WebSiteGallery.ts';
-export type {WebSitePageContent} from './WebSitePageContent.ts';
 export type {WebSitePageDirectory} from './WebSitePageDirectory.ts';
 export type {WebSitePage} from './WebSitePage.ts';
 export type {WebSiteSubject} from './WebSiteSubject';

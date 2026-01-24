@@ -1,13 +1,13 @@
 import {Col, Input, Pagination, Row, Typography} from 'antd';
 import React, {useMemo} from 'react';
 import {GalleryLoader, ShowSubjects} from './index';
-import type {WebSitePage, WebSitePageContent} from '../models';
+import type {WebSitePage} from '../models';
 import dayjs from "dayjs";
 
 const {Title, Paragraph} = Typography;
 
 interface PageViewProps {
-    pageContent: WebSitePageContent | null;
+    pageContent: WebSitePage | null;
     pages: WebSitePage[];
     pagination: { page: number; size: number; total_elements: number };
     searchInput: string;
@@ -19,7 +19,7 @@ interface PageViewProps {
 }
 
 function PageView({pageContent, pages, pagination, searchInput, onSearchInputChange, onSearchSubmit, onPageChange, pageError, pageStatus}: PageViewProps) {
-    function renderPageBody(body: string, embeds: WebSitePageContent['embeds']) {
+    function renderPageBody(body: string, embeds: WebSitePage['embeds']) {
         if (!body) return null;
 
         let resolvedEmbeds = embeds;
@@ -86,9 +86,9 @@ function PageView({pageContent, pages, pagination, searchInput, onSearchInputCha
         return (
                 <div className="content-section page-detail">
                     <Title level={2}>{pageContent.title}</Title>
-                    {pageContent.published && (
+                    {pageContent.created && (
                             <Paragraph type={"secondary"}>
-                                Julkaistu {dayjs(pageContent.published).format("YYYY-MM-DD hh:mm")} - {pageContent.creator}
+                                Julkaistu {dayjs(pageContent.created).format("YYYY-MM-DD hh:mm")} - {pageContent.creator}
                             </Paragraph>
                     )}
                     <ShowSubjects subjects={pageContent.subjects}/>

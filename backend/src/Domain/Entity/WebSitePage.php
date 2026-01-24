@@ -25,6 +25,9 @@ class WebSitePage
     #[ORM\Column(type: 'text', nullable: true)]
     private ?string $body = null;
 
+    #[ORM\Column(name: 'page_style', type: 'text', nullable: true)]
+    private ?string $pageStyle = null;
+
     #[ORM\Column(type: 'string', length: 512)]
     private string $header;
 
@@ -93,6 +96,11 @@ class WebSitePage
     public function getBody(): ?string
     {
         return $this->body;
+    }
+
+    public function getPageStyle(): ?string
+    {
+        return $this->pageStyle;
     }
 
     public function getHeader(): string

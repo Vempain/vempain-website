@@ -30,6 +30,7 @@ class PageCacheEvaluator
             'title' => $page->getTitle(),
             'header' => $page->getHeader(),
             'body' => $page->getBody(),
+            'page_style' => $page->getPageStyle(),
             'secure' => $page->isSecure(),
             'acl_id' => $page->getAclId(),
             'creator' => $page->getCreator(),
