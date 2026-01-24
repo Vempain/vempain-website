@@ -146,7 +146,7 @@ jobs:
           newVersion: ${{ steps.newVer.outputs.newVersion }}
           VEMPAIN_ACTION_TOKEN: ${{ secrets.VEMPAIN_ACTION_TOKEN }}
 
-      - name: Build production package
+      - name: Build frontend production package
         working-directory: frontend
         run: |
           yarn install
@@ -179,14 +179,13 @@ jobs:
       - name: Build and push frontend image
         shell: bash
         run: |
-          docker build --progress=plain --secret id=VEMPAIN_ACTION_TOKEN,env=VEMPAIN_ACTION_TOKEN -f frontend/Dockerfile -t $FRONTEND_IMAGE:latest frontend
+          docker build --progress=plain -f frontend/Dockerfile -t $FRONTEND_IMAGE:latest frontend
           echo "Tagging frontend image with versions: ${mainVersion}, ${baseVersion}, ${newVersion}"
           docker tag $FRONTEND_IMAGE:latest $FRONTEND_IMAGE:${mainVersion}
           docker tag $FRONTEND_IMAGE:latest $FRONTEND_IMAGE:${baseVersion}
           docker tag $FRONTEND_IMAGE:latest $FRONTEND_IMAGE:${newVersion}
           docker push --all-tags $FRONTEND_IMAGE
         env:
-          VEMPAIN_ACTION_TOKEN: ${{ secrets.VEMPAIN_ACTION_TOKEN }}
           FRONTEND_IMAGE: ${{ env.FRONTEND_IMAGE }}
           mainVersion: ${{ steps.basemain.outputs.mainVersion }}
           baseVersion: ${{ steps.basemain.outputs.baseVersion }}
