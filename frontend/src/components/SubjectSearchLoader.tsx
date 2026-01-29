@@ -3,7 +3,7 @@ import {Col, Divider, Empty, Row, Spin, Typography} from "antd";
 import {subjectSearchAPI} from "../services";
 import type {WebSiteFile, WebSiteGallery, WebSitePage} from "../models";
 import {GalleryBlock} from "./GalleryBlock";
-import {useAuth} from "../context/AuthContext";
+import {useAuth} from "../context";
 
 const {Title, Paragraph} = Typography;
 
