@@ -1,9 +1,9 @@
+import React, {useCallback, useEffect, useMemo, useState} from "react";
 import {Col, Divider, Empty, Row, Spin, Typography} from "antd";
-import {useEffect, useMemo, useState} from "react";
-import type {WebSiteFile, WebSiteGallery, WebSitePage} from "../models";
 import {subjectSearchAPI} from "../services";
+import type {WebSiteFile, WebSiteGallery, WebSitePage} from "../models";
 import {GalleryBlock} from "./GalleryBlock";
-import {useAuth} from "../context/AuthContextInstance";
+import {useAuth} from "../context/AuthContext";
 
 const {Title, Paragraph} = Typography;
 
@@ -63,31 +63,31 @@ export function SubjectSearchLoader({subjectIdList}: SubjectSearchProps) {
     }, [subjectIdList.join(",")]);
 
     // Fetch next page of files for GalleryBlock
-    function fetchMoreFiles(): Promise<WebSiteFile[]> {
+    const fetchMoreFiles = useCallback((): Promise<WebSiteFile[]> => {
         if (!filesHasMore) {
             return Promise.resolve(files);
         }
         const nextPage = filesPage + 1;
         return subjectSearchAPI.searchByIds({subjectIds: subjectIdList, page: nextPage, size: filesSize})
-                .then((data) => {
-                    if (!data?.files) {
-                        setFilesHasMore(false);
-                        return files;
-                    }
-                    const incoming = data.files.content ?? [];
-                    const combined = [...files, ...incoming];
-                    setFiles(combined);
-                    setFilesPage(data.files.page ?? nextPage);
-                    setFilesSize(data.files.size ?? filesSize);
-                    setFilesTotal(data.files.total_elements ?? combined.length);
-                    setFilesHasMore(!(data.files.last ?? true));
-                    return combined;
-                })
-                .catch((error) => {
-                    console.error("Error fetching additional files:", error);
+            .then((data) => {
+                if (!data?.files) {
+                    setFilesHasMore(false);
                     return files;
-                });
-    }
+                }
+                const incoming = data.files.content ?? [];
+                const combined = [...files, ...incoming];
+                setFiles(combined);
+                setFilesPage(data.files.page ?? nextPage);
+                setFilesSize(data.files.size ?? filesSize);
+                setFilesTotal(data.files.total_elements ?? combined.length);
+                setFilesHasMore(!(data.files.last ?? true));
+                return combined;
+            })
+            .catch((error) => {
+                console.error("Error fetching additional files:", error);
+                return files;
+            });
+    }, [files, filesHasMore, filesPage, filesSize, subjectIdList]);
 
     const sections = useMemo(() => {
         const list: Array<{
