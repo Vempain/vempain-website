@@ -209,7 +209,10 @@ SQL;
             'creatorEmail' => $row['creator_email'] ?? null,
             'creatorCountry' => $row['creator_country'] ?? null,
             'creatorUrl' => $row['creator_url'] ?? null,
-            'locationId' => isset($row['location_id']) ? (int)$row['location_id'] : 0,
+            // keep raw location_id out of DTO output; enrich to 'location' in API layer when authenticated
+            'location' => null,
+            // internal use for enrichment
+            '_location_id' => isset($row['location_id']) ? (int)$row['location_id'] : null,
             'width' => isset($row['width']) ? (int)$row['width'] : 0,
             'height' => isset($row['height']) ? (int)$row['height'] : 0,
             'length' => isset($row['length']) ? (int)$row['length'] : 0,

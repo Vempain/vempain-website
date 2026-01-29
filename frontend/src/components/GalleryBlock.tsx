@@ -4,6 +4,7 @@ import {fileAPI} from "../services";
 import {useCallback, useEffect, useMemo, useRef, useState} from "react";
 import type {MetadataEntry, WebSiteFile, WebSiteSubject} from "../models";
 import {MetadataOverlay} from "./MetadataOverlay.tsx";
+import {LocationBadge} from "./LocationBadge";
 
 const THUMB_WIDTH = 250;
 const THUMB_HEIGHT = 166;
@@ -35,9 +36,10 @@ interface GalleryBlockProps {
     gallerySubjects?: WebSiteSubject[];
     hasMore: boolean;
     fetchMoreFiles: () => Promise<WebSiteFile[]>;
+    isAuthenticated?: boolean;
 }
 
-export function GalleryBlock({title, siteFileList, totalFiles, gallerySubjects, hasMore, fetchMoreFiles}: GalleryBlockProps) {
+export function GalleryBlock({title, siteFileList, totalFiles, gallerySubjects, hasMore, fetchMoreFiles, isAuthenticated}: GalleryBlockProps) {
     const [previewVisible, setPreviewVisible] = useState<boolean>(false);
     const [previewIndex, setPreviewIndex] = useState<number>(0);
     const [showMetadata, setShowMetadata] = useState<boolean>(false);
@@ -147,6 +149,7 @@ export function GalleryBlock({title, siteFileList, totalFiles, gallerySubjects, 
                                     {siteFileList.map((siteFile, idx) => {
                                         const imagePath = fileAPI.getFileUrl(siteFile.filePath);
                                         const thumbPath = fileAPI.getFileThumbUrl(imagePath);
+                                        const hasLocation = Boolean(isAuthenticated) && siteFile.location != null;
 
                                         return (
                                                 <Tooltip
@@ -166,12 +169,13 @@ export function GalleryBlock({title, siteFileList, totalFiles, gallerySubjects, 
                                                         }
                                                 >
                                                     <div
-                                                            style={THUMBNAIL_FRAME_STYLE}
+                                                            style={{...THUMBNAIL_FRAME_STYLE, position: 'relative'}}
                                                             onClick={() => {
                                                                 setPreviewIndex(idx);
                                                                 setPreviewVisible(true);
                                                             }}
                                                     >
+                                                        <LocationBadge visible={hasLocation} />
                                                         <Image
                                                                 src={thumbPath}
                                                                 alt={siteFile.filePath}

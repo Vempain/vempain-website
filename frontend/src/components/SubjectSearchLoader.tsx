@@ -3,6 +3,7 @@ import {useEffect, useMemo, useState} from "react";
 import type {WebSiteFile, WebSiteGallery, WebSitePage} from "../models";
 import {subjectSearchAPI} from "../services";
 import {GalleryBlock} from "./GalleryBlock";
+import {useAuth} from "../context/AuthContextInstance";
 
 const {Title, Paragraph} = Typography;
 
@@ -11,6 +12,8 @@ interface SubjectSearchProps {
 }
 
 export function SubjectSearchLoader({subjectIdList}: SubjectSearchProps) {
+    const {isAuthenticated} = useAuth();
+
     const [loading, setLoading] = useState<boolean>(false);
     const [pages, setPages] = useState<WebSitePage[]>([]);
     const [galleries, setGalleries] = useState<WebSiteGallery[]>([]);
@@ -153,6 +156,7 @@ export function SubjectSearchLoader({subjectIdList}: SubjectSearchProps) {
                                     gallerySubjects={[]}
                                     hasMore={filesHasMore}
                                     fetchMoreFiles={fetchMoreFiles}
+                                    isAuthenticated={isAuthenticated}
                             />
                         </>
                 ),
@@ -161,7 +165,7 @@ export function SubjectSearchLoader({subjectIdList}: SubjectSearchProps) {
 
         // Sort descending by count
         return list.sort((a, b) => b.count - a.count);
-    }, [fetchMoreFiles, files, filesHasMore, filesTotal, galleries, pages]);
+    }, [fetchMoreFiles, files, filesHasMore, filesTotal, galleries, isAuthenticated, pages]);
 
     if (loading) {
         return <Spin/>;

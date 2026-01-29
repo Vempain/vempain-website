@@ -10,3 +10,4 @@ export type {WebSitePage} from './WebSitePage.ts';
 export type {WebSiteSubject} from './WebSiteSubject';
 export type {SubjectSearchResponse} from './SubjectSearchResponse.ts';
 export type {WebSiteStyle} from './WebSiteStyle';
+export type {WebSiteLocation} from './WebSiteLocation';
