@@ -5,7 +5,9 @@ namespace Vempain\VempainWebsite\Application\Service;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\DBAL\ParameterType;
 use Doctrine\ORM\EntityManagerInterface;
+use Vempain\VempainWebsite\Application\Transformer\LocationTransformer;
 use Vempain\VempainWebsite\Application\Transformer\SubjectTransformer;
+use Vempain\VempainWebsite\Domain\Repository\WebGpsLocationRepository;
 use Vempain\VempainWebsite\Domain\Repository\WebSiteFileRepository;
 use Vempain\VempainWebsite\Domain\Repository\WebSiteGalleryRepository;
 use Vempain\VempainWebsite\Domain\Repository\WebSitePageRepository;
@@ -19,6 +21,8 @@ class SubjectSearchService
         private readonly WebSiteFileRepository $fileRepository,
         private readonly WebSiteSubjectRepository $subjectRepository,
         private readonly SubjectTransformer $subjectTransformer,
+        private readonly WebGpsLocationRepository $gpsLocationRepository,
+        private readonly LocationTransformer $locationTransformer,
         private readonly EntityManagerInterface $entityManager,
     ) {
     }
@@ -266,6 +270,21 @@ SQL;
                 'mimetype' => $file->getMimetype(),
                 'aclId' => $file->getAclId(),
                 'subjects' => $this->subjectTransformer->manyFromEntities($file->getSubjects()),
+                'comment' => $file->getComment(),
+                'originalDateTime' => $file->getOriginalDateTime()?->format('Y-m-d H:i:s'),
+                'rightsHolder' => $file->getRightsHolder(),
+                'rightsTerms' => $file->getRightsTerms(),
+                'rightsUrl' => $file->getRightsUrl(),
+                'creatorName' => $file->getCreatorName(),
+                'creatorEmail' => $file->getCreatorEmail(),
+                'creatorCountry' => $file->getCreatorCountry(),
+                'creatorUrl' => $file->getCreatorUrl(),
+                'locationId' => $file->getLocationId(),
+                'width' => $file->getWidth(),
+                'height' => $file->getHeight(),
+                'length' => $file->getLength(),
+                'pages' => $file->getPages(),
+                'metadata' => $file->getMetadata()
             ];
         }, $entities);
 
@@ -403,8 +422,8 @@ HAVING COUNT(DISTINCT wgs.subject_id) = :need
 ORDER BY $orderColumn {$direction}
 LIMIT :limit OFFSET :offset
 SQL;
-        $listParams = $params + ['user_id' => $userId, 'limit' => $size, 'offset' => $offset];
-        $listTypes = $types + ['user_id' => ParameterType::INTEGER, 'limit' => ParameterType::INTEGER, 'offset' => ParameterType::INTEGER];
+        $listParams = $params + ['limit' => $size, 'offset' => $offset];
+        $listTypes = $types + ['limit' => ParameterType::INTEGER, 'offset' => ParameterType::INTEGER];
         $galleryIds = array_map('intval', $conn->executeQuery($listSql, $listParams, $listTypes)->fetchFirstColumn());
 
         $entities = $this->galleryRepository->findByIds($galleryIds);
@@ -436,8 +455,14 @@ SQL;
         ];
     }
 
-    private function searchFilesBySubjectIds(int $userId, array $subjectIds, int $page, int $size, string $sortBy, string $direction): array
-    {
+    private function searchFilesBySubjectIds(
+        int $userId,
+        array $subjectIds,
+        int $page,
+        int $size,
+        string $sortBy,
+        string $direction
+    ): array {
         $conn = $this->entityManager->getConnection();
         $orderColumn = match ($sortBy) {
             'file_path' => 'f.file_path',
@@ -487,7 +512,18 @@ SQL;
             $file->setSubjects($subjectsByFile[$file->getId()] ?? []);
         }
 
-        $content = array_map(function ($file) {
+        $content = array_map(function ($file) use ($userId) {
+            $location = null;
+            if ($userId > 0) {
+                $locationId = $file->getLocationId();
+                if ($locationId !== null) {
+                    $locEntity = $this->gpsLocationRepository->findById((int)$locationId);
+                    if ($locEntity !== null) {
+                        $location = $this->locationTransformer->fromEntity($locEntity);
+                    }
+                }
+            }
+
             return [
                 'id' => $file->getId(),
                 'fileId' => $file->getFileId(),
@@ -504,7 +540,7 @@ SQL;
                 'creatorEmail' => $file->getCreatorEmail(),
                 'creatorCountry' => $file->getCreatorCountry(),
                 'creatorUrl' => $file->getCreatorUrl(),
-                'locationId' => $file->getLocationId(),
+                'location' => $location,
                 'width' => $file->getWidth(),
                 'height' => $file->getHeight(),
                 'length' => $file->getLength(),

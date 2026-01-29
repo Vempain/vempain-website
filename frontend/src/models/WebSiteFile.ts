@@ -1,4 +1,5 @@
 import type {WebSiteSubject} from "./WebSiteSubject";
+import type {WebSiteLocation} from "./WebSiteLocation";
 
 export interface WebSiteFile {
     id: number;
@@ -15,7 +16,7 @@ export interface WebSiteFile {
     creatorEmail?: string | null;
     creatorCountry?: string | null;
     creatorUrl?: string | null;
-    locationId?: number | null;
+    location?: WebSiteLocation | null;
     width?: number | null;
     height?: number | null;
     length?: number | null;

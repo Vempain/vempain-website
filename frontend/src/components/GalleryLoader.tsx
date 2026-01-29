@@ -3,6 +3,7 @@ import type {WebSiteFile} from '../models';
 import {galleryAPI} from '../services';
 import {Spin} from "antd";
 import {GalleryBlock} from "./GalleryBlock.tsx";
+import {useAuth} from "../context/AuthContextInstance";
 
 interface GalleryLoaderProps {
     galleryId: number;
@@ -10,6 +11,8 @@ interface GalleryLoaderProps {
 }
 
 export function GalleryLoader({galleryId, title}: GalleryLoaderProps) {
+    const {isAuthenticated} = useAuth();
+
     const [loading, setLoading] = useState(true);
     const [webSiteFileList, setWebSiteFileList] = useState<WebSiteFile[]>([]);
     const [currentPage, setCurrentPage] = useState<number>(0);
@@ -84,6 +87,7 @@ export function GalleryLoader({galleryId, title}: GalleryLoaderProps) {
                         totalFiles={totalElements}
                         hasMore={!lastPageFetched}
                         fetchMoreFiles={fetchNextPagedData}
+                        isAuthenticated={isAuthenticated}
                 />
             </Spin>
     );

@@ -12,7 +12,9 @@ use Vempain\VempainWebsite\Application\Service\FileService;
 use Vempain\VempainWebsite\Application\Service\PageService;
 use Vempain\VempainWebsite\Application\Service\ResourceAccessService;
 use Vempain\VempainWebsite\Application\Service\SubjectSearchService;
+use Vempain\VempainWebsite\Application\Transformer\LocationTransformer;
 use Vempain\VempainWebsite\Application\Transformer\SubjectTransformer;
+use Vempain\VempainWebsite\Domain\Repository\WebGpsLocationRepository;
 use Vempain\VempainWebsite\Domain\Repository\WebSiteConfigurationRepository;
 use Vempain\VempainWebsite\Domain\Repository\WebSiteFileRepository;
 use Vempain\VempainWebsite\Domain\Repository\WebSiteGalleryRepository;
@@ -267,6 +269,10 @@ class Routes
             $subjectRepo = $app->getContainer()->get(WebSiteSubjectRepository::class);
             /** @var SubjectTransformer $subjectTransformer */
             $subjectTransformer = $app->getContainer()->get(SubjectTransformer::class);
+            /** @var WebGpsLocationRepository $gpsRepo */
+            $gpsRepo = $app->getContainer()->get(WebGpsLocationRepository::class);
+            /** @var LocationTransformer $locationTransformer */
+            $locationTransformer = $app->getContainer()->get(LocationTransformer::class);
             $internalGalleryId = $galleryRepo->findInternalIdByExternalGalleryId($galleryId, $userId);
 
             $logger->debug('Internal gallery ID lookup', [
@@ -315,8 +321,22 @@ class Routes
             $subjectsByFile = $subjectRepo->findByFileIds($fileIds);
             $gallerySubjects = $subjectRepo->findByGalleryId($internalGalleryId);
 
-            $itemsWithSubjects = array_map(function (array $item) use ($subjectTransformer, $subjectsByFile) {
+            $itemsWithSubjects = array_map(function (array $item) use ($subjectTransformer, $subjectsByFile, $userId, $gpsRepo, $locationTransformer) {
                 $item['subjects'] = $subjectTransformer->manyFromEntities($subjectsByFile[$item['id']] ?? []);
+
+                $location = null;
+                if ($userId > 0) {
+                    $locationId = $item['_location_id'] ?? null;
+                    if (is_int($locationId) || is_numeric($locationId)) {
+                        $locEntity = $gpsRepo->findById((int)$locationId);
+                        if ($locEntity !== null) {
+                            $location = $locationTransformer->fromEntity($locEntity);
+                        }
+                    }
+                }
+                $item['location'] = $location;
+                unset($item['_location_id']);
+
                 return $item;
             }, $result['items']);
 

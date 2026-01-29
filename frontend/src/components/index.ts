@@ -5,3 +5,5 @@ export {MetadataOverlay} from './MetadataOverlay.tsx';
 export {ShowSubjects} from './ShowSubjects';
 export {SubjectSearchLoader} from './SubjectSearchLoader';
 export {default as PageView} from './PageView';
+export {LocationBadge} from './LocationBadge';
+export {LocationModal} from './LocationModal';

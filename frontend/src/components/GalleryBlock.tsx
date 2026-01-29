@@ -2,8 +2,10 @@ import {Button, Card, Empty, Image, Spin, Tooltip, Typography} from "antd";
 import {ShowSubjects} from "./ShowSubjects.tsx";
 import {fileAPI} from "../services";
 import {useCallback, useEffect, useMemo, useRef, useState} from "react";
-import type {MetadataEntry, WebSiteFile, WebSiteSubject} from "../models";
+import type {MetadataEntry, WebSiteFile, WebSiteLocation, WebSiteSubject} from "../models";
 import {MetadataOverlay} from "./MetadataOverlay.tsx";
+import {LocationBadge} from "./LocationBadge";
+import {LocationModal} from "./LocationModal";
 
 const THUMB_WIDTH = 250;
 const THUMB_HEIGHT = 166;
@@ -35,12 +37,15 @@ interface GalleryBlockProps {
     gallerySubjects?: WebSiteSubject[];
     hasMore: boolean;
     fetchMoreFiles: () => Promise<WebSiteFile[]>;
+    isAuthenticated?: boolean;
 }
 
-export function GalleryBlock({title, siteFileList, totalFiles, gallerySubjects, hasMore, fetchMoreFiles}: GalleryBlockProps) {
+export function GalleryBlock({title, siteFileList, totalFiles, gallerySubjects, hasMore, fetchMoreFiles, isAuthenticated}: GalleryBlockProps) {
     const [previewVisible, setPreviewVisible] = useState<boolean>(false);
     const [previewIndex, setPreviewIndex] = useState<number>(0);
     const [showMetadata, setShowMetadata] = useState<boolean>(false);
+    const [locationModalOpen, setLocationModalOpen] = useState(false);
+    const [selectedLocation, setSelectedLocation] = useState<WebSiteLocation | null>(null);
     const prefetchingRef = useRef(false);
 
     const handlePreviewVisibleChange = (visible: boolean) => {
@@ -106,96 +111,119 @@ export function GalleryBlock({title, siteFileList, totalFiles, gallerySubjects, 
     }, [previewVisible, previewIndex, siteFileList.length, hasMore, stableFetchMore]);
 
     return (
-            <Card size="small" className="gallery-embed">
-                {title && <Typography.Text strong>{title}</Typography.Text>}
-                <ShowSubjects subjects={gallerySubjects}/>
-                <div style={{marginTop: 8}}>
-                    {siteFileList.length === 0 && <Spin/>}
-                    {siteFileList.length === 0 && (
-                            <Empty description="No images"/>
-                    )}
-                    {siteFileList.length > 0 && (
-                            <Image.PreviewGroup
-                                    preview={{
-                                        open: previewVisible,
-                                        onOpenChange: handlePreviewVisibleChange,
-                                        current: previewIndex,
-                                        onChange: handlePreviewChange,
-                                        movable: true,
-                                        countRender: (current, total) => `${current + 1} / ${totalFiles ?? total}`,
-                                        actionsRender: (original) => (
-                                                <>
-                                                    {(metadataEntries.length > 0 || (activeFile?.subjects?.length ?? 0) > 0) && (
-                                                            <Button
-                                                                    size="small"
-                                                                    type="primary"
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        setShowMetadata((prev) => !prev);
-                                                                    }}
-                                                                    style={{marginRight: 8}}
-                                                            >
-                                                                {showMetadata ? 'Piilota lisätiedot' : 'Näytä lisätiedot'}
-                                                            </Button>
-                                                    )}
-                                                    {original}
-                                                </>
-                                        ),
-                                    }}
-                            >
-                                <div style={columnsStyle}>
-                                    {siteFileList.map((siteFile, idx) => {
-                                        const imagePath = fileAPI.getFileUrl(siteFile.filePath);
-                                        const thumbPath = fileAPI.getFileThumbUrl(imagePath);
-
-                                        return (
-                                                <Tooltip
-                                                        key={`galleryfile-${siteFile.id}`}
-                                                        placement="top"
-                                                        styles={{container: {padding: 0, background: '#000'}}}
-                                                        title={
-                                                            <img
-                                                                    src={thumbPath}
-                                                                    alt={siteFile.filePath}
-                                                                    style={{
-                                                                        maxWidth: THUMB_TOOLTIP_MAX_WIDTH,
-                                                                        maxHeight: THUMB_TOOLTIP_MAX_HEIGHT,
-                                                                        display: 'block',
-                                                                    }}
-                                                            />
-                                                        }
-                                                >
-                                                    <div
-                                                            style={THUMBNAIL_FRAME_STYLE}
-                                                            onClick={() => {
-                                                                setPreviewIndex(idx);
-                                                                setPreviewVisible(true);
-                                                            }}
-                                                    >
-                                                        <Image
-                                                                src={thumbPath}
-                                                                alt={siteFile.filePath}
-                                                                style={THUMBNAIL_IMAGE_STYLE}
-                                                                preview={{src: imagePath}}
-                                                        />
-                                                    </div>
-                                                </Tooltip>
-                                        );
-                                    })}
-                                </div>
-                            </Image.PreviewGroup>
-                    )}
-                    {siteFileList.length > 0 && hasMore && (
-                            <div style={{display: 'flex', justifyContent: 'center', marginTop: 16}}>
-                                <Button type="primary" onClick={stableFetchMore} disabled={!hasMore}>
-                                    Lataa lisää
-                                </Button>
-                            </div>
-                    )}
-                </div>
-                {previewVisible && showMetadata && (metadataEntries.length > 0 || (activeFile?.subjects?.length ?? 0) > 0) && (
-                        <MetadataOverlay entries={metadataEntries} subjects={activeFile?.subjects}/>
+        <Card size="small" className="gallery-embed">
+            {title && <Typography.Text strong>{title}</Typography.Text>}
+            <ShowSubjects subjects={gallerySubjects}/>
+            <div style={{marginTop: 8}}>
+                {siteFileList.length === 0 && <Spin/>}
+                {siteFileList.length === 0 && (
+                    <Empty description="No images"/>
                 )}
-            </Card>
+                {siteFileList.length > 0 && (
+                    <Image.PreviewGroup
+                        preview={{
+                            open: previewVisible,
+                            onOpenChange: handlePreviewVisibleChange,
+                            current: previewIndex,
+                            onChange: handlePreviewChange,
+                            movable: true,
+                            countRender: (current, total) => `${current + 1} / ${totalFiles ?? total}`,
+                            actionsRender: (original) => (
+                                <>
+                                    {(metadataEntries.length > 0 || (activeFile?.subjects?.length ?? 0) > 0) && (
+                                        <Button
+                                            size="small"
+                                            type="primary"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setShowMetadata((prev) => !prev);
+                                            }}
+                                            style={{marginRight: 8}}
+                                        >
+                                            {showMetadata ? 'Piilota lisätiedot' : 'Näytä lisätiedot'}
+                                        </Button>
+                                    )}
+                                    {original}
+                                </>
+                            ),
+                        }}
+                    >
+                        <div style={columnsStyle}>
+                            {siteFileList.map((siteFile, idx) => {
+                                const imagePath = fileAPI.getFileUrl(siteFile.filePath);
+                                const thumbPath = fileAPI.getFileThumbUrl(imagePath);
+                                const hasLocation = Boolean(isAuthenticated) && siteFile.location != null;
+
+                                return (
+                                    <Tooltip
+                                        key={`galleryfile-${siteFile.id}`}
+                                        placement="top"
+                                        styles={{container: {padding: 0, background: '#000'}}}
+                                        title={
+                                            <img
+                                                src={thumbPath}
+                                                alt={siteFile.filePath}
+                                                style={{
+                                                    maxWidth: THUMB_TOOLTIP_MAX_WIDTH,
+                                                    maxHeight: THUMB_TOOLTIP_MAX_HEIGHT,
+                                                    display: 'block',
+                                                }}
+                                            />
+                                        }
+                                    >
+                                        <div
+                                            style={{...THUMBNAIL_FRAME_STYLE, position: 'relative'}}
+                                            onClick={() => {
+                                                setPreviewIndex(idx);
+                                                setPreviewVisible(true);
+                                            }}
+                                        >
+                                            <LocationBadge
+                                                visible={hasLocation}
+                                                onClick={
+                                                    hasLocation
+                                                        ? () => {
+                                                            setSelectedLocation(siteFile.location!);
+                                                            setLocationModalOpen(true);
+                                                        }
+                                                        : undefined
+                                                }
+                                            />
+                                            <Image
+                                                src={thumbPath}
+                                                alt={siteFile.filePath}
+                                                style={THUMBNAIL_IMAGE_STYLE}
+                                                preview={{src: imagePath}}
+                                            />
+                                        </div>
+                                    </Tooltip>
+                                );
+                            })}
+                        </div>
+                    </Image.PreviewGroup>
+                )}
+                {siteFileList.length > 0 && hasMore && (
+                    <div style={{display: 'flex', justifyContent: 'center', marginTop: 16}}>
+                        <Button type="primary" onClick={stableFetchMore} disabled={!hasMore}>
+                            Lataa lisää
+                        </Button>
+                    </div>
+                )}
+            </div>
+            {previewVisible && showMetadata && (metadataEntries.length > 0 || (activeFile?.subjects?.length ?? 0) > 0) && (
+                <MetadataOverlay entries={metadataEntries} subjects={activeFile?.subjects}/>
+            )}
+            {selectedLocation && (
+                <LocationModal
+                    key={selectedLocation.id}
+                    open={locationModalOpen}
+                    location={selectedLocation}
+                    onClose={() => {
+                        setLocationModalOpen(false);
+                        setSelectedLocation(null);
+                    }}
+                />
+            )}
+        </Card>
     );
 }
