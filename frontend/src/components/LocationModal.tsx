@@ -89,7 +89,10 @@ export function LocationModal({open, location, onClose}: LocationModalProps) {
                                 </div>
                             }
                         >
-                            <LazyLocationMap position={position} />
+                            <LazyLocationMap
+                                key={`${position[0]},${position[1]}`}
+                                position={position}
+                            />
                         </Suspense>
                     ) : null
                 ) : (
