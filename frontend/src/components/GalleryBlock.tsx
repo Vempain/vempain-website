@@ -2,9 +2,10 @@ import {Button, Card, Empty, Image, Spin, Tooltip, Typography} from "antd";
 import {ShowSubjects} from "./ShowSubjects.tsx";
 import {fileAPI} from "../services";
 import {useCallback, useEffect, useMemo, useRef, useState} from "react";
-import type {MetadataEntry, WebSiteFile, WebSiteSubject} from "../models";
+import type {MetadataEntry, WebSiteFile, WebSiteLocation, WebSiteSubject} from "../models";
 import {MetadataOverlay} from "./MetadataOverlay.tsx";
 import {LocationBadge} from "./LocationBadge";
+import {LocationModal} from "./LocationModal";
 
 const THUMB_WIDTH = 250;
 const THUMB_HEIGHT = 166;
@@ -43,6 +44,8 @@ export function GalleryBlock({title, siteFileList, totalFiles, gallerySubjects, 
     const [previewVisible, setPreviewVisible] = useState<boolean>(false);
     const [previewIndex, setPreviewIndex] = useState<number>(0);
     const [showMetadata, setShowMetadata] = useState<boolean>(false);
+    const [locationModalOpen, setLocationModalOpen] = useState(false);
+    const [selectedLocation, setSelectedLocation] = useState<WebSiteLocation | null>(null);
     const prefetchingRef = useRef(false);
 
     const handlePreviewVisibleChange = (visible: boolean) => {
@@ -175,7 +178,17 @@ export function GalleryBlock({title, siteFileList, totalFiles, gallerySubjects, 
                                                                 setPreviewVisible(true);
                                                             }}
                                                     >
-                                                        <LocationBadge visible={hasLocation} />
+                                                        <LocationBadge
+                                                            visible={hasLocation}
+                                                            onClick={
+                                                                hasLocation
+                                                                    ? () => {
+                                                                        setSelectedLocation(siteFile.location!);
+                                                                        setLocationModalOpen(true);
+                                                                    }
+                                                                    : undefined
+                                                            }
+                                                        />
                                                         <Image
                                                                 src={thumbPath}
                                                                 alt={siteFile.filePath}
@@ -199,6 +212,13 @@ export function GalleryBlock({title, siteFileList, totalFiles, gallerySubjects, 
                 </div>
                 {previewVisible && showMetadata && (metadataEntries.length > 0 || (activeFile?.subjects?.length ?? 0) > 0) && (
                         <MetadataOverlay entries={metadataEntries} subjects={activeFile?.subjects}/>
+                )}
+                {selectedLocation && (
+                    <LocationModal
+                        open={locationModalOpen}
+                        location={selectedLocation}
+                        onClose={() => setLocationModalOpen(false)}
+                    />
                 )}
             </Card>
     );
