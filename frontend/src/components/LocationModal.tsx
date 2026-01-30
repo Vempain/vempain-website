@@ -2,7 +2,7 @@ import {CloseOutlined, ExpandOutlined, ShrinkOutlined} from '@ant-design/icons';
 import {Button, Modal, Space, Typography} from 'antd';
 import {lazy, Suspense, useMemo, useState} from 'react';
 import type {WebSiteLocation} from '../models';
-import {parseCoordinate, toCompass16} from '../tools';
+import {toCompass16} from '../tools';
 
 const LazyLocationMap = lazy(() => import('./LocationMap'));
 
@@ -14,16 +14,6 @@ interface LocationModalProps {
 
 export function LocationModal({open, location, onClose}: LocationModalProps) {
     const [isFullscreen, setIsFullscreen] = useState(false);
-
-    const latitude = useMemo(() => parseCoordinate(location.latitude, location.latitude_ref), [location.latitude, location.latitude_ref]);
-    const longitude = useMemo(() => parseCoordinate(location.longitude, location.longitude_ref), [location.longitude, location.longitude_ref]);
-
-    const position = useMemo<[number, number] | null>(() => {
-        if (latitude === null || longitude === null) {
-            return null;
-        }
-        return [latitude, longitude];
-    }, [latitude, longitude]);
 
     const compass = useMemo(() => toCompass16(location.direction), [location.direction]);
 
@@ -80,7 +70,7 @@ export function LocationModal({open, location, onClose}: LocationModalProps) {
             closable={false}
         >
             <div style={{flex: 1, minHeight: 300, borderRadius: 8, overflow: 'hidden'}}>
-                {position ? (
+                {location ? (
                     open ? (
                         <Suspense
                             fallback={
@@ -90,8 +80,9 @@ export function LocationModal({open, location, onClose}: LocationModalProps) {
                             }
                         >
                             <LazyLocationMap
-                                key={`${position[0]},${position[1]}`}
-                                position={position}
+                                key={`${location.longitude},${location.latitude}`}
+                                location={location}
+                                compass={compass}
                             />
                         </Suspense>
                     ) : null
@@ -103,7 +94,7 @@ export function LocationModal({open, location, onClose}: LocationModalProps) {
             </div>
 
             <div style={{background: 'rgba(0,0,0,0.03)', padding: 12, borderRadius: 8}}>
-                <Space direction="vertical" size={4} style={{width: '100%'}}>
+                <Space orientation={"vertical"} size={4} style={{width: '100%'}}>
                     {location.altitude != null && (
                         <Typography.Text>Altitude: {location.altitude} m</Typography.Text>
                     )}
@@ -139,9 +130,9 @@ export function LocationModal({open, location, onClose}: LocationModalProps) {
                         </Typography.Text>
                     )}
 
-                    {position && (
-                        <Typography.Text type="secondary">
-                            {position[0].toFixed(6)}, {position[1].toFixed(6)}
+                    {location && (
+                        <Typography.Text type={"secondary"}>
+                            {location.longitude}, {location.latitude}
                         </Typography.Text>
                     )}
                 </Space>
