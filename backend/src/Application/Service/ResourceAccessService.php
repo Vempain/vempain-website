@@ -22,6 +22,16 @@ class ResourceAccessService
             return null;
         }
 
+        if ($claims !== null && isset($claims['global_permission'])) {
+            $this->logger->debug('Claims contains global permission', [
+                'claims' => $claims,
+            ]);
+
+            if ($claims['global_permission']) {
+                return null;
+            }
+        }
+
         $this->logger->debug('Checking if ACL service is negative for ACL ID:', [
             'aclId' => $aclId,
             'claims' => $claims,

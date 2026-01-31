@@ -6,6 +6,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\QueryBuilder;
 use Psr\Log\LoggerInterface;
 use Vempain\VempainWebsite\Domain\Entity\WebSitePage;
+use Vempain\VempainWebsite\Domain\Entity\WebSiteUser;
 
 class WebSitePageRepository
 {
@@ -80,7 +81,11 @@ SQL;
             ->select('p')
             ->from(WebSitePage::class, 'p')
             ->leftJoin('Vempain\VempainWebsite\Domain\Entity\WebSiteAcl', 'a', 'WITH', 'a.aclId = p.aclId')
-            ->andWhere($qb->expr()->orX('a.aclId IS NULL', 'a.userId = :userId'))
+            ->andWhere($qb->expr()->orX(
+                'a.aclId IS NULL',
+                'a.userId = :userId',
+                'EXISTS (SELECT 1 FROM ' . WebSiteUser::class . ' wsu WHERE wsu.id = :userId AND wsu.globalPermission = TRUE)'
+            ))
             ->setParameter('userId', $userId)
             ->andWhere('p.filePath LIKE :dirPrefix')
             ->orderBy('p.filePath', 'ASC')
@@ -102,7 +107,11 @@ SQL;
             ->select('p')
             ->from(WebSitePage::class, 'p')
             ->leftJoin('Vempain\VempainWebsite\Domain\Entity\WebSiteAcl', 'a', 'WITH', 'a.aclId = p.aclId')
-            ->andWhere($qb->expr()->orX('a.aclId IS NULL', 'a.userId = :userId'))
+            ->andWhere($qb->expr()->orX(
+                'a.aclId IS NULL',
+                'a.userId = :userId',
+                'EXISTS (SELECT 1 FROM ' . WebSiteUser::class . ' wsu WHERE wsu.id = :userId AND wsu.globalPermission = TRUE)'
+            ))
             ->setParameter('userId', $userId);
 
         $this->applyFilePathPrefixFilter($qb, $pathPrefix);
@@ -158,7 +167,11 @@ SQL;
             ->select('COUNT(p.id)')
             ->from(WebSitePage::class, 'p')
             ->leftJoin('Vempain\VempainWebsite\Domain\Entity\WebSiteAcl', 'a', 'WITH', 'a.aclId = p.aclId')
-            ->andWhere($qb->expr()->orX('a.aclId IS NULL', 'a.userId = :userId'))
+            ->andWhere($qb->expr()->orX(
+                'a.aclId IS NULL',
+                'a.userId = :userId',
+                'EXISTS (SELECT 1 FROM ' . WebSiteUser::class . ' wsu WHERE wsu.id = :userId AND wsu.globalPermission = TRUE)'
+            ))
             ->setParameter('userId', $userId);
 
         $this->applyFilePathPrefixFilter($qb, $pathPrefix);

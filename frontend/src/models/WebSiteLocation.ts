@@ -1,8 +1,8 @@
 export interface WebSiteLocation {
     id: number;
-    latitude: string;
+    latitude: number;
     latitude_ref: string;
-    longitude: string;
+    longitude: number;
     longitude_ref: string;
     altitude?: number | null;
     direction?: number | null;

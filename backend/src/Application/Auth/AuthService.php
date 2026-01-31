@@ -26,7 +26,7 @@ class AuthService
             return null;
         }
 
-        $token = $this->jwtService->issueToken($user->getId(), $user->getUsername());
+        $token = $this->jwtService->issueToken($user->getId(), $user->getUsername(), $user->getGlobalPermission());
 
         return [
             'token' => $token,

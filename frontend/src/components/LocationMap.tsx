@@ -1,42 +1,73 @@
-import {MapContainer, Marker, TileLayer, useMap} from 'react-leaflet';
-import {useEffect} from 'react';
+import {MapContainer, Marker, Popup, TileLayer} from 'react-leaflet';
+import type {WebSiteLocation} from "../models";
+import {Space, Typography} from "antd";
 
 interface LocationMapProps {
-    position: [number, number];
+    location: WebSiteLocation;
     zoom?: number;
+    compass?: string | null;
 }
 
-function MapSizeInvalidator({position}: {position: [number, number]}) {
-    const map = useMap();
+export default function LocationMap({location, zoom = 15, compass}: LocationMapProps) {
+    const position = [location.latitude, location.longitude] as [number, number];
 
-    useEffect(() => {
-        // Leaflet needs this when the container size changes (e.g. modal open/close, fullscreen)
-        // or when the map is mounted in a flexbox container.
-        const t = window.setTimeout(() => {
-            map.invalidateSize();
-            map.setView(position);
-        }, 0);
-
-        return () => window.clearTimeout(t);
-    }, [map, position]);
-
-    return null;
-}
-
-export default function LocationMap({position, zoom = 15}: LocationMapProps) {
     return (
-        <MapContainer
-            center={position}
-            zoom={zoom}
-            style={{width: '100%', height: '100%'}}
-            scrollWheelZoom
-        >
-            <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            />
-            <Marker position={position} />
-            <MapSizeInvalidator position={position} />
-        </MapContainer>
+            <MapContainer
+                    center={position}
+                    zoom={zoom}
+                    style={{width: '100%', height: '100%'}}
+                    scrollWheelZoom
+            >
+                <TileLayer
+                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                <Marker position={position}>
+                    <Popup>
+                        <Space orientation={"vertical"} size={4} style={{width: '100%'}}>
+                            {location.altitude != null && (
+                                    <Typography.Text>Altitude: {location.altitude} m</Typography.Text>
+                            )}
+                            {location.direction != null && (
+                                    <Typography.Text>
+                                        Direction: {location.direction} ({compass ?? '?'})
+                                    </Typography.Text>
+                            )}
+                            {location.satellite_count != null && (
+                                    <Typography.Text>Satellites: {location.satellite_count}</Typography.Text>
+                            )}
+
+                            {(location.country || location.state || location.city) && (
+                                    <Typography.Text>
+                                        {[
+                                            location.country,
+                                            location.state,
+                                            location.city,
+                                        ]
+                                                .filter(Boolean)
+                                                .join(', ')}
+                                    </Typography.Text>
+                            )}
+
+                            {(location.street || location.sub_location) && (
+                                    <Typography.Text>
+                                        {[
+                                            location.street,
+                                            location.sub_location,
+                                        ]
+                                                .filter(Boolean)
+                                                .join(', ')}
+                                    </Typography.Text>
+                            )}
+
+                            {location && (
+                                    <Typography.Text type={"secondary"}>
+                                        {location.longitude}, {location.latitude}
+                                    </Typography.Text>
+                            )}
+                        </Space>
+                    </Popup>
+                </Marker>
+            </MapContainer>
     );
 }

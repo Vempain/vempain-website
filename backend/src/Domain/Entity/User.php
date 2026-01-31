@@ -19,6 +19,9 @@ class User
     #[ORM\Column(name: 'password_hash', type: 'string', length: 255)]
     private string $passwordHash;
 
+    #[ORM\Column(name: 'global_permission', type: 'boolean', length: 255)]
+    private bool $globalPermission;
+
     public function getId(): int
     {
         return $this->id;
@@ -32,5 +35,10 @@ class User
     public function getPasswordHash(): string
     {
         return $this->passwordHash;
+    }
+
+    public function getGlobalPermission(): bool
+    {
+        return $this->globalPermission;
     }
 }

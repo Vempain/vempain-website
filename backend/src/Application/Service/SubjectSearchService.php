@@ -317,14 +317,15 @@ SELECT COUNT(*) FROM (
     JOIN web_site_page_subject wps ON wps.page_id = p.id
     LEFT JOIN web_site_acl a
         ON a.acl_id = p.acl_id
-    WHERE (a.user_id = :user_id
-       OR a.acl_id IS NULL)
+    WHERE (a.user_id = :userId
+       OR a.acl_id IS NULL
+       OR EXISTS (SELECT 1 FROM web_site_users wsu WHERE wsu.id = :userId AND wsu.global_permission = TRUE))
       AND wps.subject_id IN (:subject_ids)
     GROUP BY p.id
     HAVING COUNT(DISTINCT wps.subject_id) = :need
 ) t
 SQL;
-        $params = ['user_id' => $userId, 'subject_ids' => $subjectIds, 'need' => count($subjectIds)];
+        $params = ['userId' => $userId, 'subject_ids' => $subjectIds, 'need' => count($subjectIds)];
         $types = ['user_id' => ParameterType::INTEGER, 'subject_ids' => ArrayParameterType::INTEGER, 'need' => ParameterType::INTEGER];
         $total = (int)$conn->executeQuery($countSql, $params, $types)->fetchOne();
 
@@ -335,8 +336,9 @@ FROM web_site_page p
 JOIN web_site_page_subject wps ON wps.page_id = p.id
 LEFT JOIN web_site_acl a
     ON a.acl_id = p.acl_id
-WHERE (a.user_id = :user_id
-   OR a.acl_id IS NULL)
+WHERE (a.user_id = :userId
+   OR a.acl_id IS NULL
+   OR EXISTS (SELECT 1 FROM web_site_users wsu WHERE wsu.id = :userId AND wsu.global_permission = TRUE))
   AND wps.subject_id IN (:subject_ids)
 GROUP BY p.id
 HAVING COUNT(DISTINCT wps.subject_id) = :need
@@ -396,14 +398,15 @@ SELECT COUNT(*) FROM (
     JOIN web_site_gallery_subject wgs ON wgs.gallery_id = g.id
     LEFT JOIN web_site_acl a
         ON a.acl_id = g.acl_id
-    WHERE (a.user_id = :user_id
-       OR a.acl_id IS NULL)
+    WHERE (a.user_id = :userId
+       OR a.acl_id IS NULL
+       OR EXISTS (SELECT 1 FROM web_site_users wsu WHERE wsu.id = :userId AND wsu.global_permission = TRUE))
       AND wgs.subject_id IN (:subject_ids)
     GROUP BY g.id
     HAVING COUNT(DISTINCT wgs.subject_id) = :need
 ) t
 SQL;
-        $params = ['user_id' => $userId, 'subject_ids' => $subjectIds, 'need' => count($subjectIds)];
+        $params = ['userId' => $userId, 'subject_ids' => $subjectIds, 'need' => count($subjectIds)];
         $types = ['user_id' => ParameterType::INTEGER, 'subject_ids' => ArrayParameterType::INTEGER, 'need' => ParameterType::INTEGER];
         $total = (int)$conn->executeQuery($countSql, $params, $types)->fetchOne();
 
@@ -414,8 +417,9 @@ FROM web_site_gallery g
 JOIN web_site_gallery_subject wgs ON wgs.gallery_id = g.id
 LEFT JOIN web_site_acl a
     ON a.acl_id = g.acl_id
-WHERE (a.user_id = :user_id
-   OR a.acl_id IS NULL)
+WHERE (a.user_id = :userId
+   OR a.acl_id IS NULL
+   OR EXISTS (SELECT 1 FROM web_site_users wsu WHERE wsu.id = :userId AND wsu.global_permission = TRUE))
   AND wgs.subject_id IN (:subject_ids)
 GROUP BY g.id
 HAVING COUNT(DISTINCT wgs.subject_id) = :need
@@ -476,14 +480,15 @@ SELECT COUNT(*) FROM (
     JOIN web_site_file_subject wfs ON wfs.file_id = f.id
     LEFT JOIN web_site_acl a
         ON a.acl_id = f.acl_id
-    WHERE (a.user_id = :user_id
-       OR a.acl_id IS NULL)
+    WHERE (a.user_id = :userId
+       OR a.acl_id IS NULL
+       OR EXISTS (SELECT 1 FROM web_site_users wsu WHERE wsu.id = :userId AND wsu.global_permission = TRUE))
       AND wfs.subject_id IN (:subject_ids)
     GROUP BY f.id
     HAVING COUNT(DISTINCT wfs.subject_id) = :need
 ) t
 SQL;
-        $params = ['user_id' => $userId, 'subject_ids' => $subjectIds, 'need' => count($subjectIds)];
+        $params = ['userId' => $userId, 'subject_ids' => $subjectIds, 'need' => count($subjectIds)];
         $types = ['user_id' => ParameterType::INTEGER, 'subject_ids' => ArrayParameterType::INTEGER, 'need' => ParameterType::INTEGER];
         $total = (int)$conn->executeQuery($countSql, $params, $types)->fetchOne();
 
@@ -494,8 +499,9 @@ FROM web_site_file f
 JOIN web_site_file_subject wfs ON wfs.file_id = f.id
 LEFT JOIN web_site_acl a
     ON a.acl_id = f.acl_id
-WHERE (a.user_id = :user_id
-   OR a.acl_id IS NULL)
+WHERE (a.user_id = :userId
+   OR a.acl_id IS NULL
+   OR EXISTS (SELECT 1 FROM web_site_users wsu WHERE wsu.id = :userId AND wsu.global_permission = TRUE))
   AND wfs.subject_id IN (:subject_ids)
 GROUP BY f.id
 HAVING COUNT(DISTINCT wfs.subject_id) = :need
