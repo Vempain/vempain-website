@@ -4,6 +4,7 @@ namespace Vempain\VempainWebsite\Domain\Repository;
 
 use Doctrine\ORM\EntityManagerInterface;
 use Vempain\VempainWebsite\Domain\Entity\WebSiteFile;
+use Vempain\VempainWebsite\Domain\Entity\WebSiteUser;
 
 class WebSiteFileRepository
 {
@@ -21,7 +22,7 @@ class WebSiteFileRepository
             ->andWhere($qb->expr()->orX(
                 'f.aclId IS NULL',
                 'a.userId = :userId',
-                'EXISTS (SELECT 1 FROM web_site_user wsu WHERE wsu.user_id = :userId AND wsu.global_permission = TRUE)'
+                'EXISTS (SELECT 1 FROM ' . WebSiteUser::class . ' wsu WHERE wsu.id = :userId AND wsu.globalPermission = TRUE)'
             ))
             ->setParameter('userId', $userId)
             ->orderBy('f.id', 'DESC');
@@ -46,7 +47,7 @@ class WebSiteFileRepository
             ->andWhere($qb->expr()->orX(
                 'a.aclId IS NULL',
                 'a.userId = :userId',
-                'EXISTS (SELECT 1 FROM web_site_user wsu WHERE wsu.user_id = :userId AND wsu.global_permission = TRUE)'
+                'EXISTS (SELECT 1 FROM ' . WebSiteUser::class . ' wsu WHERE wsu.id = :userId AND wsu.globalPermission = TRUE)'
             ))
             ->setParameter('userId', $userId)
             ->andWhere('f.filePath = :filePath')

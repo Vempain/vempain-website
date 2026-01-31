@@ -319,7 +319,7 @@ SELECT COUNT(*) FROM (
         ON a.acl_id = p.acl_id
     WHERE (a.user_id = :userId
        OR a.acl_id IS NULL
-       OR EXISTS (SELECT 1 FROM web_site_user wsu WHERE wsu.user_id = :userId AND wsu.global_permission = TRUE))
+       OR EXISTS (SELECT 1 FROM web_site_users wsu WHERE wsu.id = :userId AND wsu.global_permission = TRUE))
       AND wps.subject_id IN (:subject_ids)
     GROUP BY p.id
     HAVING COUNT(DISTINCT wps.subject_id) = :need
@@ -338,7 +338,7 @@ LEFT JOIN web_site_acl a
     ON a.acl_id = p.acl_id
 WHERE (a.user_id = :userId
    OR a.acl_id IS NULL
-   OR EXISTS (SELECT 1 FROM web_site_user wsu WHERE wsu.user_id = :userId AND wsu.global_permission = TRUE))
+   OR EXISTS (SELECT 1 FROM web_site_users wsu WHERE wsu.id = :userId AND wsu.global_permission = TRUE))
   AND wps.subject_id IN (:subject_ids)
 GROUP BY p.id
 HAVING COUNT(DISTINCT wps.subject_id) = :need
@@ -400,7 +400,7 @@ SELECT COUNT(*) FROM (
         ON a.acl_id = g.acl_id
     WHERE (a.user_id = :userId
        OR a.acl_id IS NULL
-       OR EXISTS (SELECT 1 FROM web_site_user wsu WHERE wsu.user_id = :userId AND wsu.global_permission = TRUE))
+       OR EXISTS (SELECT 1 FROM web_site_users wsu WHERE wsu.id = :userId AND wsu.global_permission = TRUE))
       AND wgs.subject_id IN (:subject_ids)
     GROUP BY g.id
     HAVING COUNT(DISTINCT wgs.subject_id) = :need
@@ -419,7 +419,7 @@ LEFT JOIN web_site_acl a
     ON a.acl_id = g.acl_id
 WHERE (a.user_id = :userId
    OR a.acl_id IS NULL
-   OR EXISTS (SELECT 1 FROM web_site_user wsu WHERE wsu.user_id = :userId AND wsu.global_permission = TRUE))
+   OR EXISTS (SELECT 1 FROM web_site_users wsu WHERE wsu.id = :userId AND wsu.global_permission = TRUE))
   AND wgs.subject_id IN (:subject_ids)
 GROUP BY g.id
 HAVING COUNT(DISTINCT wgs.subject_id) = :need
@@ -482,7 +482,7 @@ SELECT COUNT(*) FROM (
         ON a.acl_id = f.acl_id
     WHERE (a.user_id = :userId
        OR a.acl_id IS NULL
-       OR EXISTS (SELECT 1 FROM web_site_user wsu WHERE wsu.user_id = :userId AND wsu.global_permission = TRUE))
+       OR EXISTS (SELECT 1 FROM web_site_users wsu WHERE wsu.id = :userId AND wsu.global_permission = TRUE))
       AND wfs.subject_id IN (:subject_ids)
     GROUP BY f.id
     HAVING COUNT(DISTINCT wfs.subject_id) = :need
@@ -501,7 +501,7 @@ LEFT JOIN web_site_acl a
     ON a.acl_id = f.acl_id
 WHERE (a.user_id = :userId
    OR a.acl_id IS NULL
-   OR EXISTS (SELECT 1 FROM web_site_user wsu WHERE wsu.user_id = :userId AND wsu.global_permission = TRUE))
+   OR EXISTS (SELECT 1 FROM web_site_users wsu WHERE wsu.id = :userId AND wsu.global_permission = TRUE))
   AND wfs.subject_id IN (:subject_ids)
 GROUP BY f.id
 HAVING COUNT(DISTINCT wfs.subject_id) = :need

@@ -83,7 +83,7 @@ LEFT JOIN web_site_acl a
        ON a.acl_id = f.acl_id
 WHERE (a.user_id = :userId
    OR a.acl_id IS NULL
-   OR EXISTS (SELECT 1 FROM web_site_user wsu WHERE wsu.user_id = :userId AND wsu.global_permission = TRUE))
+   OR EXISTS (SELECT 1 FROM web_site_users wsu WHERE wsu.id = :userId AND wsu.global_permission = TRUE))
    AND g.gallery_id = :externalGalleryId
 SQL;
 
@@ -131,7 +131,7 @@ LEFT JOIN web_site_acl a
        ON a.acl_id = g.acl_id
 WHERE (a.user_id = :userId
    OR a.acl_id IS NULL
-   OR EXISTS (SELECT 1 FROM web_site_user wsu WHERE wsu.user_id = :userId AND wsu.global_permission = TRUE))
+   OR EXISTS (SELECT 1 FROM web_site_users wsu WHERE wsu.id = :userId AND wsu.global_permission = TRUE))
    AND g.gallery_id = :externalGalleryId
 LIMIT 1
 SQL;

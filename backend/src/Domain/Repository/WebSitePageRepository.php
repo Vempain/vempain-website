@@ -6,6 +6,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\QueryBuilder;
 use Psr\Log\LoggerInterface;
 use Vempain\VempainWebsite\Domain\Entity\WebSitePage;
+use Vempain\VempainWebsite\Domain\Entity\WebSiteUser;
 
 class WebSitePageRepository
 {
@@ -83,7 +84,7 @@ SQL;
             ->andWhere($qb->expr()->orX(
                 'a.aclId IS NULL',
                 'a.userId = :userId',
-                'EXISTS (SELECT 1 FROM web_site_user wsu WHERE wsu.user_id = :userId AND wsu.global_permission = TRUE)'
+                'EXISTS (SELECT 1 FROM ' . WebSiteUser::class . ' wsu WHERE wsu.id = :userId AND wsu.globalPermission = TRUE)'
             ))
             ->setParameter('userId', $userId)
             ->andWhere('p.filePath LIKE :dirPrefix')
@@ -109,7 +110,7 @@ SQL;
             ->andWhere($qb->expr()->orX(
                 'a.aclId IS NULL',
                 'a.userId = :userId',
-                'EXISTS (SELECT 1 FROM web_site_user wsu WHERE wsu.user_id = :userId AND wsu.global_permission = TRUE)'
+                'EXISTS (SELECT 1 FROM ' . WebSiteUser::class . ' wsu WHERE wsu.id = :userId AND wsu.globalPermission = TRUE)'
             ))
             ->setParameter('userId', $userId);
 
@@ -169,7 +170,7 @@ SQL;
             ->andWhere($qb->expr()->orX(
                 'a.aclId IS NULL',
                 'a.userId = :userId',
-                'EXISTS (SELECT 1 FROM web_site_user wsu WHERE wsu.user_id = :userId AND wsu.global_permission = TRUE)'
+                'EXISTS (SELECT 1 FROM ' . WebSiteUser::class . ' wsu WHERE wsu.id = :userId AND wsu.globalPermission = TRUE)'
             ))
             ->setParameter('userId', $userId);
 
