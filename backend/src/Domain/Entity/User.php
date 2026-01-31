@@ -37,7 +37,7 @@ class User
         return $this->passwordHash;
     }
 
-    public function getGlobalPermission(): string
+    public function getGlobalPermission(): bool
     {
         return $this->globalPermission;
     }

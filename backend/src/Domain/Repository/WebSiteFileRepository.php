@@ -18,7 +18,11 @@ class WebSiteFileRepository
             ->select('f')
             ->from(WebSiteFile::class, 'f')
             ->leftJoin('Vempain\VempainWebsite\Domain\Entity\WebSiteAcl', 'a', 'WITH', 'a.aclId = f.aclId')
-            ->andWhere($qb->expr()->orX('f.aclId IS NULL', 'a.userId = :userId'))
+            ->andWhere($qb->expr()->orX(
+                'f.aclId IS NULL',
+                'a.userId = :userId',
+                'EXISTS (SELECT 1 FROM web_site_user wsu WHERE wsu.user_id = :userId AND wsu.global_permission = TRUE)'
+            ))
             ->setParameter('userId', $userId)
             ->orderBy('f.id', 'DESC');
 
@@ -39,7 +43,11 @@ class WebSiteFileRepository
             ->select('f')
             ->from(WebSiteFile::class, 'f')
             ->leftJoin('Vempain\VempainWebsite\Domain\Entity\WebSiteAcl', 'a', 'WITH', 'a.aclId = f.aclId')
-            ->andWhere($qb->expr()->orX('a.aclId IS NULL', 'a.userId = :userId'))
+            ->andWhere($qb->expr()->orX(
+                'a.aclId IS NULL',
+                'a.userId = :userId',
+                'EXISTS (SELECT 1 FROM web_site_user wsu WHERE wsu.user_id = :userId AND wsu.global_permission = TRUE)'
+            ))
             ->setParameter('userId', $userId)
             ->andWhere('f.filePath = :filePath')
             ->setParameter('filePath', $filePath);

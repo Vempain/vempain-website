@@ -27,10 +27,11 @@ class JwtService
 
     public function refreshToken(array $claims): string
     {
-        return $this->issueToken($claims['sub'], $claims['username']);
+        $globalPermission = !empty($claims['global_permission']);
+        return $this->issueToken($claims['sub'], $claims['username'], $globalPermission);
     }
 
-    public function issueToken(int $userId, string $username): string
+    public function issueToken(int $userId, string $username, bool $globalPermission): string
     {
         $secret = $this->resolveSecret();
 
@@ -43,6 +44,7 @@ class JwtService
         $payload = [
             'sub' => $userId,
             'username' => $username,
+            'global_permission' => $globalPermission,
             'iat' => $issuedAt,
             'exp' => $issuedAt + $ttl,
         ];

@@ -80,7 +80,11 @@ SQL;
             ->select('p')
             ->from(WebSitePage::class, 'p')
             ->leftJoin('Vempain\VempainWebsite\Domain\Entity\WebSiteAcl', 'a', 'WITH', 'a.aclId = p.aclId')
-            ->andWhere($qb->expr()->orX('a.aclId IS NULL', 'a.userId = :userId'))
+            ->andWhere($qb->expr()->orX(
+                'a.aclId IS NULL',
+                'a.userId = :userId',
+                'EXISTS (SELECT 1 FROM web_site_user wsu WHERE wsu.user_id = :userId AND wsu.global_permission = TRUE)'
+            ))
             ->setParameter('userId', $userId)
             ->andWhere('p.filePath LIKE :dirPrefix')
             ->orderBy('p.filePath', 'ASC')
@@ -102,7 +106,11 @@ SQL;
             ->select('p')
             ->from(WebSitePage::class, 'p')
             ->leftJoin('Vempain\VempainWebsite\Domain\Entity\WebSiteAcl', 'a', 'WITH', 'a.aclId = p.aclId')
-            ->andWhere($qb->expr()->orX('a.aclId IS NULL', 'a.userId = :userId'))
+            ->andWhere($qb->expr()->orX(
+                'a.aclId IS NULL',
+                'a.userId = :userId',
+                'EXISTS (SELECT 1 FROM web_site_user wsu WHERE wsu.user_id = :userId AND wsu.global_permission = TRUE)'
+            ))
             ->setParameter('userId', $userId);
 
         $this->applyFilePathPrefixFilter($qb, $pathPrefix);
@@ -158,7 +166,11 @@ SQL;
             ->select('COUNT(p.id)')
             ->from(WebSitePage::class, 'p')
             ->leftJoin('Vempain\VempainWebsite\Domain\Entity\WebSiteAcl', 'a', 'WITH', 'a.aclId = p.aclId')
-            ->andWhere($qb->expr()->orX('a.aclId IS NULL', 'a.userId = :userId'))
+            ->andWhere($qb->expr()->orX(
+                'a.aclId IS NULL',
+                'a.userId = :userId',
+                'EXISTS (SELECT 1 FROM web_site_user wsu WHERE wsu.user_id = :userId AND wsu.global_permission = TRUE)'
+            ))
             ->setParameter('userId', $userId);
 
         $this->applyFilePathPrefixFilter($qb, $pathPrefix);
