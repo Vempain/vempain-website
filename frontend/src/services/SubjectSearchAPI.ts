@@ -40,8 +40,14 @@ class SubjectSearchAPI extends AbstractAPI {
             direction: params.direction ?? 'ASC',
         };
 
-        const response = await this.axiosInstance.post<SubjectSearchResponse>('/subjects/search', payload);
-        return response.data;
+        const response = await this.request<SubjectSearchResponse>('/subjects/search', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+        });
+        if (response.error) {
+            throw new Error(response.error);
+        }
+        return response.data!;
     }
 }
 

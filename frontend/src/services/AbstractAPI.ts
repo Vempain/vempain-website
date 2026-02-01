@@ -3,6 +3,21 @@ import Axios, {type AxiosInstance, isAxiosError, type Method} from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
 
+// Session expiry event emitter
+type SessionExpiredCallback = () => void;
+const sessionExpiredCallbacks: Set<SessionExpiredCallback> = new Set();
+
+export function onSessionExpired(callback: SessionExpiredCallback): () => void {
+    sessionExpiredCallbacks.add(callback);
+    return () => {
+        sessionExpiredCallbacks.delete(callback);
+    };
+}
+
+function notifySessionExpired(): void {
+    sessionExpiredCallbacks.forEach(cb => cb());
+}
+
 export abstract class AbstractAPI {
     protected axiosInstance: AxiosInstance;
     protected basePath: string;
@@ -81,9 +96,10 @@ export abstract class AbstractAPI {
                 // Try to extract server-provided error message
                 const resp = err.response;
                 if (resp) {
-                    // If 401, clear token
+                    // If 401, clear token and notify listeners
                     if (resp.status === 401) {
                         this.setToken(null);
+                        notifySessionExpired();
                     }
                     // resp.data might be a object with { error }
                     const serverData: unknown = resp.data;

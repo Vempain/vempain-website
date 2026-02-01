@@ -18,8 +18,11 @@ class GalleryAPI extends AbstractAPI {
         if (params.direction) searchParams.set('direction', params.direction);
         if (params.search) searchParams.set('search', params.search);
         const query = searchParams.toString();
-        const response = await this.axiosInstance.get<PagedResponse<WebSiteFile>>(`/${galleryId}/files${query ? `?${query}` : ''}`);
-        return response.data;
+        const response = await this.request<PagedResponse<WebSiteFile>>(`/${galleryId}/files${query ? `?${query}` : ''}`);
+        if (response.error) {
+            throw new Error(response.error);
+        }
+        return response.data!;
     }
 }
 
