@@ -2,11 +2,13 @@
 
 namespace Vempain\VempainWebsite\Application\Auth;
 
+use Firebase\JWT\ExpiredException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Psr\Log\LoggerInterface;
+use Slim\Psr7\Response;
 
 class JwtMiddleware implements MiddlewareInterface
 {
@@ -29,15 +31,34 @@ class JwtMiddleware implements MiddlewareInterface
 
         $token = $this->extractToken($request);
         $claims = null;
+        $tokenExpired = false;
+
         if ($token !== null) {
             $this->logger->debug("Token is not null, validating");
             try {
                 // Try to validate token; if invalid, swallow error and treat as unauthenticated.
                 $claims = $this->jwtService->validate($token);
-            } catch (\Throwable) {
-                // Invalid token — do not block the request here. Leave $claims as null.
+            } catch (ExpiredException $e) {
+                // Token is expired - we need to return 401 and clear the cookie
+                $this->logger->debug("Token is expired", ['error' => $e->getMessage()]);
+                $tokenExpired = true;
+            } catch (\Throwable $e) {
+                // Other invalid token errors — do not block the request here. Leave $claims as null.
+                $this->logger->debug("Token validation failed", ['error' => $e->getMessage()]);
                 $claims = null;
             }
+        }
+
+        // If token was present but expired, return 401 with cookie clearing
+        if ($tokenExpired) {
+            $this->logger->debug("Returning 401 for expired token");
+            $response = new Response(401);
+            $response->getBody()->write(json_encode([
+                'error' => 'Session expired',
+                'code' => 'SESSION_EXPIRED'
+            ]));
+            $response = $response->withHeader('Content-Type', 'application/json');
+            return $this->clearAuthCookie($response);
         }
 
         if ($claims !== null) {
@@ -89,6 +110,27 @@ class JwtMiddleware implements MiddlewareInterface
             'Path=/',
             'HttpOnly',
             'SameSite=Lax',
+        ];
+
+        if (!empty($_ENV['COOKIE_SECURE']) && $_ENV['COOKIE_SECURE'] === 'true') {
+            $cookieParts[] = 'Secure';
+        }
+
+        if (!empty($_ENV['COOKIE_DOMAIN'])) {
+            $cookieParts[] = 'Domain=' . $_ENV['COOKIE_DOMAIN'];
+        }
+
+        return $response->withAddedHeader('Set-Cookie', implode('; ', $cookieParts));
+    }
+
+    private function clearAuthCookie(ResponseInterface $response): ResponseInterface
+    {
+        $cookieParts = [
+            'jwt=deleted',
+            'Path=/',
+            'HttpOnly',
+            'SameSite=Lax',
+            'Expires=Thu, 01 Jan 1970 00:00:00 GMT',
         ];
 
         if (!empty($_ENV['COOKIE_SECURE']) && $_ENV['COOKIE_SECURE'] === 'true') {

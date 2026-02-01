@@ -54,7 +54,9 @@ $containerBuilder->addDefinitions([
         $dsn = sprintf('pgsql:host=%s;port=%d;dbname=%s', $params['host'], $params['port'], $params['dbname']);
         $pdo = new PDO($dsn, $params['user'], $params['password']);
         $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        $pdo->exec(sprintf('SET search_path TO %s', $params['schema'] ?? 'public'));
+        /** @var array<string, mixed> $params */
+        $schema = isset($params['schema']) && is_string($params['schema']) ? $params['schema'] : 'public';
+        $pdo->exec(sprintf('SET search_path TO %s', $schema));
 
         return $pdo;
     },
@@ -102,11 +104,12 @@ $containerBuilder->addDefinitions([
     },
     AclService::class => DI\autowire(AclService::class),
     FileService::class => function ($container) {
+        $webRoot = getenv('VEMPAIN_WEBSITE_WEB_ROOT');
         return new FileService(
             $container->get(WebSiteFileRepository::class),
             $container->get(WebSiteSubjectRepository::class),
             $container->get(SubjectTransformer::class),
-            getenv('VEMPAIN_WEBSITE_WEB_ROOT') ?? '/files',
+            $webRoot !== false ? $webRoot : '/files',
             $container->get(ResourceAccessService::class),
             $container->get(LoggerInterface::class)
         );
@@ -146,14 +149,15 @@ $app->add(
     new ErrorMiddleware(
         $app->getCallableResolver(),
         $app->getResponseFactory(),
-        (bool)(getenv('APP_DEBUG') ?? false),
+        (bool)(getenv('APP_DEBUG') ?: false),
         true,
         true
     )
 );
-$app->add(CorsMiddleware::class);
 $app->add(ResourceResolverMiddleware::class);
 $app->add(JwtMiddleware::class);
+// CorsMiddleware must be added last so it executes first and adds CORS headers to all responses
+$app->add(CorsMiddleware::class);
 
 Routes::register($app);
 

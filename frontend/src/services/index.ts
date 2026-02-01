@@ -1,4 +1,4 @@
-export {AbstractAPI} from './AbstractAPI';
+export {AbstractAPI, onSessionExpired} from './AbstractAPI';
 export {authenticationAPI} from './AuthenticationAPI';
 export {fileAPI} from './FileAPI'
 export {galleryAPI} from './GalleryAPI';
