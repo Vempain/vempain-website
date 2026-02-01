@@ -1,4 +1,4 @@
-import {type ReactNode, useEffect, useState} from 'react';
+import {type ReactNode, useEffect, useRef, useState} from 'react';
 import {message} from 'antd';
 import {AuthContext} from './AuthContextInstance';
 import {authenticationAPI, onSessionExpired} from "../services";
@@ -7,17 +7,22 @@ export function AuthProvider({children}: { children: ReactNode }) {
     const [isAuthenticated, setIsAuthenticated] = useState(() => authenticationAPI.isAuthenticated());
     const [loginVisible, setLoginVisible] = useState(false);
 
-    // Subscribe to session expiry events
+    // Use ref to track auth state for the callback to avoid stale closure
+    const isAuthenticatedRef = useRef(isAuthenticated);
     useEffect(() => {
-        const unsubscribe = onSessionExpired(() => {
+        isAuthenticatedRef.current = isAuthenticated;
+    }, [isAuthenticated]);
+
+    // Subscribe to session expiry events - only once on mount
+    useEffect(() => {
+        return onSessionExpired(() => {
             // Only show message if user was previously authenticated
-            if (isAuthenticated) {
+            if (isAuthenticatedRef.current) {
                 setIsAuthenticated(false);
                 message.warning('Your session has expired. Please log in again.');
             }
         });
-        return unsubscribe;
-    }, [isAuthenticated]);
+    }, []);
 
     const login = async (username: string, password: string) => {
         const response = await authenticationAPI.login(username, password);
