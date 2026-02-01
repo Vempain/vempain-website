@@ -1,6 +1,6 @@
 import {CloseOutlined, ExpandOutlined, ShrinkOutlined} from '@ant-design/icons';
 import {Button, Modal, Space, Typography} from 'antd';
-import {lazy, Suspense, useMemo, useState} from 'react';
+import {lazy, Suspense, useEffect, useMemo, useState} from 'react';
 import type {WebSiteLocation} from '../models';
 import {toCompass16} from '../tools';
 
@@ -14,8 +14,28 @@ interface LocationModalProps {
 
 export function LocationModal({open, location, onClose}: LocationModalProps) {
     const [isFullscreen, setIsFullscreen] = useState(false);
+    // Track if map should be mounted - delayed slightly to ensure clean remount
+    const [mapMounted, setMapMounted] = useState(false);
+    // Track a unique key for forcing complete map remount
+    const [mapKey, setMapKey] = useState(0);
 
     const compass = useMemo(() => toCompass16(location.direction), [location.direction]);
+
+    // When modal opens, delay map mounting slightly to ensure DOM is ready
+    // When modal closes, unmount map immediately
+    useEffect(() => {
+        if (open) {
+            // Generate new key to force remount
+            setMapKey(prev => prev + 1);
+            // Small delay to ensure modal animation completes
+            const timer = setTimeout(() => {
+                setMapMounted(true);
+            }, 50);
+            return () => clearTimeout(timer);
+        } else {
+            setMapMounted(false);
+        }
+    }, [open]);
 
     const bodyStyle = useMemo(() => {
         const height = isFullscreen ? 'calc(100vh - 110px)' : '70vh';
@@ -71,7 +91,7 @@ export function LocationModal({open, location, onClose}: LocationModalProps) {
         >
             <div style={{flex: 1, minHeight: 300, borderRadius: 8, overflow: 'hidden'}}>
                 {location ? (
-                    open ? (
+                    mapMounted ? (
                         <Suspense
                             fallback={
                                 <div style={{height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
@@ -80,12 +100,16 @@ export function LocationModal({open, location, onClose}: LocationModalProps) {
                             }
                         >
                             <LazyLocationMap
-                                key={`${location.longitude},${location.latitude}`}
+                                key={`map-${mapKey}-${location.longitude}-${location.latitude}`}
                                 location={location}
                                 compass={compass}
                             />
                         </Suspense>
-                    ) : null
+                    ) : (
+                        <div style={{height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                            <Typography.Text type="secondary">Loading map</Typography.Text>
+                        </div>
+                    )
                 ) : (
                     <div style={{height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
                         <Typography.Text type="secondary">No coordinates available</Typography.Text>
@@ -94,7 +118,7 @@ export function LocationModal({open, location, onClose}: LocationModalProps) {
             </div>
 
             <div style={{background: 'rgba(0,0,0,0.03)', padding: 12, borderRadius: 8}}>
-                <Space orientation={"vertical"} size={4} style={{width: '100%'}}>
+                <Space direction={"vertical"} size={4} style={{width: '100%'}}>
                     {location.altitude != null && (
                         <Typography.Text>Altitude: {location.altitude} m</Typography.Text>
                     )}

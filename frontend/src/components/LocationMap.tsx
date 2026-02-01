@@ -1,6 +1,7 @@
-import {MapContainer, Marker, Popup, TileLayer} from 'react-leaflet';
+import {MapContainer, Marker, Popup, TileLayer, useMap} from 'react-leaflet';
 import type {WebSiteLocation} from "../models";
 import {Space, Typography} from "antd";
+import {useEffect} from "react";
 
 interface LocationMapProps {
     location: WebSiteLocation;
@@ -8,8 +9,23 @@ interface LocationMapProps {
     compass?: string | null;
 }
 
+// Component to update map view when location changes
+function MapViewUpdater({position, zoom}: { position: [number, number]; zoom: number }) {
+    const map = useMap();
+
+    useEffect(() => {
+        map.setView(position, zoom);
+        // Invalidate size to handle container resize issues
+        setTimeout(() => {
+            map.invalidateSize();
+        }, 100);
+    }, [map, position[0], position[1], zoom]);
+
+    return null;
+}
+
 export default function LocationMap({location, zoom = 15, compass}: LocationMapProps) {
-    const position = [location.latitude, location.longitude] as [number, number];
+    const position: [number, number] = [location.latitude, location.longitude];
 
     return (
             <MapContainer
@@ -18,19 +34,20 @@ export default function LocationMap({location, zoom = 15, compass}: LocationMapP
                     style={{width: '100%', height: '100%'}}
                     scrollWheelZoom
             >
+                <MapViewUpdater position={position} zoom={zoom} />
                 <TileLayer
                         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 />
                 <Marker position={position}>
                     <Popup>
-                        <Space orientation={"vertical"} size={4} style={{width: '100%'}}>
+                        <Space direction={"vertical"} size={4} style={{width: '100%'}}>
                             {location.altitude != null && (
                                     <Typography.Text>Altitude: {location.altitude} m</Typography.Text>
                             )}
                             {location.direction != null && (
                                     <Typography.Text>
-                                        Direction: {location.direction} ({compass ?? '?'})
+                                        Direction: {location.direction}° ({compass ?? '?'})
                                     </Typography.Text>
                             )}
                             {location.satellite_count != null && (
