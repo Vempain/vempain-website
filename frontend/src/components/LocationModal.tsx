@@ -17,6 +17,14 @@ export function LocationModal({open, location, onClose}: LocationModalProps) {
 
     const compass = useMemo(() => toCompass16(location.direction), [location.direction]);
 
+    // Generate a unique key based on location to force map remount when location changes
+    const mapKey = useMemo(
+        () => `map-${location.longitude}-${location.latitude}-${Date.now()}`,
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [open, location.longitude, location.latitude]
+    );
+
+
     const bodyStyle = useMemo(() => {
         const height = isFullscreen ? 'calc(100vh - 110px)' : '70vh';
         return {
@@ -24,6 +32,7 @@ export function LocationModal({open, location, onClose}: LocationModalProps) {
             display: 'flex',
             flexDirection: 'column' as const,
             gap: 12,
+            paddingTop: 12
         };
     }, [isFullscreen]);
 
@@ -31,14 +40,14 @@ export function LocationModal({open, location, onClose}: LocationModalProps) {
         <Modal
             open={open}
             onCancel={onClose}
+            destroyOnHidden
             footer={null}
             centered
             width={isFullscreen ? '100vw' : '90vw'}
             style={isFullscreen ? {top: 0, padding: 0, maxWidth: '100vw'} : undefined}
-            bodyStyle={bodyStyle}
             styles={{
                 header: {marginBottom: 0},
-                body: {paddingTop: 12},
+                body: bodyStyle,
             }}
             title={
                 <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
@@ -80,7 +89,7 @@ export function LocationModal({open, location, onClose}: LocationModalProps) {
                             }
                         >
                             <LazyLocationMap
-                                key={`${location.longitude},${location.latitude}`}
+                                key={mapKey}
                                 location={location}
                                 compass={compass}
                             />
