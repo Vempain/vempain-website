@@ -1,6 +1,6 @@
 import {CloseOutlined, ExpandOutlined, ShrinkOutlined} from '@ant-design/icons';
 import {Button, Modal, Space, Typography} from 'antd';
-import {lazy, Suspense, useEffect, useMemo, useState} from 'react';
+import {lazy, Suspense, useMemo, useState} from 'react';
 import type {WebSiteLocation} from '../models';
 import {toCompass16} from '../tools';
 
@@ -14,28 +14,16 @@ interface LocationModalProps {
 
 export function LocationModal({open, location, onClose}: LocationModalProps) {
     const [isFullscreen, setIsFullscreen] = useState(false);
-    // Track if map should be mounted - delayed slightly to ensure clean remount
-    const [mapMounted, setMapMounted] = useState(false);
-    // Track a unique key for forcing complete map remount
-    const [mapKey, setMapKey] = useState(0);
 
     const compass = useMemo(() => toCompass16(location.direction), [location.direction]);
 
-    // When modal opens, delay map mounting slightly to ensure DOM is ready
-    // When modal closes, unmount map immediately
-    useEffect(() => {
-        if (open) {
-            // Generate new key to force remount
-            setMapKey(prev => prev + 1);
-            // Small delay to ensure modal animation completes
-            const timer = setTimeout(() => {
-                setMapMounted(true);
-            }, 50);
-            return () => clearTimeout(timer);
-        } else {
-            setMapMounted(false);
-        }
-    }, [open]);
+    // Generate a unique key based on location to force map remount when location changes
+    const mapKey = useMemo(
+        () => `map-${location.longitude}-${location.latitude}-${Date.now()}`,
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [open, location.longitude, location.latitude]
+    );
+
 
     const bodyStyle = useMemo(() => {
         const height = isFullscreen ? 'calc(100vh - 110px)' : '70vh';
@@ -44,6 +32,7 @@ export function LocationModal({open, location, onClose}: LocationModalProps) {
             display: 'flex',
             flexDirection: 'column' as const,
             gap: 12,
+            paddingTop: 12
         };
     }, [isFullscreen]);
 
@@ -51,14 +40,14 @@ export function LocationModal({open, location, onClose}: LocationModalProps) {
         <Modal
             open={open}
             onCancel={onClose}
+            destroyOnHidden
             footer={null}
             centered
             width={isFullscreen ? '100vw' : '90vw'}
             style={isFullscreen ? {top: 0, padding: 0, maxWidth: '100vw'} : undefined}
-            bodyStyle={bodyStyle}
             styles={{
                 header: {marginBottom: 0},
-                body: {paddingTop: 12},
+                body: bodyStyle,
             }}
             title={
                 <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
@@ -91,7 +80,7 @@ export function LocationModal({open, location, onClose}: LocationModalProps) {
         >
             <div style={{flex: 1, minHeight: 300, borderRadius: 8, overflow: 'hidden'}}>
                 {location ? (
-                    mapMounted ? (
+                    open ? (
                         <Suspense
                             fallback={
                                 <div style={{height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
@@ -100,16 +89,12 @@ export function LocationModal({open, location, onClose}: LocationModalProps) {
                             }
                         >
                             <LazyLocationMap
-                                key={`map-${mapKey}-${location.longitude}-${location.latitude}`}
+                                key={mapKey}
                                 location={location}
                                 compass={compass}
                             />
                         </Suspense>
-                    ) : (
-                        <div style={{height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-                            <Typography.Text type="secondary">Loading map</Typography.Text>
-                        </div>
-                    )
+                    ) : null
                 ) : (
                     <div style={{height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
                         <Typography.Text type="secondary">No coordinates available</Typography.Text>
@@ -118,7 +103,7 @@ export function LocationModal({open, location, onClose}: LocationModalProps) {
             </div>
 
             <div style={{background: 'rgba(0,0,0,0.03)', padding: 12, borderRadius: 8}}>
-                <Space direction={"vertical"} size={4} style={{width: '100%'}}>
+                <Space orientation={"vertical"} size={4} style={{width: '100%'}}>
                     {location.altitude != null && (
                         <Typography.Text>Altitude: {location.altitude} m</Typography.Text>
                     )}

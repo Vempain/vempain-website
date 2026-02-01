@@ -12,14 +12,16 @@ interface LocationMapProps {
 // Component to update map view when location changes
 function MapViewUpdater({position, zoom}: { position: [number, number]; zoom: number }) {
     const map = useMap();
+    const lat = position[0];
+    const lng = position[1];
 
     useEffect(() => {
-        map.setView(position, zoom);
+        map.setView([lat, lng], zoom);
         // Invalidate size to handle container resize issues
         setTimeout(() => {
             map.invalidateSize();
         }, 100);
-    }, [map, position[0], position[1], zoom]);
+    }, [map, lat, lng, zoom]);
 
     return null;
 }
