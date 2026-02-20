@@ -18,7 +18,8 @@ function computeNewVersion(baseVersion) {
         // ignore
     }
 
-    let currentVersion = '';
+    let currentVersion;
+
     try {
         currentVersion = execSync(
             `bash -c 'git tag --list --sort=-version:refname "${baseVersion}.*" | head -n 1'`,
