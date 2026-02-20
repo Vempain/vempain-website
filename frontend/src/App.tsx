@@ -20,8 +20,7 @@ import {
 import type {DataNode} from 'antd/es/tree';
 import {SearchOutlined} from '@ant-design/icons';
 import './App.css';
-import {useAuth} from './context/AuthContextInstance';
-import {useTheme} from './context/ThemeContextInstance';
+import {useAuth, useTheme} from './context';
 import {BottomFooter, GalleryLoader, PageView, ShowSubjects, SubjectSearchLoader} from './components';
 import type {DirectoryNode, WebSiteFile, WebSiteGallery, WebSitePage, WebSitePageDirectory, WebSiteSubject} from "./models";
 import {galleryAPI, pageAPI, subjectSearchAPI, webSiteConfigurationAPI} from "./services";
