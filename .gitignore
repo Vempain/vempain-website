@@ -25,3 +25,6 @@ frontend/.env
 frontend/.env.local
 frontend/dist
 frontend/src/buildInfo.json
+frontend/public
+frontend/coverage
+frontend/VERSION
