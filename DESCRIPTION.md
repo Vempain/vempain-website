@@ -11,20 +11,22 @@ performance, and scalability.
 
 ### Content Browsing
 - Pages are organised into a hierarchical directory tree, making it easy to navigate large collections of content.
-- A collapsible sidebar shows the full directory structure; selecting any node loads the corresponding section or page
+- A sidebar shows the full directory structure; selecting any node loads the corresponding section or page
   immediately.
 - Each page supports rich embedded content, custom per-page styling, and optional access restrictions.
 
 ### Image & File Galleries
 - Galleries group related files (images, documents, and other media) and present them with thumbnail previews and
   metadata overlays.
-- Infinite-scroll pagination loads additional files on demand, keeping the initial page load fast.
-- File metadata — including MIME type, subjects, and other attributes — is displayed alongside each item.
+- Additional files are loaded in batches via an explicit "Load more" action (with optional prefetch), keeping the
+  initial page load fast.
+- File metadata — including MIME type, subjects, and other attributes — is shown on demand in the gallery preview or
+  overlay when an item is selected.
 
 ### Subject Tagging & Search
 - Every piece of content can be tagged with one or more subjects, enabling fine-grained discovery.
-- A global search modal provides text-based full-page search with paginated results.
-- A dedicated subject search lets visitors filter content by selecting one or multiple tags, narrowing results
+- Text-based search across pages is available via the search input in the page listing view.
+- A global search modal lets visitors filter content by selecting one or multiple subjects/tags, narrowing results
   interactively.
 
 ### Geographic Locations
@@ -50,7 +52,7 @@ performance, and scalability.
 - A `/health` endpoint enables container orchestration systems and monitoring tools to check service availability.
 - Static files and assets are served from a mounted host directory, decoupling content storage from application
   upgrades.
-- Structured application logs are written to a configurable host directory for easy monitoring and audit trails.
+- Application logs are written to a configurable host directory for easy monitoring and audit trails.
 
 ---
 
