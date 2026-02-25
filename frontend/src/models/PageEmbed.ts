@@ -1,5 +1,5 @@
 export interface PageEmbed {
     type: string;
-    galleryId: number;
+    embedId: number;
     placeholder?: string
 }

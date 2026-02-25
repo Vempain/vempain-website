@@ -25,17 +25,17 @@ function PageView({pageContent, pages, pagination, searchInput, onSearchInputCha
         let resolvedEmbeds = embeds;
         if ((!resolvedEmbeds || resolvedEmbeds.length === 0) && body) {
             const placeholderPattern = /<!--\s*vps:embed:(?<type>[a-z0-9_-]+):(?<payload>[^\s>]+)\s*-->/ig;
-            const matches: Array<{ type: string; galleryId?: number; placeholder: string }> = [];
+            const matches: Array<{ type: string; embedId?: number; placeholder: string }> = [];
             let m: RegExpExecArray | null;
             while ((m = placeholderPattern.exec(body)) !== null) {
                 const type = (m.groups?.type ?? '').toLowerCase();
                 const payload = m.groups?.payload ?? '';
                 if (type === 'gallery' && /^\d+$/.test(payload)) {
-                    matches.push({type: 'gallery', galleryId: Number(payload), placeholder: m[0]});
+                    matches.push({type: 'gallery', embedId: Number(payload), placeholder: m[0]});
                 }
             }
             if (matches.length > 0) {
-                resolvedEmbeds = matches.map((x) => ({type: x.type, galleryId: x.galleryId as number, placeholder: x.placeholder}));
+                resolvedEmbeds = matches.map((x) => ({type: x.type, embedId: x.embedId as number, placeholder: x.placeholder}));
             }
         }
 
@@ -47,7 +47,7 @@ function PageView({pageContent, pages, pagination, searchInput, onSearchInputCha
         let cursor = 0;
 
         resolvedEmbeds.forEach((embed, index) => {
-            const placeholder = embed.placeholder ?? `<!--vps:embed:${embed.type}:${embed.galleryId}-->`;
+            const placeholder = embed.placeholder ?? `<!--vps:embed:${embed.type}:${embed.embedId}-->`;
             const placeholderIndex = body.indexOf(placeholder, cursor);
 
             if (placeholderIndex === -1) {
@@ -61,9 +61,9 @@ function PageView({pageContent, pages, pagination, searchInput, onSearchInputCha
                 );
             }
 
-            if (embed.type === 'gallery' && embed.galleryId) {
+            if (embed.type === 'gallery' && embed.embedId) {
                 segments.push(
-                        <GalleryLoader key={`gallery-${embed.galleryId}-${index}`} galleryId={embed.galleryId}/>
+                        <GalleryLoader key={`gallery-${embed.embedId}-${index}`} galleryId={embed.embedId}/>
                 );
             }
 
