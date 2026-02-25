@@ -1,7 +1,12 @@
 import {Col, Input, Pagination, Row, Typography} from 'antd';
 import React, {useMemo} from 'react';
 import {GalleryLoader, ShowSubjects} from './index';
+import {ImageEmbed} from './ImageEmbed';
+import {HeroEmbed} from './HeroEmbed';
+import {CollapseEmbed} from './CollapseEmbed';
+import {CarouselEmbed} from './CarouselEmbed';
 import type {WebSitePage} from '../models';
+import {parseEmbeds} from '../tools/embedParser.ts';
 import dayjs from "dayjs";
 
 const {Title, Paragraph} = Typography;
@@ -24,18 +29,9 @@ function PageView({pageContent, pages, pagination, searchInput, onSearchInputCha
 
         let resolvedEmbeds = embeds;
         if ((!resolvedEmbeds || resolvedEmbeds.length === 0) && body) {
-            const placeholderPattern = /<!--\s*vps:embed:(?<type>[a-z0-9_-]+):(?<payload>[^\s>]+)\s*-->/ig;
-            const matches: Array<{ type: string; embedId?: number; placeholder: string }> = [];
-            let m: RegExpExecArray | null;
-            while ((m = placeholderPattern.exec(body)) !== null) {
-                const type = (m.groups?.type ?? '').toLowerCase();
-                const payload = m.groups?.payload ?? '';
-                if (type === 'gallery' && /^\d+$/.test(payload)) {
-                    matches.push({type: 'gallery', embedId: Number(payload), placeholder: m[0]});
-                }
-            }
-            if (matches.length > 0) {
-                resolvedEmbeds = matches.map((x) => ({type: x.type, embedId: x.embedId as number, placeholder: x.placeholder}));
+            const parsed = parseEmbeds(body);
+            if (parsed.length > 0) {
+                resolvedEmbeds = parsed;
             }
         }
 
@@ -64,6 +60,28 @@ function PageView({pageContent, pages, pagination, searchInput, onSearchInputCha
             if (embed.type === 'gallery' && embed.embedId) {
                 segments.push(
                         <GalleryLoader key={`gallery-${embed.embedId}-${index}`} galleryId={embed.embedId}/>
+                );
+            } else if (embed.type === 'image' && embed.embedId) {
+                segments.push(
+                        <ImageEmbed key={`image-${embed.embedId}-${index}`} fileId={embed.embedId}/>
+                );
+            } else if (embed.type === 'hero' && embed.embedId) {
+                segments.push(
+                        <HeroEmbed key={`hero-${embed.embedId}-${index}`} fileId={embed.embedId} title={pageContent?.title ?? ''}/>
+                );
+            } else if (embed.type === 'collapse' && embed.embedId) {
+                segments.push(
+                        <CollapseEmbed key={`collapse-${embed.embedId}-${index}`} parentPageId={embed.embedId}/>
+                );
+            } else if (embed.type === 'carousel' && embed.embedId) {
+                segments.push(
+                        <CarouselEmbed
+                                key={`carousel-${embed.embedId}-${index}`}
+                                parentPageId={embed.embedId}
+                                autoplay={embed.autoplay ?? false}
+                                dotDuration={embed.dotDuration ?? false}
+                                speed={embed.speed ?? 500}
+                        />
                 );
             }
 

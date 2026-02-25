@@ -1,5 +1,8 @@
 export interface PageEmbed {
     type: string;
     embedId: number;
-    placeholder?: string
+    placeholder?: string;
+    autoplay?: boolean;
+    dotDuration?: boolean;
+    speed?: number;
 }
