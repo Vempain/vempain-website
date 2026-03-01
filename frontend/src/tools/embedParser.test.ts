@@ -103,4 +103,47 @@ describe('parseEmbeds', () => {
         expect(result).toHaveLength(1);
         expect(result[0]).toMatchObject({type: 'gallery', embedId: 99});
     });
+
+    it('parses an HTML-entity-encoded hero embed tag', () => {
+        const body = '<p>Before</p>&lt;!--vps:embed:hero:71291--&gt;<p>After</p>';
+        const result = parseEmbeds(body);
+        expect(result).toHaveLength(1);
+        expect(result[0]).toMatchObject({
+            type: 'hero',
+            embedId: 71291,
+            placeholder: '&lt;!--vps:embed:hero:71291--&gt;',
+        });
+    });
+
+    it('parses an HTML-entity-encoded gallery embed tag', () => {
+        const body = '&lt;!--vps:embed:gallery:42--&gt;';
+        const result = parseEmbeds(body);
+        expect(result).toHaveLength(1);
+        expect(result[0]).toMatchObject({
+            type: 'gallery',
+            embedId: 42,
+            placeholder: '&lt;!--vps:embed:gallery:42--&gt;',
+        });
+    });
+
+    it('parses a mix of literal and entity-encoded embed tags', () => {
+        const body = '<!--vps:embed:image:1--><p>Mid</p>&lt;!--vps:embed:hero:2--&gt;';
+        const result = parseEmbeds(body);
+        expect(result).toHaveLength(2);
+        expect(result[0]).toMatchObject({type: 'image', embedId: 1});
+        expect(result[1]).toMatchObject({type: 'hero', embedId: 2});
+    });
+
+    it('parses an HTML-entity-encoded carousel embed tag', () => {
+        const body = '&lt;!--vps:embed:carousel:10:true:false:600--&gt;';
+        const result = parseEmbeds(body);
+        expect(result).toHaveLength(1);
+        expect(result[0]).toMatchObject({
+            type: 'carousel',
+            embedId: 10,
+            autoplay: true,
+            dotDuration: false,
+            speed: 600,
+        });
+    });
 });

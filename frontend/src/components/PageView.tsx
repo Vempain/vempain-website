@@ -24,16 +24,14 @@ interface PageViewProps {
 }
 
 function PageView({pageContent, pages, pagination, searchInput, onSearchInputChange, onSearchSubmit, onPageChange, pageError, pageStatus}: PageViewProps) {
-    function renderPageBody(body: string, embeds: WebSitePage['embeds']) {
+    function renderPageBody(body: string) {
         if (!body) return null;
 
-        let resolvedEmbeds = embeds;
-        if ((!resolvedEmbeds || resolvedEmbeds.length === 0) && body) {
-            const parsed = parseEmbeds(body);
-            if (parsed.length > 0) {
-                resolvedEmbeds = parsed;
-            }
-        }
+        // Always parse embeds directly from the body so that every embed tag
+        // present in the HTML is discovered – the backend-stored embeds may be
+        // stale / incomplete (e.g. only gallery entries from before hero/image
+        // support was added).
+        const resolvedEmbeds = parseEmbeds(body);
 
         if (!resolvedEmbeds || resolvedEmbeds.length === 0) {
             return <div dangerouslySetInnerHTML={{__html: body}}/>;
@@ -110,7 +108,7 @@ function PageView({pageContent, pages, pagination, searchInput, onSearchInputCha
                             </Paragraph>
                     )}
                     <ShowSubjects subjects={pageContent.subjects}/>
-                    {renderPageBody(pageContent.body, pageContent.embeds)}
+                    {renderPageBody(pageContent.body)}
                 </div>
         );
     }

@@ -88,12 +88,12 @@ class Routes
             return $response->withHeader('Content-Type', 'application/json');
         });
 
-        $app->get('/api/pages/{id}', function (Request $request, Response $response, array $args) use ($app) {
+        $app->get('/api/pages/{id}', function (Request $request, Response $response, string $id) use ($app) {
             /** @var WebSitePageRepository $pageRepo */
             $pageRepo = $app->getContainer()->get(WebSitePageRepository::class);
             /** @var SubjectTransformer $subjectTransformer */
             $subjectTransformer = $app->getContainer()->get(SubjectTransformer::class);
-            $page = $pageRepo->findById((int)$args['id']);
+            $page = $pageRepo->findById((int)$id);
 
             if (!$page) {
                 return $response->withStatus(404);
@@ -460,8 +460,8 @@ class Routes
             return $response->withHeader('Content-Type', 'application/json');
         });
 
-        $app->get('/api/public/pages/{parentId}/children', function (Request $request, Response $response, array $args) use ($app) {
-            $parentId = isset($args['parentId']) && is_numeric($args['parentId']) ? (int)$args['parentId'] : 0;
+        $app->get('/api/public/pages/{parentId}/children', function (Request $request, Response $response, string $parentId) use ($app) {
+            $parentId = is_numeric($parentId) ? (int)$parentId : 0;
             if ($parentId <= 0) {
                 return $response->withStatus(400);
             }
@@ -560,15 +560,15 @@ class Routes
         });
 
         // Public file by ID API
-        $app->get('/api/public/files/id/{id}', function (Request $request, Response $response, array $args) use ($app) {
-            $id = isset($args['id']) && is_numeric($args['id']) ? (int)$args['id'] : 0;
+        $app->get('/api/public/files/id/{id}', function (Request $request, Response $response, string $id) use ($app) {
+            $id = is_numeric($id) ? (int)$id : 0;
             if ($id <= 0) {
                 return $response->withStatus(400);
             }
 
             /** @var WebSiteFileRepository $fileRepo */
             $fileRepo = $app->getContainer()->get(WebSiteFileRepository::class);
-            $file = $fileRepo->findById($id);
+            $file = $fileRepo->findByFileId($id);
 
             if (!$file) {
                 return $response->withStatus(404);
