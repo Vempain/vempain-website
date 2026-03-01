@@ -27,7 +27,7 @@ class Routes
     {
         // Health check
         $app->get('/health', function (Request $request, Response $response) {
-            $response->getBody()->write(json_encode(['status' => 'ok']));
+            $response->getBody()->write(json_encode(['status' => 'ok'], JSON_UNESCAPED_SLASHES));
             return $response->withHeader('Content-Type', 'application/json');
         });
 
@@ -38,17 +38,17 @@ class Routes
             $data = (array)$request->getParsedBody();
             $result = $authService->authenticate($data['username'] ?? '', $data['password'] ?? '');
             if (!$result) {
-                $response->getBody()->write(json_encode(['error' => 'Invalid credentials']));
+                $response->getBody()->write(json_encode(['error' => 'Invalid credentials'], JSON_UNESCAPED_SLASHES));
                 return $response->withStatus(401)->withHeader('Content-Type', 'application/json');
             }
 
-            $response->getBody()->write(json_encode(['token' => $result['token']]));
+            $response->getBody()->write(json_encode(['token' => $result['token']], JSON_UNESCAPED_SLASHES));
             $response = self::applyAuthCookie($response, $result['token']);
             return $response->withHeader('Content-Type', 'application/json');
         });
 
         $app->post('/api/logout', function (Request $request, Response $response) {
-            $response->getBody()->write(json_encode(['status' => 'ok']));
+            $response->getBody()->write(json_encode(['status' => 'ok'], JSON_UNESCAPED_SLASHES));
             $response = self::clearAuthCookie($response);
             return $response->withHeader('Content-Type', 'application/json');
         });
@@ -84,16 +84,16 @@ class Routes
                 ];
             }, $pages);
 
-            $response->getBody()->write(json_encode($data));
+            $response->getBody()->write(json_encode($data, JSON_UNESCAPED_SLASHES));
             return $response->withHeader('Content-Type', 'application/json');
         });
 
-        $app->get('/api/pages/{id}', function (Request $request, Response $response, array $args) use ($app) {
+        $app->get('/api/pages/{id}', function (Request $request, Response $response, string $id) use ($app) {
             /** @var WebSitePageRepository $pageRepo */
             $pageRepo = $app->getContainer()->get(WebSitePageRepository::class);
             /** @var SubjectTransformer $subjectTransformer */
             $subjectTransformer = $app->getContainer()->get(SubjectTransformer::class);
-            $page = $pageRepo->findById((int)$args['id']);
+            $page = $pageRepo->findById((int)$id);
 
             if (!$page) {
                 return $response->withStatus(404);
@@ -117,7 +117,7 @@ class Routes
                 'secure' => $page->isSecure()
             ];
 
-            $response->getBody()->write(json_encode($data));
+            $response->getBody()->write(json_encode($data, JSON_UNESCAPED_SLASHES));
             return $response->withHeader('Content-Type', 'application/json');
         });
 
@@ -149,7 +149,7 @@ class Routes
                 ];
             }, $files);
 
-            $response->getBody()->write(json_encode($data));
+            $response->getBody()->write(json_encode($data, JSON_UNESCAPED_SLASHES));
             return $response->withHeader('Content-Type', 'application/json');
         });
 
@@ -177,7 +177,7 @@ class Routes
                 ];
             }, $galleries);
 
-            $response->getBody()->write(json_encode($data));
+            $response->getBody()->write(json_encode($data, JSON_UNESCAPED_SLASHES));
             return $response->withHeader('Content-Type', 'application/json');
         });
 
@@ -235,7 +235,7 @@ class Routes
                 'empty' => $total === 0,
             ];
 
-            $response->getBody()->write(json_encode($payload));
+            $response->getBody()->write(json_encode($payload, JSON_UNESCAPED_SLASHES));
             return $response->withHeader('Content-Type', 'application/json');
         });
         // Files for a gallery (public)
@@ -354,7 +354,7 @@ class Routes
                 'gallerySubjects' => $subjectTransformer->manyFromEntities($gallerySubjects),
             ];
 
-            $response->getBody()->write(json_encode($payload));
+            $response->getBody()->write(json_encode($payload, JSON_UNESCAPED_SLASHES));
             return $response->withHeader('Content-Type', 'application/json');
         });
 
@@ -391,7 +391,7 @@ class Routes
                 $pathPrefix,
                 $userId
             );
-            $response->getBody()->write(json_encode($payload));
+            $response->getBody()->write(json_encode($payload, JSON_UNESCAPED_SLASHES));
 
             return $response->withHeader('Content-Type', 'application/json');
         });
@@ -399,7 +399,7 @@ class Routes
         $app->get('/api/public/page-directories', function (Request $request, Response $response) use ($app) {
             /** @var PageService $pageService */
             $pageService = $app->getContainer()->get(PageService::class);
-            $response->getBody()->write(json_encode($pageService->getTopLevelDirectories()));
+            $response->getBody()->write(json_encode($pageService->getTopLevelDirectories(), JSON_UNESCAPED_SLASHES));
             return $response->withHeader('Content-Type', 'application/json');
         });
 
@@ -428,7 +428,7 @@ class Routes
                 }
 
                 $tree = $pageService->getDirectoryTree($directory, $userId);
-                $response->getBody()->write(json_encode($tree));
+                $response->getBody()->write(json_encode($tree, JSON_UNESCAPED_SLASHES));
 
                 return $response->withHeader('Content-Type', 'application/json');
             }
@@ -455,13 +455,13 @@ class Routes
 
             $response
                 ->getBody()
-                ->write(json_encode($content));
+                ->write(json_encode($content, JSON_UNESCAPED_SLASHES));
 
             return $response->withHeader('Content-Type', 'application/json');
         });
 
-        $app->get('/api/public/pages/{parentId}/children', function (Request $request, Response $response, array $args) use ($app) {
-            $parentId = isset($args['parentId']) && is_numeric($args['parentId']) ? (int)$args['parentId'] : 0;
+        $app->get('/api/public/pages/{parentId}/children', function (Request $request, Response $response, string $parentId) use ($app) {
+            $parentId = is_numeric($parentId) ? (int)$parentId : 0;
             if ($parentId <= 0) {
                 return $response->withStatus(400);
             }
@@ -469,7 +469,7 @@ class Routes
             /** @var PageService $pageService */
             $pageService = $app->getContainer()->get(PageService::class);
             $children = $pageService->getChildPages($parentId);
-            $response->getBody()->write(json_encode($children));
+            $response->getBody()->write(json_encode($children, JSON_UNESCAPED_SLASHES));
 
             return $response->withHeader('Content-Type', 'application/json');
         });
@@ -478,7 +478,7 @@ class Routes
             /** @var WebSiteConfigurationRepository $configurationRepo */
             $configurationRepo = $app->getContainer()->get(WebSiteConfigurationRepository::class);
             $payload = $configurationRepo->findAllKeyValuePairs();
-            $response->getBody()->write(json_encode($payload));
+            $response->getBody()->write(json_encode($payload, JSON_UNESCAPED_SLASHES));
             return $response->withHeader('Content-Type', 'application/json');
         });
 
@@ -503,7 +503,7 @@ class Routes
                 'embeds_raw' => $page->getEmbedsRaw(),
             ];
 
-            $response->getBody()->write(json_encode($payload));
+            $response->getBody()->write(json_encode($payload, JSON_UNESCAPED_SLASHES));
             return $response->withHeader('Content-Type', 'application/json');
         });
 
@@ -555,23 +555,34 @@ class Routes
                 'empty' => $total === 0,
             ];
 
-            $response->getBody()->write(json_encode($payload));
+            $response->getBody()->write(json_encode($payload, JSON_UNESCAPED_SLASHES));
             return $response->withHeader('Content-Type', 'application/json');
         });
 
         // Public file by ID API
-        $app->get('/api/public/files/id/{id}', function (Request $request, Response $response, array $args) use ($app) {
-            $id = isset($args['id']) && is_numeric($args['id']) ? (int)$args['id'] : 0;
+        $app->get('/api/public/files/id/{id}', function (Request $request, Response $response, string $id) use ($app) {
+            $id = is_numeric($id) ? (int)$id : 0;
             if ($id <= 0) {
                 return $response->withStatus(400);
             }
 
             /** @var WebSiteFileRepository $fileRepo */
             $fileRepo = $app->getContainer()->get(WebSiteFileRepository::class);
-            $file = $fileRepo->findById($id);
+            $file = $fileRepo->findByFileId($id);
 
             if (!$file) {
                 return $response->withStatus(404);
+            }
+
+            /** @var ResourceAccessService $resourceAccessService */
+            $resourceAccessService = $app->getContainer()->get(ResourceAccessService::class);
+            $claims = $request->getAttribute('jwt');
+            $deniedStatus = $resourceAccessService->getDeniedStatus($file->getAclId(), $claims);
+
+            if ($deniedStatus !== null) {
+                $message = $deniedStatus === 401 ? 'Authentication required' : 'Forbidden';
+                $response->getBody()->write(json_encode(['error' => $message], JSON_UNESCAPED_SLASHES));
+                return $response->withStatus($deniedStatus)->withHeader('Content-Type', 'application/json');
             }
 
             $payload = [
@@ -581,7 +592,7 @@ class Routes
                 'aclId' => $file->getAclId(),
             ];
 
-            $response->getBody()->write(json_encode($payload));
+            $response->getBody()->write(json_encode($payload, JSON_UNESCAPED_SLASHES));
             return $response->withHeader('Content-Type', 'application/json');
         });
 
@@ -629,7 +640,7 @@ class Routes
             $caseSensitive = (bool)($body['case_sensitive'] ?? false);
 
             $payload = $service->searchBySubject($search, $caseSensitive, $page, $size, $sortBy, $direction);
-            $response->getBody()->write(json_encode($payload));
+            $response->getBody()->write(json_encode($payload, JSON_UNESCAPED_SLASHES));
             return $response->withHeader('Content-Type', 'application/json');
         });
 
@@ -643,7 +654,7 @@ class Routes
             $subjects = $subjectRepo->autocomplete($term);
             $payload = $subjectTransformer->manyFromEntities($subjects);
 
-            $response->getBody()->write(json_encode($payload));
+            $response->getBody()->write(json_encode($payload, JSON_UNESCAPED_SLASHES));
             return $response->withHeader('Content-Type', 'application/json');
         });
 
@@ -659,7 +670,7 @@ class Routes
             $userId = self::getUserId($request);
 
             $payload = $service->searchBySubjectIds($userId, $subjectIds, $page, $size, $sortBy, $direction);
-            $response->getBody()->write(json_encode($payload));
+            $response->getBody()->write(json_encode($payload, JSON_UNESCAPED_SLASHES));
             return $response->withHeader('Content-Type', 'application/json');
         });
     }

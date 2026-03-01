@@ -128,7 +128,7 @@ class FileService
     private function forbiddenResponse(): ResponseInterface
     {
         $response = new Response(403);
-        $response->getBody()->write(json_encode(['error' => 'Forbidden']));
+        $response->getBody()->write(json_encode(['error' => 'Forbidden'], JSON_UNESCAPED_SLASHES));
         return $response->withHeader('Content-Type', 'application/json');
     }
 
@@ -136,7 +136,7 @@ class FileService
     {
         $response = new Response($status);
         $message = $status === 401 ? 'Authentication required' : 'Forbidden';
-        $response->getBody()->write(json_encode(['error' => $message]));
+        $response->getBody()->write(json_encode(['error' => $message], JSON_UNESCAPED_SLASHES));
         return $response->withHeader('Content-Type', 'application/json');
     }
 

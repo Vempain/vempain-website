@@ -37,6 +37,13 @@ class WebSiteFileRepository
             ->find($id);
     }
 
+    public function findByFileId(int $fileId): ?WebSiteFile
+    {
+        return $this->entityManager
+            ->getRepository(WebSiteFile::class)
+            ->findOneBy(['fileId' => $fileId]);
+    }
+
     public function findByFilePath(int $userId, string $filePath): ?WebSiteFile
     {
         $qb = $this->entityManager->createQueryBuilder();

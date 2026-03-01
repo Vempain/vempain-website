@@ -74,7 +74,7 @@ class PageService
         ];
 
         $response = new Response();
-        $response->getBody()->write(json_encode($payload));
+        $response->getBody()->write(json_encode($payload, JSON_UNESCAPED_SLASHES));
         return $response->withHeader('Content-Type', 'application/json');
     }
 
@@ -82,14 +82,14 @@ class PageService
     {
         $response = new Response($status);
         $message = $status === 401 ? 'Authentication required' : 'Forbidden';
-        $response->getBody()->write(json_encode(['error' => $message]));
+        $response->getBody()->write(json_encode(['error' => $message], JSON_UNESCAPED_SLASHES));
         return $response->withHeader('Content-Type', 'application/json');
     }
 
     private function errorResponse(): ResponseInterface
     {
         $response = new Response(500);
-        $response->getBody()->write(json_encode(['error' => 'Failed to render page']));
+        $response->getBody()->write(json_encode(['error' => 'Failed to render page'], JSON_UNESCAPED_SLASHES));
         return $response->withHeader('Content-Type', 'application/json');
     }
 
