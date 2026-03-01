@@ -45,7 +45,7 @@ class WebSitePageRepository
     }
 
     /**
-     * @param array<int, array<string, int|string>> $embeds
+     * @param array<int, array<string, mixed>> $embeds
      */
     public function updateCacheAndEmbeds(WebSitePage $page, string $content, array $embeds): void
     {

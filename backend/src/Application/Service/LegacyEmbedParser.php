@@ -8,7 +8,7 @@ class LegacyEmbedParser
     private const PATTERN_SHOWGALLERY = '/showGallery\s*\(\s*(?<id>\d+)\s*\)/i';
 
     /**
-     * @return array<int, array<string, int|string>>
+     * @return array<int, array<string, mixed>>
      */
     public function parse(?string $body): array
     {
@@ -17,48 +17,53 @@ class LegacyEmbedParser
         }
 
         $embeds = [];
-        $seen = [];
 
-        // 1) parse explicit placeholders first
+        // 1) parse explicit placeholders first; one entry per occurrence so the
+        //    frontend can replace every placeholder in document order
         preg_match_all(self::PATTERN_PLACEHOLDER, $body, $matches, PREG_SET_ORDER);
-        if ($matches !== []) {
-            foreach ($matches as $match) {
-                $type = strtolower($match['type']);
-                $payload = $match['payload'];
+        foreach ($matches as $match) {
+            $type = strtolower($match['type']);
+            $payload = $match['payload'];
 
-                if ($type === 'gallery' && is_numeric($payload)) {
-                    $id = (int)$payload;
-                    $key = "gallery:{$id}";
-                    if (!isset($seen[$key])) {
-                        $embeds[] = [
-                            'type' => 'gallery',
-                            'galleryId' => $id,
-                            'placeholder' => $match[0],
-                        ];
-                        $seen[$key] = true;
-                    }
+            if (in_array($type, ['gallery', 'image', 'hero', 'collapse'], true) && is_numeric($payload)) {
+                $embeds[] = [
+                    'type' => $type,
+                    'embedId' => (int)$payload,
+                    'placeholder' => $match[0],
+                ];
+            } elseif ($type === 'carousel') {
+                $parts = explode(':', $payload);
+                if (count($parts) >= 4 && is_numeric($parts[0])) {
+                    $embeds[] = [
+                        'type' => 'carousel',
+                        'embedId' => (int)$parts[0],
+                        'autoplay' => strtolower($parts[1]) === 'true',
+                        'dotDuration' => strtolower($parts[2]) === 'true',
+                        'speed' => $this->parseCarouselSpeed($parts[3] ?? ''),
+                        'placeholder' => $match[0],
+                    ];
                 }
             }
         }
 
-        // 2) also detect legacy showGallery(123) calls in raw body
+        // 2) also detect legacy showGallery(123) calls in raw body; one entry per call
         preg_match_all(self::PATTERN_SHOWGALLERY, $body, $sgMatches, PREG_SET_ORDER);
-        if ($sgMatches !== []) {
-            foreach ($sgMatches as $m) {
-                $id = (int)$m['id'];
-                $key = "gallery:{$id}";
-                if (!isset($seen[$key])) {
-                    $placeholder = "<!--vps:embed:gallery:{$id}-->";
-                    $embeds[] = [
-                        'type' => 'gallery',
-                        'galleryId' => $id,
-                        'placeholder' => $placeholder,
-                    ];
-                    $seen[$key] = true;
-                }
-            }
+        foreach ($sgMatches as $m) {
+            $id = (int)$m['id'];
+            $embeds[] = [
+                'type' => 'gallery',
+                'embedId' => $id,
+                'placeholder' => "<!--vps:embed:gallery:{$id}-->",
+            ];
         }
 
         return $embeds;
+    }
+
+    private function parseCarouselSpeed(string $value): int
+    {
+        return ($value !== '' && is_numeric($value) && (int)$value > 0)
+            ? (int)$value
+            : 500;
     }
 }
