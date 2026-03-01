@@ -1,7 +1,6 @@
-import {useEffect, useState} from 'react';
+import {useEffect, useRef, useState} from 'react';
 import {Image, Spin} from 'antd';
-import {fileAPI} from '../services';
-import {pageAPI} from '../services/PageAPI.ts';
+import {fileAPI, pageAPI} from '../services';
 
 interface ImageEmbedProps {
     fileId: number;
@@ -10,21 +9,31 @@ interface ImageEmbedProps {
 export function ImageEmbed({fileId}: ImageEmbedProps) {
     const [src, setSrc] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
+    const activeRef = useRef(true);
 
     useEffect(() => {
-        setLoading(true);
+        activeRef.current = true;
+
         pageAPI.getPublicFileById(fileId)
             .then((response) => {
+                if (!activeRef.current) return;
                 if (response.data?.filePath) {
                     setSrc(fileAPI.getFileUrl(response.data.filePath));
                 }
             })
             .catch((err) => {
+                if (!activeRef.current) return;
                 console.error('Error fetching image file:', err);
             })
             .finally(() => {
-                setLoading(false);
+                if (activeRef.current) {
+                    setLoading(false);
+                }
             });
+
+        return () => {
+            activeRef.current = false;
+        };
     }, [fileId]);
 
     return (

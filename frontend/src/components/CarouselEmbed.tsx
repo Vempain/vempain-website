@@ -1,7 +1,7 @@
-import {useEffect, useState} from 'react';
+import {useEffect, useRef, useState} from 'react';
 import {Carousel, Spin, Typography} from 'antd';
-import {pageAPI} from '../services/PageAPI.ts';
-import type {WebSiteChildPage} from '../services/PageAPI.ts';
+import {pageAPI} from '../services';
+import type {WebSiteChildPage} from '../services/PageAPI';
 
 const {Title} = Typography;
 
@@ -15,21 +15,31 @@ interface CarouselEmbedProps {
 export function CarouselEmbed({parentPageId, autoplay, dotDuration, speed}: CarouselEmbedProps) {
     const [pages, setPages] = useState<WebSiteChildPage[]>([]);
     const [loading, setLoading] = useState(true);
+    const activeRef = useRef(true);
 
     useEffect(() => {
-        setLoading(true);
+        activeRef.current = true;
+
         pageAPI.getChildPages(parentPageId)
             .then((response) => {
+                if (!activeRef.current) return;
                 if (response.data) {
                     setPages(response.data);
                 }
             })
             .catch((err) => {
+                if (!activeRef.current) return;
                 console.error('Error fetching child pages for carousel:', err);
             })
             .finally(() => {
-                setLoading(false);
+                if (activeRef.current) {
+                    setLoading(false);
+                }
             });
+
+        return () => {
+            activeRef.current = false;
+        };
     }, [parentPageId]);
 
     const autoplayConfig = autoplay

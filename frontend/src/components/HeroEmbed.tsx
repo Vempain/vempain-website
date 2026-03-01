@@ -1,7 +1,6 @@
-import {useEffect, useState} from 'react';
+import {useEffect, useRef, useState} from 'react';
 import {Spin} from 'antd';
-import {fileAPI} from '../services';
-import {pageAPI} from '../services/PageAPI.ts';
+import {fileAPI, pageAPI} from '../services';
 
 interface HeroEmbedProps {
     fileId: number;
@@ -11,21 +10,31 @@ interface HeroEmbedProps {
 export function HeroEmbed({fileId, title}: HeroEmbedProps) {
     const [src, setSrc] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
+    const activeRef = useRef(true);
 
     useEffect(() => {
-        setLoading(true);
+        activeRef.current = true;
+
         pageAPI.getPublicFileById(fileId)
             .then((response) => {
+                if (!activeRef.current) return;
                 if (response.data?.filePath) {
                     setSrc(fileAPI.getFileUrl(response.data.filePath));
                 }
             })
             .catch((err) => {
+                if (!activeRef.current) return;
                 console.error('Error fetching hero image file:', err);
             })
             .finally(() => {
-                setLoading(false);
+                if (activeRef.current) {
+                    setLoading(false);
+                }
             });
+
+        return () => {
+            activeRef.current = false;
+        };
     }, [fileId]);
 
     return (
