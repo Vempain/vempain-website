@@ -13,40 +13,44 @@ export function parseEmbeds(body: string): PageEmbed[] {
     // Pattern 2: entity-encoded         &lt;!--vps:embed:type:payload--&gt;
     const encodedPattern = /&lt;!--\s*vps:embed:(?<type>[a-z0-9_-]+):(?<payload>[^\s&]+)\s*--&gt;/ig;
 
-    const matches: PageEmbed[] = [];
+    const matchesWithIndex: Array<{embed: PageEmbed; index: number}> = [];
 
     for (const pattern of [literalPattern, encodedPattern]) {
         let m: RegExpExecArray | null;
         while ((m = pattern.exec(body)) !== null) {
             const type = (m.groups?.type ?? '').toLowerCase();
             const payload = m.groups?.payload ?? '';
+            const matchIndex = m.index;
 
             if (type === 'gallery' && /^\d+$/.test(payload)) {
-                matches.push({type: 'gallery', embedId: Number(payload), placeholder: m[0]});
+                matchesWithIndex.push({embed: {type: 'gallery', embedId: Number(payload), placeholder: m[0]}, index: matchIndex});
             } else if (type === 'image' && /^\d+$/.test(payload)) {
-                matches.push({type: 'image', embedId: Number(payload), placeholder: m[0]});
+                matchesWithIndex.push({embed: {type: 'image', embedId: Number(payload), placeholder: m[0]}, index: matchIndex});
             } else if (type === 'hero' && /^\d+$/.test(payload)) {
-                matches.push({type: 'hero', embedId: Number(payload), placeholder: m[0]});
+                matchesWithIndex.push({embed: {type: 'hero', embedId: Number(payload), placeholder: m[0]}, index: matchIndex});
             } else if (type === 'collapse' && /^\d+$/.test(payload)) {
-                matches.push({type: 'collapse', embedId: Number(payload), placeholder: m[0]});
+                matchesWithIndex.push({embed: {type: 'collapse', embedId: Number(payload), placeholder: m[0]}, index: matchIndex});
             } else if (type === 'carousel') {
                 const parts = payload.split(':');
                 if (parts.length >= 4 && /^\d+$/.test(parts[0])) {
-                    matches.push({
-                        type: 'carousel',
-                        embedId: Number(parts[0]),
-                        placeholder: m[0],
-                        autoplay: parts[1].toLowerCase() === 'true',
-                        dotDuration: parts[2].toLowerCase() === 'true',
-                        speed: parseInt(parts[3], 10) || 500,
+                    matchesWithIndex.push({
+                        embed: {
+                            type: 'carousel',
+                            embedId: Number(parts[0]),
+                            placeholder: m[0],
+                            autoplay: parts[1].toLowerCase() === 'true',
+                            dotDuration: parts[2].toLowerCase() === 'true',
+                            speed: parseInt(parts[3], 10) || 500,
+                        },
+                        index: matchIndex,
                     });
                 }
             }
         }
     }
 
-    // Sort by position in body so cursor-based replacement in PageView works correctly
-    matches.sort((a, b) => body.indexOf(a.placeholder!) - body.indexOf(b.placeholder!));
+    // Sort by capture position so cursor-based replacement in PageView works correctly
+    matchesWithIndex.sort((a, b) => a.index - b.index);
 
-    return matches;
+    return matchesWithIndex.map(({embed}) => embed);
 }
