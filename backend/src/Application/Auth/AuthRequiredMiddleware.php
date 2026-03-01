@@ -19,7 +19,7 @@ class AuthRequiredMiddleware implements MiddlewareInterface
         $claims = $request->getAttribute('jwt');
         if ($claims === null) {
             $response = new Response(401);
-            $response->getBody()->write(json_encode(['error' => 'Unauthorized']));
+            $response->getBody()->write(json_encode(['error' => 'Unauthorized'], JSON_UNESCAPED_SLASHES));
             return $response->withHeader('Content-Type', 'application/json');
         }
 

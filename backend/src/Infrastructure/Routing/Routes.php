@@ -27,7 +27,7 @@ class Routes
     {
         // Health check
         $app->get('/health', function (Request $request, Response $response) {
-            $response->getBody()->write(json_encode(['status' => 'ok']));
+            $response->getBody()->write(json_encode(['status' => 'ok'], JSON_UNESCAPED_SLASHES));
             return $response->withHeader('Content-Type', 'application/json');
         });
 
@@ -38,17 +38,17 @@ class Routes
             $data = (array)$request->getParsedBody();
             $result = $authService->authenticate($data['username'] ?? '', $data['password'] ?? '');
             if (!$result) {
-                $response->getBody()->write(json_encode(['error' => 'Invalid credentials']));
+                $response->getBody()->write(json_encode(['error' => 'Invalid credentials'], JSON_UNESCAPED_SLASHES));
                 return $response->withStatus(401)->withHeader('Content-Type', 'application/json');
             }
 
-            $response->getBody()->write(json_encode(['token' => $result['token']]));
+            $response->getBody()->write(json_encode(['token' => $result['token']], JSON_UNESCAPED_SLASHES));
             $response = self::applyAuthCookie($response, $result['token']);
             return $response->withHeader('Content-Type', 'application/json');
         });
 
         $app->post('/api/logout', function (Request $request, Response $response) {
-            $response->getBody()->write(json_encode(['status' => 'ok']));
+            $response->getBody()->write(json_encode(['status' => 'ok'], JSON_UNESCAPED_SLASHES));
             $response = self::clearAuthCookie($response);
             return $response->withHeader('Content-Type', 'application/json');
         });
@@ -84,7 +84,7 @@ class Routes
                 ];
             }, $pages);
 
-            $response->getBody()->write(json_encode($data));
+            $response->getBody()->write(json_encode($data, JSON_UNESCAPED_SLASHES));
             return $response->withHeader('Content-Type', 'application/json');
         });
 
@@ -117,7 +117,7 @@ class Routes
                 'secure' => $page->isSecure()
             ];
 
-            $response->getBody()->write(json_encode($data));
+            $response->getBody()->write(json_encode($data, JSON_UNESCAPED_SLASHES));
             return $response->withHeader('Content-Type', 'application/json');
         });
 
@@ -149,7 +149,7 @@ class Routes
                 ];
             }, $files);
 
-            $response->getBody()->write(json_encode($data));
+            $response->getBody()->write(json_encode($data, JSON_UNESCAPED_SLASHES));
             return $response->withHeader('Content-Type', 'application/json');
         });
 
@@ -177,7 +177,7 @@ class Routes
                 ];
             }, $galleries);
 
-            $response->getBody()->write(json_encode($data));
+            $response->getBody()->write(json_encode($data, JSON_UNESCAPED_SLASHES));
             return $response->withHeader('Content-Type', 'application/json');
         });
 
@@ -235,7 +235,7 @@ class Routes
                 'empty' => $total === 0,
             ];
 
-            $response->getBody()->write(json_encode($payload));
+            $response->getBody()->write(json_encode($payload, JSON_UNESCAPED_SLASHES));
             return $response->withHeader('Content-Type', 'application/json');
         });
         // Files for a gallery (public)
@@ -354,7 +354,7 @@ class Routes
                 'gallerySubjects' => $subjectTransformer->manyFromEntities($gallerySubjects),
             ];
 
-            $response->getBody()->write(json_encode($payload));
+            $response->getBody()->write(json_encode($payload, JSON_UNESCAPED_SLASHES));
             return $response->withHeader('Content-Type', 'application/json');
         });
 
@@ -391,7 +391,7 @@ class Routes
                 $pathPrefix,
                 $userId
             );
-            $response->getBody()->write(json_encode($payload));
+            $response->getBody()->write(json_encode($payload, JSON_UNESCAPED_SLASHES));
 
             return $response->withHeader('Content-Type', 'application/json');
         });
@@ -399,7 +399,7 @@ class Routes
         $app->get('/api/public/page-directories', function (Request $request, Response $response) use ($app) {
             /** @var PageService $pageService */
             $pageService = $app->getContainer()->get(PageService::class);
-            $response->getBody()->write(json_encode($pageService->getTopLevelDirectories()));
+            $response->getBody()->write(json_encode($pageService->getTopLevelDirectories(), JSON_UNESCAPED_SLASHES));
             return $response->withHeader('Content-Type', 'application/json');
         });
 
@@ -428,7 +428,7 @@ class Routes
                 }
 
                 $tree = $pageService->getDirectoryTree($directory, $userId);
-                $response->getBody()->write(json_encode($tree));
+                $response->getBody()->write(json_encode($tree, JSON_UNESCAPED_SLASHES));
 
                 return $response->withHeader('Content-Type', 'application/json');
             }
@@ -455,7 +455,7 @@ class Routes
 
             $response
                 ->getBody()
-                ->write(json_encode($content));
+                ->write(json_encode($content, JSON_UNESCAPED_SLASHES));
 
             return $response->withHeader('Content-Type', 'application/json');
         });
@@ -469,7 +469,7 @@ class Routes
             /** @var PageService $pageService */
             $pageService = $app->getContainer()->get(PageService::class);
             $children = $pageService->getChildPages($parentId);
-            $response->getBody()->write(json_encode($children));
+            $response->getBody()->write(json_encode($children, JSON_UNESCAPED_SLASHES));
 
             return $response->withHeader('Content-Type', 'application/json');
         });
@@ -478,7 +478,7 @@ class Routes
             /** @var WebSiteConfigurationRepository $configurationRepo */
             $configurationRepo = $app->getContainer()->get(WebSiteConfigurationRepository::class);
             $payload = $configurationRepo->findAllKeyValuePairs();
-            $response->getBody()->write(json_encode($payload));
+            $response->getBody()->write(json_encode($payload, JSON_UNESCAPED_SLASHES));
             return $response->withHeader('Content-Type', 'application/json');
         });
 
@@ -503,7 +503,7 @@ class Routes
                 'embeds_raw' => $page->getEmbedsRaw(),
             ];
 
-            $response->getBody()->write(json_encode($payload));
+            $response->getBody()->write(json_encode($payload, JSON_UNESCAPED_SLASHES));
             return $response->withHeader('Content-Type', 'application/json');
         });
 
@@ -555,7 +555,7 @@ class Routes
                 'empty' => $total === 0,
             ];
 
-            $response->getBody()->write(json_encode($payload));
+            $response->getBody()->write(json_encode($payload, JSON_UNESCAPED_SLASHES));
             return $response->withHeader('Content-Type', 'application/json');
         });
 
@@ -581,7 +581,7 @@ class Routes
                 'aclId' => $file->getAclId(),
             ];
 
-            $response->getBody()->write(json_encode($payload));
+            $response->getBody()->write(json_encode($payload, JSON_UNESCAPED_SLASHES));
             return $response->withHeader('Content-Type', 'application/json');
         });
 
@@ -629,7 +629,7 @@ class Routes
             $caseSensitive = (bool)($body['case_sensitive'] ?? false);
 
             $payload = $service->searchBySubject($search, $caseSensitive, $page, $size, $sortBy, $direction);
-            $response->getBody()->write(json_encode($payload));
+            $response->getBody()->write(json_encode($payload, JSON_UNESCAPED_SLASHES));
             return $response->withHeader('Content-Type', 'application/json');
         });
 
@@ -643,7 +643,7 @@ class Routes
             $subjects = $subjectRepo->autocomplete($term);
             $payload = $subjectTransformer->manyFromEntities($subjects);
 
-            $response->getBody()->write(json_encode($payload));
+            $response->getBody()->write(json_encode($payload, JSON_UNESCAPED_SLASHES));
             return $response->withHeader('Content-Type', 'application/json');
         });
 
@@ -659,7 +659,7 @@ class Routes
             $userId = self::getUserId($request);
 
             $payload = $service->searchBySubjectIds($userId, $subjectIds, $page, $size, $sortBy, $direction);
-            $response->getBody()->write(json_encode($payload));
+            $response->getBody()->write(json_encode($payload, JSON_UNESCAPED_SLASHES));
             return $response->withHeader('Content-Type', 'application/json');
         });
     }
