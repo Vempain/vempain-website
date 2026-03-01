@@ -2,6 +2,17 @@ import {AbstractAPI} from './AbstractAPI.ts';
 import type {ApiResponse, DirectoryNode, WebSiteFile, WebSitePage, WebSitePageDirectory} from '../models';
 import type {PagedRequest, PagedResponse} from "@vempain/vempain-auth-frontend";
 
+export interface WebSiteChildPage {
+    id: number;
+    page_id: number;
+    title: string;
+    header: string;
+    body: string;
+    file_path: string;
+    published: string | null;
+    secure: boolean;
+}
+
 class PageAPI extends AbstractAPI {
     async getPublicPages(params: Partial<PagedRequest & { sortDir?: 'asc' | 'desc'; directory?: string | null }> = {}) {
         const searchParams = new URLSearchParams();
@@ -34,6 +45,14 @@ class PageAPI extends AbstractAPI {
     async getPageContent(file_path: string): Promise<ApiResponse<WebSitePage>> {
         const params = new URLSearchParams({file_path});
         return await this.request<WebSitePage>(`/page-content?${params.toString()}`);
+    }
+
+    async getChildPages(parentId: number): Promise<ApiResponse<WebSiteChildPage[]>> {
+        return await this.request<WebSiteChildPage[]>(`/pages/${parentId}/children`);
+    }
+
+    async getPublicFileById(id: number): Promise<ApiResponse<WebSiteFile>> {
+        return await this.request<WebSiteFile>(`/files/id/${id}`);
     }
 }
 

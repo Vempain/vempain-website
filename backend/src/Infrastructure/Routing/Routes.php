@@ -460,6 +460,20 @@ class Routes
             return $response->withHeader('Content-Type', 'application/json');
         });
 
+        $app->get('/api/public/pages/{parentId}/children', function (Request $request, Response $response, array $args) use ($app) {
+            $parentId = isset($args['parentId']) && is_numeric($args['parentId']) ? (int)$args['parentId'] : 0;
+            if ($parentId <= 0) {
+                return $response->withStatus(400);
+            }
+
+            /** @var PageService $pageService */
+            $pageService = $app->getContainer()->get(PageService::class);
+            $children = $pageService->getChildPages($parentId);
+            $response->getBody()->write(json_encode($children));
+
+            return $response->withHeader('Content-Type', 'application/json');
+        });
+
         $app->get('/api/public/configuration', function (Request $request, Response $response) use ($app) {
             /** @var WebSiteConfigurationRepository $configurationRepo */
             $configurationRepo = $app->getContainer()->get(WebSiteConfigurationRepository::class);
@@ -539,6 +553,32 @@ class Routes
                 'first' => $page === 0,
                 'last' => $totalPages === 0 ? true : ($page >= $totalPages - 1),
                 'empty' => $total === 0,
+            ];
+
+            $response->getBody()->write(json_encode($payload));
+            return $response->withHeader('Content-Type', 'application/json');
+        });
+
+        // Public file by ID API
+        $app->get('/api/public/files/id/{id}', function (Request $request, Response $response, array $args) use ($app) {
+            $id = isset($args['id']) && is_numeric($args['id']) ? (int)$args['id'] : 0;
+            if ($id <= 0) {
+                return $response->withStatus(400);
+            }
+
+            /** @var WebSiteFileRepository $fileRepo */
+            $fileRepo = $app->getContainer()->get(WebSiteFileRepository::class);
+            $file = $fileRepo->findById($id);
+
+            if (!$file) {
+                return $response->withStatus(404);
+            }
+
+            $payload = [
+                'id' => $file->getId(),
+                'filePath' => $file->getFilePath(),
+                'mimetype' => $file->getMimetype(),
+                'aclId' => $file->getAclId(),
             ];
 
             $response->getBody()->write(json_encode($payload));

@@ -192,6 +192,19 @@ SQL;
             ->findBy(['id' => $ids]);
     }
 
+    public function findByParentId(int $parentId): array
+    {
+        $qb = $this->entityManager->createQueryBuilder();
+        $qb
+            ->select('p')
+            ->from(WebSitePage::class, 'p')
+            ->where('p.parentId = :parentId')
+            ->setParameter('parentId', $parentId)
+            ->orderBy('p.published', 'ASC');
+
+        return $qb->getQuery()->getResult();
+    }
+
     public function getEntityManager(): EntityManagerInterface
     {
         return $this->entityManager;

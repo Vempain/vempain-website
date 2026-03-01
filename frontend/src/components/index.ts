@@ -7,3 +7,7 @@ export {SubjectSearchLoader} from './SubjectSearchLoader';
 export {default as PageView} from './PageView';
 export {LocationBadge} from './LocationBadge';
 export {LocationModal} from './LocationModal';
+export {ImageEmbed} from './ImageEmbed';
+export {HeroEmbed} from './HeroEmbed';
+export {CollapseEmbed} from './CollapseEmbed';
+export {CarouselEmbed} from './CarouselEmbed';
