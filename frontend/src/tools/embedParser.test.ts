@@ -146,4 +146,14 @@ describe('parseEmbeds', () => {
             speed: 600,
         });
     });
+
+    it('returns duplicate embed tags in document order when the same placeholder appears more than once', () => {
+        // Gallery 42 appears at positions 0 and after gallery 99 — order must be preserved
+        const body = '<!--vps:embed:gallery:42--><p>Mid</p><!--vps:embed:gallery:99--><!--vps:embed:gallery:42-->';
+        const result = parseEmbeds(body);
+        expect(result).toHaveLength(3);
+        expect(result[0]).toMatchObject({type: 'gallery', embedId: 42});
+        expect(result[1]).toMatchObject({type: 'gallery', embedId: 99});
+        expect(result[2]).toMatchObject({type: 'gallery', embedId: 42});
+    });
 });

@@ -574,6 +574,17 @@ class Routes
                 return $response->withStatus(404);
             }
 
+            /** @var ResourceAccessService $resourceAccessService */
+            $resourceAccessService = $app->getContainer()->get(ResourceAccessService::class);
+            $claims = $request->getAttribute('jwt');
+            $deniedStatus = $resourceAccessService->getDeniedStatus($file->getAclId(), $claims);
+
+            if ($deniedStatus !== null) {
+                $message = $deniedStatus === 401 ? 'Authentication required' : 'Forbidden';
+                $response->getBody()->write(json_encode(['error' => $message], JSON_UNESCAPED_SLASHES));
+                return $response->withStatus($deniedStatus)->withHeader('Content-Type', 'application/json');
+            }
+
             $payload = [
                 'id' => $file->getId(),
                 'filePath' => $file->getFilePath(),
