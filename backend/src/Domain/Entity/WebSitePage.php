@@ -169,7 +169,7 @@ class WebSitePage
     }
 
     /**
-     * @return array<int, array<string, int|string>>
+     * @return array<int, array<string, mixed>>
      */
     public function getEmbeds(): array
     {
@@ -179,14 +179,33 @@ class WebSitePage
 
         try {
             $decoded = json_decode($this->embeds, true, 512, JSON_THROW_ON_ERROR);
-            return is_array($decoded) ? $decoded : [];
+            if (!is_array($decoded)) {
+                return [];
+            }
+
+            // Normalize legacy 'galleryId' key to 'embedId' for backward compatibility
+            $result = [];
+            foreach ($decoded as $embed) {
+                if (!is_array($embed)) {
+                    continue;
+                }
+
+                if (isset($embed['galleryId']) && !isset($embed['embedId'])) {
+                    $embed['embedId'] = $embed['galleryId'];
+                    unset($embed['galleryId']);
+                }
+
+                $result[] = $embed;
+            }
+
+            return $result;
         } catch (\JsonException) {
             return [];
         }
     }
 
     /**
-     * @param array<int, array<string, int|string>>|null $embeds
+     * @param array<int, array<string, mixed>>|null $embeds
      */
     public function setEmbeds(?array $embeds): void
     {

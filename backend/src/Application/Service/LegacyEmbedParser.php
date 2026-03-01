@@ -8,7 +8,7 @@ class LegacyEmbedParser
     private const PATTERN_SHOWGALLERY = '/showGallery\s*\(\s*(?<id>\d+)\s*\)/i';
 
     /**
-     * @return array<int, array<string, int|string>>
+     * @return array<int, array<string, mixed>>
      */
     public function parse(?string $body): array
     {
@@ -26,16 +26,33 @@ class LegacyEmbedParser
                 $type = strtolower($match['type']);
                 $payload = $match['payload'];
 
-                if ($type === 'gallery' && is_numeric($payload)) {
+                if (in_array($type, ['gallery', 'image', 'hero', 'collapse'], true) && is_numeric($payload)) {
                     $id = (int)$payload;
-                    $key = "gallery:{$id}";
+                    $key = "{$type}:{$id}";
                     if (!isset($seen[$key])) {
                         $embeds[] = [
-                            'type' => 'gallery',
-                            'galleryId' => $id,
+                            'type' => $type,
+                            'embedId' => $id,
                             'placeholder' => $match[0],
                         ];
                         $seen[$key] = true;
+                    }
+                } elseif ($type === 'carousel') {
+                    $parts = explode(':', $payload);
+                    if (count($parts) >= 4 && is_numeric($parts[0])) {
+                        $id = (int)$parts[0];
+                        $key = "carousel:{$id}";
+                        if (!isset($seen[$key])) {
+                            $embeds[] = [
+                                'type' => 'carousel',
+                                'embedId' => $id,
+                                'autoplay' => strtolower($parts[1]) === 'true',
+                                'dotDuration' => strtolower($parts[2]) === 'true',
+                                'speed' => $parts[3] !== '' ? (int)$parts[3] : 500,
+                                'placeholder' => $match[0],
+                            ];
+                            $seen[$key] = true;
+                        }
                     }
                 }
             }
@@ -51,7 +68,7 @@ class LegacyEmbedParser
                     $placeholder = "<!--vps:embed:gallery:{$id}-->";
                     $embeds[] = [
                         'type' => 'gallery',
-                        'galleryId' => $id,
+                        'embedId' => $id,
                         'placeholder' => $placeholder,
                     ];
                     $seen[$key] = true;
