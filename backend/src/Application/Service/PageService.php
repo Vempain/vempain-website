@@ -160,6 +160,24 @@ class PageService
         return array_values(array_filter($terms, fn($term) => $term !== null && $term !== ''));
     }
 
+    public function getChildPages(int $parentId): array
+    {
+        $pages = $this->pageRepository->findByParentId($parentId);
+
+        return array_map(function ($page) {
+            return [
+                'id' => $page->getId(),
+                'page_id' => $page->getPageId(),
+                'title' => $page->getTitle(),
+                'header' => $page->getHeader(),
+                'body' => $page->getBody(),
+                'file_path' => $page->getFilePath(),
+                'published' => $page->getPublished()?->format('c'),
+                'secure' => $page->isSecure(),
+            ];
+        }, $pages);
+    }
+
     public function getTopLevelDirectories(): array
     {
         return array_map(
