@@ -67,15 +67,15 @@ function PageView({pageContent, pages, pagination, searchInput, onSearchInputCha
                 segments.push(
                         <HeroEmbed key={`hero-${embed.embedId}-${index}`} fileId={embed.embedId} title={pageContent?.title ?? ''}/>
                 );
-            } else if (embed.type === 'collapse' && embed.embedId) {
+            } else if (embed.type === 'collapse' && embed.items) {
                 segments.push(
-                        <CollapseEmbed key={`collapse-${embed.embedId}-${index}`} parentPageId={embed.embedId}/>
+                        <CollapseEmbed key={`collapse-${index}`} items={embed.items}/>
                 );
-            } else if (embed.type === 'carousel' && embed.embedId) {
+            } else if (embed.type === 'carousel' && embed.items) {
                 segments.push(
                         <CarouselEmbed
-                                key={`carousel-${embed.embedId}-${index}`}
-                                parentPageId={embed.embedId}
+                                key={`carousel-${index}`}
+                                items={embed.items}
                                 autoplay={embed.autoplay ?? false}
                                 dotDuration={embed.dotDuration ?? false}
                                 speed={embed.speed ?? 500}

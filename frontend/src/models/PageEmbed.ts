@@ -1,8 +1,9 @@
 export interface PageEmbed {
     type: string;
-    embedId: number;
+    embedId?: number;
     placeholder?: string;
     autoplay?: boolean;
     dotDuration?: boolean;
     speed?: number;
+    items?: Array<{title: string; body: string}>;
 }
