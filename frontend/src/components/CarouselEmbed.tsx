@@ -1,11 +1,7 @@
 import {Carousel, Typography} from 'antd';
+import type {EmbedItem} from '../models/PageEmbed.ts';
 
 const {Title} = Typography;
-
-interface EmbedItem {
-    title: string;
-    body: string;
-}
 
 interface CarouselEmbedProps {
     items: EmbedItem[];

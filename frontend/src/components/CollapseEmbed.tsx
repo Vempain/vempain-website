@@ -1,9 +1,5 @@
 import {Collapse} from 'antd';
-
-interface EmbedItem {
-    title: string;
-    body: string;
-}
+import type {EmbedItem} from '../models/PageEmbed.ts';
 
 interface CollapseEmbedProps {
     items: EmbedItem[];

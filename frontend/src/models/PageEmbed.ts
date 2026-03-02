@@ -1,3 +1,8 @@
+export interface EmbedItem {
+    title: string;
+    body: string;
+}
+
 export interface PageEmbed {
     type: string;
     embedId?: number;
@@ -5,5 +10,5 @@ export interface PageEmbed {
     autoplay?: boolean;
     dotDuration?: boolean;
     speed?: number;
-    items?: Array<{title: string; body: string}>;
+    items?: EmbedItem[];
 }

@@ -169,6 +169,19 @@ describe('parseEmbeds', () => {
         });
     });
 
+    it('parses an HTML-entity-encoded carousel embed tag with entity-encoded JSON quotes', () => {
+        const body = '&lt;!--vps:embed:carousel:[{&quot;title&quot;:&quot;T&quot;,&quot;body&quot;:&quot;B&quot;}]:true:true:800--&gt;';
+        const result = parseEmbeds(body);
+        expect(result).toHaveLength(1);
+        expect(result[0]).toMatchObject({
+            type: 'carousel',
+            items: [{title: 'T', body: 'B'}],
+            autoplay: true,
+            dotDuration: true,
+            speed: 800,
+        });
+    });
+
     it('returns duplicate embed tags in document order when the same placeholder appears more than once', () => {
         // Gallery 42 appears at positions 0 and after gallery 99 — order must be preserved
         const body = '<!--vps:embed:gallery:42--><p>Mid</p><!--vps:embed:gallery:99--><!--vps:embed:gallery:42-->';

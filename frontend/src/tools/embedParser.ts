@@ -1,4 +1,4 @@
-import type {PageEmbed} from '../models/PageEmbed.ts';
+import type {EmbedItem, PageEmbed} from '../models/PageEmbed.ts';
 
 /**
  * Parses embed tags from a page body string and returns an array of PageEmbed objects.
@@ -37,7 +37,7 @@ function decodePayloadEntities(s: string): string {
 }
 
 /** Type guard for a single embed item. */
-function isEmbedItem(item: unknown): item is {title: string; body: string} {
+function isEmbedItem(item: unknown): item is EmbedItem {
     return (
         typeof item === 'object' &&
         item !== null &&
@@ -46,13 +46,13 @@ function isEmbedItem(item: unknown): item is {title: string; body: string} {
     );
 }
 
-/** Parse a JSON string as an array of {title, body} items; returns null on failure. */
-function parseJsonItems(jsonStr: string): Array<{title: string; body: string}> | null {
+/** Parse a JSON string as an array of {title, body} items; returns null on failure.
+ *  The caller must pass an already-decoded (no HTML entities) string. */
+function parseJsonItems(jsonStr: string): EmbedItem[] | null {
     try {
-        const decoded = decodePayloadEntities(jsonStr);
-        const parsed = JSON.parse(decoded) as unknown;
+        const parsed = JSON.parse(jsonStr) as unknown;
         if (Array.isArray(parsed) && parsed.every(isEmbedItem)) {
-            return parsed as Array<{title: string; body: string}>;
+            return parsed as EmbedItem[];
         }
     } catch {
         // ignore invalid JSON
@@ -82,17 +82,18 @@ export function parseEmbeds(body: string): PageEmbed[] {
             } else if (type === 'hero' && /^\d+$/.test(payload)) {
                 matchesWithIndex.push({embed: {type: 'hero', embedId: Number(payload), placeholder: m[0]}, index: matchIndex});
             } else if (type === 'collapse') {
-                const items = parseJsonItems(payload);
+                const items = parseJsonItems(decodePayloadEntities(payload));
                 if (items) {
                     matchesWithIndex.push({embed: {type: 'collapse', placeholder: m[0], items}, index: matchIndex});
                 }
             } else if (type === 'carousel') {
                 // Payload format: [{...}]:autoplay:dotDuration:speed
-                // Locate the end of the JSON array using bracket counting, then read params after ':'
-                const jsonEnd = findJsonEndIndex(payload);
-                if (jsonEnd !== -1 && jsonEnd + 1 < payload.length && payload[jsonEnd + 1] === ':') {
-                    const jsonStr = payload.slice(0, jsonEnd + 1);
-                    const parts = payload.slice(jsonEnd + 2).split(':');
+                // Decode entities first so findJsonEndIndex correctly treats &quot; as string delimiters
+                const decodedPayload = decodePayloadEntities(payload);
+                const jsonEnd = findJsonEndIndex(decodedPayload);
+                if (jsonEnd !== -1 && jsonEnd + 1 < decodedPayload.length && decodedPayload[jsonEnd + 1] === ':') {
+                    const jsonStr = decodedPayload.slice(0, jsonEnd + 1);
+                    const parts = decodedPayload.slice(jsonEnd + 2).split(':');
                     if (parts.length >= 3) {
                         const items = parseJsonItems(jsonStr);
                         if (items) {
