@@ -52,40 +52,27 @@ describe('parseEmbeds', () => {
         expect(result[0].items![1]).toMatchObject({title: 'Item B', body: '<p>Body B</p>'});
     });
 
-    it('parses a legacy collapse embed tag with numeric ID', () => {
-        const body = '<p>Text</p><!--vps:embed:collapse:30--><p>More</p>';
-        const result = parseEmbeds(body);
-        expect(result).toHaveLength(1);
-        expect(result[0]).toMatchObject({
-            type: 'collapse',
-            embedId: 30,
-            placeholder: '<!--vps:embed:collapse:30-->',
-        });
-        expect(result[0].items).toBeUndefined();
-    });
-
-    it('parses a legacy carousel embed tag with all parameters', () => {
-        const body = '<!--vps:embed:carousel:10:true:true:800-->';
+    it('parses a carousel embed tag with all parameters', () => {
+        const body = '<!--vps:embed:carousel:[{"title":"A","body":"a"},{"title":"B","body":"b"}]:true:true:800-->';
         const result = parseEmbeds(body);
         expect(result).toHaveLength(1);
         expect(result[0]).toMatchObject({
             type: 'carousel',
-            embedId: 10,
-            placeholder: '<!--vps:embed:carousel:10:true:true:800-->',
+            embedId: 0,
             autoplay: true,
             dotDuration: true,
             speed: 800,
         });
-        expect(result[0].items).toBeUndefined();
+        expect(result[0].items).toHaveLength(2);
     });
 
-    it('parses a legacy carousel embed tag with autoplay false', () => {
-        const body = '<!--vps:embed:carousel:5:false:false:400-->';
+    it('parses a carousel embed tag with autoplay false', () => {
+        const body = '<!--vps:embed:carousel:[{"title":"X","body":"x"}]:false:false:400-->';
         const result = parseEmbeds(body);
         expect(result).toHaveLength(1);
         expect(result[0]).toMatchObject({
             type: 'carousel',
-            embedId: 5,
+            embedId: 0,
             autoplay: false,
             dotDuration: false,
             speed: 400,
@@ -108,8 +95,8 @@ describe('parseEmbeds', () => {
         expect(result[0].items![1]).toMatchObject({title: 'Slide 2', body: '<p>Content 2</p>'});
     });
 
-    it('ignores a legacy carousel embed tag with missing parameters', () => {
-        const body = '<!--vps:embed:carousel:10-->';
+    it('ignores a carousel embed tag with missing parameters', () => {
+        const body = '<!--vps:embed:carousel:[{"title":"A","body":"a"}]-->';
         const result = parseEmbeds(body);
         expect(result).toHaveLength(0);
     });
@@ -121,11 +108,12 @@ describe('parseEmbeds', () => {
     });
 
     it('parses multiple embed tags from the same body', () => {
-        const body = '<p>A</p><!--vps:embed:image:1--><p>B</p><!--vps:embed:collapse:30--><p>C</p>';
+        const body = '<p>A</p><!--vps:embed:image:1--><p>B</p><!--vps:embed:collapse:[{"title":"T","body":"B"}]--><p>C</p>';
         const result = parseEmbeds(body);
         expect(result).toHaveLength(2);
         expect(result[0]).toMatchObject({type: 'image', embedId: 1});
-        expect(result[1]).toMatchObject({type: 'collapse', embedId: 30});
+        expect(result[1]).toMatchObject({type: 'collapse', embedId: 0});
+        expect(result[1].items).toHaveLength(1);
     });
 
     it('is case-insensitive for embed type', () => {
@@ -166,16 +154,17 @@ describe('parseEmbeds', () => {
     });
 
     it('parses an HTML-entity-encoded carousel embed tag', () => {
-        const body = '&lt;!--vps:embed:carousel:10:true:false:600--&gt;';
+        const body = '&lt;!--vps:embed:carousel:[{"title":"A","body":"a"}]:true:false:600--&gt;';
         const result = parseEmbeds(body);
         expect(result).toHaveLength(1);
         expect(result[0]).toMatchObject({
             type: 'carousel',
-            embedId: 10,
+            embedId: 0,
             autoplay: true,
             dotDuration: false,
             speed: 600,
         });
+        expect(result[0].items).toHaveLength(1);
     });
 
     it('returns duplicate embed tags in document order when the same placeholder appears more than once', () => {

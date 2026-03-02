@@ -24,9 +24,9 @@ function tryParseItemsJson(json: string): EmbedItem[] | null {
  * Parses embed tags from a page body string and returns an array of PageEmbed objects.
  * Supports: gallery, image, hero, collapse, carousel embed types.
  *
- * Collapse and carousel now support two payload formats:
- *   1. Numeric parent page ID (legacy):  <!--vps:embed:collapse:30-->
- *   2. Inline JSON array (new):          <!--vps:embed:collapse:[{"title":"…","body":"…"},…]-->
+ * Collapse and carousel use inline JSON array payloads:
+ *   <!--vps:embed:collapse:[{"title":"…","body":"…"},…]-->
+ *   <!--vps:embed:carousel:[{"title":"…","body":"…"},…]:true:true:800-->
  *
  * Handles both literal HTML comments (<!--vps:embed:…-->) and HTML-entity-encoded
  * variants (&lt;!--vps:embed:…--&gt;) that may appear after server-side eval/cache.
@@ -52,11 +52,9 @@ export function parseEmbeds(body: string): PageEmbed[] {
         }
     }
 
-    // Collapse: payload is either a numeric ID or a JSON array
+    // Collapse: payload is a JSON array
     const collapseLiteral = /<!--\s*vps:embed:collapse:(\[[\s\S]*?\])\s*-->/ig;
     const collapseEncoded = /&lt;!--\s*vps:embed:collapse:(\[[\s\S]*?\])\s*--&gt;/ig;
-    const collapseNumLiteral = /<!--\s*vps:embed:collapse:(\d+)\s*-->/ig;
-    const collapseNumEncoded = /&lt;!--\s*vps:embed:collapse:(\d+)\s*--&gt;/ig;
 
     for (const pattern of [collapseLiteral, collapseEncoded]) {
         let m: RegExpExecArray | null;
@@ -72,17 +70,7 @@ export function parseEmbeds(body: string): PageEmbed[] {
         }
     }
 
-    for (const pattern of [collapseNumLiteral, collapseNumEncoded]) {
-        let m: RegExpExecArray | null;
-        while ((m = pattern.exec(body)) !== null) {
-            matchesWithIndex.push({
-                embed: {type: 'collapse', embedId: Number(m[1]), placeholder: m[0]},
-                index: m.index,
-            });
-        }
-    }
-
-    // Carousel: payload is either <id>:<autoplay>:<dotDuration>:<speed> or [JSON]:<autoplay>:<dotDuration>:<speed>
+    // Carousel: payload is [JSON]:<autoplay>:<dotDuration>:<speed>
     // New JSON format: <!--vps:embed:carousel:[…]:true:true:800-->
     const carouselJsonLiteral = /<!--\s*vps:embed:carousel:(\[[\s\S]*?\]):([^:]+):([^:]+):(\d+)\s*-->/ig;
     const carouselJsonEncoded = /&lt;!--\s*vps:embed:carousel:(\[[\s\S]*?\]):([^:]+):([^:]+):(\d+)\s*--&gt;/ig;
@@ -109,26 +97,6 @@ export function parseEmbeds(body: string): PageEmbed[] {
         }
     }
 
-    // Legacy numeric carousel: <!--vps:embed:carousel:<id>:<autoplay>:<dotDuration>:<speed>-->
-    const carouselNumLiteral = /<!--\s*vps:embed:carousel:(\d+):([^:]+):([^:]+):(\d+)\s*-->/ig;
-    const carouselNumEncoded = /&lt;!--\s*vps:embed:carousel:(\d+):([^:]+):([^:]+):(\d+)\s*--&gt;/ig;
-
-    for (const pattern of [carouselNumLiteral, carouselNumEncoded]) {
-        let m: RegExpExecArray | null;
-        while ((m = pattern.exec(body)) !== null) {
-            matchesWithIndex.push({
-                embed: {
-                    type: 'carousel',
-                    embedId: Number(m[1]),
-                    placeholder: m[0],
-                    autoplay: m[2].toLowerCase() === 'true',
-                    dotDuration: m[3].toLowerCase() === 'true',
-                    speed: parseInt(m[4], 10) || 500,
-                },
-                index: m.index,
-            });
-        }
-    }
 
     // Sort by capture position so cursor-based replacement in PageView works correctly
     matchesWithIndex.sort((a, b) => a.index - b.index);
