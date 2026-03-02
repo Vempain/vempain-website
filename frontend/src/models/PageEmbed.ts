@@ -10,5 +10,6 @@ export interface PageEmbed {
     autoplay?: boolean;
     dotDuration?: boolean;
     speed?: number;
+    /** Inline items for collapse/carousel embeds (new JSON format) */
     items?: EmbedItem[];
 }

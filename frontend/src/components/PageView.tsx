@@ -67,14 +67,19 @@ function PageView({pageContent, pages, pagination, searchInput, onSearchInputCha
                 segments.push(
                         <HeroEmbed key={`hero-${embed.embedId}-${index}`} fileId={embed.embedId} title={pageContent?.title ?? ''}/>
                 );
-            } else if (embed.type === 'collapse' && embed.items) {
+            } else if (embed.type === 'collapse') {
                 segments.push(
-                        <CollapseEmbed key={`collapse-${index}`} items={embed.items}/>
+                        <CollapseEmbed
+                                key={`collapse-${index}`}
+                                parentPageId={embed.embedId || undefined}
+                                items={embed.items}
+                        />
                 );
-            } else if (embed.type === 'carousel' && embed.items) {
+            } else if (embed.type === 'carousel') {
                 segments.push(
                         <CarouselEmbed
                                 key={`carousel-${index}`}
+                                parentPageId={embed.embedId || undefined}
                                 items={embed.items}
                                 autoplay={embed.autoplay ?? false}
                                 dotDuration={embed.dotDuration ?? false}

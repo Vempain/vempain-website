@@ -1,122 +1,147 @@
 import type {EmbedItem, PageEmbed} from '../models/PageEmbed.ts';
 
 /**
- * Parses embed tags from a page body string and returns an array of PageEmbed objects.
- * Supports: gallery, image, hero, collapse, carousel embed types.
- *
- * Handles both literal HTML comments (<!--vps:embed:…-->) and HTML-entity-encoded
- * variants (&lt;!--vps:embed:…--&gt;) that may appear after server-side eval/cache.
- *
- * collapse format:  <!--vps:embed:collapse:[{"title":"…","body":"…"},…]-->
- * carousel format:  <!--vps:embed:carousel:[{"title":"…","body":"…"},…]:autoplay:dotDuration:speed-->
+ * Try to parse a JSON array of {title,body} items from the given string.
+ * Returns the parsed array on success, or null on failure.
  */
-
-/** Find the index of the closing bracket/brace that balances the first one in `s`. */
-function findJsonEndIndex(s: string): number {
-    let depth = 0;
-    let inString = false;
-    let escape = false;
-    for (let i = 0; i < s.length; i++) {
-        const c = s[i];
-        if (escape) { escape = false; continue; }
-        if (c === '\\' && inString) { escape = true; continue; }
-        if (c === '"') { inString = !inString; continue; }
-        if (inString) continue;
-        if (c === '[' || c === '{') depth++;
-        else if (c === ']' || c === '}') {
-            depth--;
-            if (depth === 0) return i;
-        }
-    }
-    return -1;
-}
-
-/** Decode HTML entities that may appear when an embed tag is entity-encoded. */
-function decodePayloadEntities(s: string): string {
-    return s.replace(/&quot;/g, '"').replace(/&amp;/g, '&');
-}
-
-/** Type guard for a single embed item. */
-function isEmbedItem(item: unknown): item is EmbedItem {
-    return (
-        typeof item === 'object' &&
-        item !== null &&
-        typeof (item as {title: unknown}).title === 'string' &&
-        typeof (item as {body: unknown}).body === 'string'
-    );
-}
-
-/** Parse a JSON string as an array of {title, body} items; returns null on failure.
- *  The caller must pass an already-decoded (no HTML entities) string. */
-function parseJsonItems(jsonStr: string): EmbedItem[] | null {
+function tryParseItemsJson(json: string): EmbedItem[] | null {
     try {
-        const parsed = JSON.parse(jsonStr) as unknown;
-        if (Array.isArray(parsed) && parsed.every(isEmbedItem)) {
+        const parsed = JSON.parse(json);
+        if (Array.isArray(parsed) && parsed.every(
+            (item: unknown) =>
+                typeof item === 'object' && item !== null &&
+                'title' in item && 'body' in item
+        )) {
             return parsed as EmbedItem[];
         }
     } catch {
-        // ignore invalid JSON
+        // not valid JSON
     }
     return null;
 }
 
+/**
+ * Parses embed tags from a page body string and returns an array of PageEmbed objects.
+ * Supports: gallery, image, hero, collapse, carousel embed types.
+ *
+ * Collapse and carousel now support two payload formats:
+ *   1. Numeric parent page ID (legacy):  <!--vps:embed:collapse:30-->
+ *   2. Inline JSON array (new):          <!--vps:embed:collapse:[{"title":"…","body":"…"},…]-->
+ *
+ * Handles both literal HTML comments (<!--vps:embed:…-->) and HTML-entity-encoded
+ * variants (&lt;!--vps:embed:…--&gt;) that may appear after server-side eval/cache.
+ */
 export function parseEmbeds(body: string): PageEmbed[] {
-    // Pattern 1: literal HTML comment  <!--vps:embed:type:payload-->
-    const literalPattern = /<!--\s*vps:embed:(?<type>[a-z0-9_-]+):(?<payload>.+?)\s*-->/ig;
-    // Pattern 2: entity-encoded         &lt;!--vps:embed:type:payload--&gt;
-    const encodedPattern = /&lt;!--\s*vps:embed:(?<type>[a-z0-9_-]+):(?<payload>.+?)\s*--&gt;/ig;
+    const matchesWithIndex: Array<{ embed: PageEmbed; index: number }> = [];
 
-    const matchesWithIndex: Array<{embed: PageEmbed; index: number}> = [];
+    // --- Pattern pairs: [literal, entity-encoded] ---
 
-    for (const pattern of [literalPattern, encodedPattern]) {
+    // Simple types (gallery, image, hero): payload is always a numeric ID
+    const simpleLiteral = /<!--\s*vps:embed:(?<type>gallery|image|hero):(?<id>\d+)\s*-->/ig;
+    const simpleEncoded = /&lt;!--\s*vps:embed:(?<type>gallery|image|hero):(?<id>\d+)\s*--&gt;/ig;
+
+    for (const pattern of [simpleLiteral, simpleEncoded]) {
         let m: RegExpExecArray | null;
         while ((m = pattern.exec(body)) !== null) {
             const type = (m.groups?.type ?? '').toLowerCase();
-            const payload = m.groups?.payload ?? '';
-            const matchIndex = m.index;
+            const id = Number(m.groups?.id);
+            matchesWithIndex.push({
+                embed: {type, embedId: id, placeholder: m[0]},
+                index: m.index,
+            });
+        }
+    }
 
-            if (type === 'gallery' && /^\d+$/.test(payload)) {
-                matchesWithIndex.push({embed: {type: 'gallery', embedId: Number(payload), placeholder: m[0]}, index: matchIndex});
-            } else if (type === 'image' && /^\d+$/.test(payload)) {
-                matchesWithIndex.push({embed: {type: 'image', embedId: Number(payload), placeholder: m[0]}, index: matchIndex});
-            } else if (type === 'hero' && /^\d+$/.test(payload)) {
-                matchesWithIndex.push({embed: {type: 'hero', embedId: Number(payload), placeholder: m[0]}, index: matchIndex});
-            } else if (type === 'collapse') {
-                const items = parseJsonItems(decodePayloadEntities(payload));
-                if (items) {
-                    matchesWithIndex.push({embed: {type: 'collapse', placeholder: m[0], items}, index: matchIndex});
-                }
-            } else if (type === 'carousel') {
-                // Payload format: [{...}]:autoplay:dotDuration:speed
-                // Decode entities first so findJsonEndIndex correctly treats &quot; as string delimiters
-                const decodedPayload = decodePayloadEntities(payload);
-                const jsonEnd = findJsonEndIndex(decodedPayload);
-                if (jsonEnd !== -1 && jsonEnd + 1 < decodedPayload.length && decodedPayload[jsonEnd + 1] === ':') {
-                    const jsonStr = decodedPayload.slice(0, jsonEnd + 1);
-                    const parts = decodedPayload.slice(jsonEnd + 2).split(':');
-                    if (parts.length >= 3) {
-                        const items = parseJsonItems(jsonStr);
-                        if (items) {
-                            matchesWithIndex.push({
-                                embed: {
-                                    type: 'carousel',
-                                    placeholder: m[0],
-                                    items,
-                                    autoplay: parts[0].toLowerCase() === 'true',
-                                    dotDuration: parts[1].toLowerCase() === 'true',
-                                    speed: parseInt(parts[2], 10) || 500,
-                                },
-                                index: matchIndex,
-                            });
-                        }
-                    }
-                }
+    // Collapse: payload is either a numeric ID or a JSON array
+    const collapseLiteral = /<!--\s*vps:embed:collapse:(\[[\s\S]*?\])\s*-->/ig;
+    const collapseEncoded = /&lt;!--\s*vps:embed:collapse:(\[[\s\S]*?\])\s*--&gt;/ig;
+    const collapseNumLiteral = /<!--\s*vps:embed:collapse:(\d+)\s*-->/ig;
+    const collapseNumEncoded = /&lt;!--\s*vps:embed:collapse:(\d+)\s*--&gt;/ig;
+
+    for (const pattern of [collapseLiteral, collapseEncoded]) {
+        let m: RegExpExecArray | null;
+        while ((m = pattern.exec(body)) !== null) {
+            const jsonStr = m[1];
+            const items = tryParseItemsJson(jsonStr);
+            if (items) {
+                matchesWithIndex.push({
+                    embed: {type: 'collapse', embedId: 0, placeholder: m[0], items},
+                    index: m.index,
+                });
             }
+        }
+    }
+
+    for (const pattern of [collapseNumLiteral, collapseNumEncoded]) {
+        let m: RegExpExecArray | null;
+        while ((m = pattern.exec(body)) !== null) {
+            matchesWithIndex.push({
+                embed: {type: 'collapse', embedId: Number(m[1]), placeholder: m[0]},
+                index: m.index,
+            });
+        }
+    }
+
+    // Carousel: payload is either <id>:<autoplay>:<dotDuration>:<speed> or [JSON]:<autoplay>:<dotDuration>:<speed>
+    // New JSON format: <!--vps:embed:carousel:[…]:true:true:800-->
+    const carouselJsonLiteral = /<!--\s*vps:embed:carousel:(\[[\s\S]*?\]):([^:]+):([^:]+):(\d+)\s*-->/ig;
+    const carouselJsonEncoded = /&lt;!--\s*vps:embed:carousel:(\[[\s\S]*?\]):([^:]+):([^:]+):(\d+)\s*--&gt;/ig;
+
+    for (const pattern of [carouselJsonLiteral, carouselJsonEncoded]) {
+        let m: RegExpExecArray | null;
+        while ((m = pattern.exec(body)) !== null) {
+            const jsonStr = m[1];
+            const items = tryParseItemsJson(jsonStr);
+            if (items) {
+                matchesWithIndex.push({
+                    embed: {
+                        type: 'carousel',
+                        embedId: 0,
+                        placeholder: m[0],
+                        items,
+                        autoplay: m[2].toLowerCase() === 'true',
+                        dotDuration: m[3].toLowerCase() === 'true',
+                        speed: parseInt(m[4], 10) || 500,
+                    },
+                    index: m.index,
+                });
+            }
+        }
+    }
+
+    // Legacy numeric carousel: <!--vps:embed:carousel:<id>:<autoplay>:<dotDuration>:<speed>-->
+    const carouselNumLiteral = /<!--\s*vps:embed:carousel:(\d+):([^:]+):([^:]+):(\d+)\s*-->/ig;
+    const carouselNumEncoded = /&lt;!--\s*vps:embed:carousel:(\d+):([^:]+):([^:]+):(\d+)\s*--&gt;/ig;
+
+    for (const pattern of [carouselNumLiteral, carouselNumEncoded]) {
+        let m: RegExpExecArray | null;
+        while ((m = pattern.exec(body)) !== null) {
+            matchesWithIndex.push({
+                embed: {
+                    type: 'carousel',
+                    embedId: Number(m[1]),
+                    placeholder: m[0],
+                    autoplay: m[2].toLowerCase() === 'true',
+                    dotDuration: m[3].toLowerCase() === 'true',
+                    speed: parseInt(m[4], 10) || 500,
+                },
+                index: m.index,
+            });
         }
     }
 
     // Sort by capture position so cursor-based replacement in PageView works correctly
     matchesWithIndex.sort((a, b) => a.index - b.index);
 
-    return matchesWithIndex.map(({embed}) => embed);
+    // Deduplicate overlapping matches (JSON patterns may re-match what numeric already captured)
+    const seen = new Set<number>();
+    const deduped: Array<{ embed: PageEmbed; index: number }> = [];
+    for (const entry of matchesWithIndex) {
+        if (!seen.has(entry.index)) {
+            seen.add(entry.index);
+            deduped.push(entry);
+        }
+    }
+
+    return deduped.map(({embed}) => embed);
 }
