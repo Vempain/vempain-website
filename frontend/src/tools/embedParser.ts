@@ -1,4 +1,4 @@
-import type {PageEmbed} from '../models/PageEmbed.ts';
+import type {EmbedItem, PageEmbed} from '../models/PageEmbed.ts';
 
 /**
  * Parses embed tags from a page body string and returns an array of PageEmbed objects.
@@ -6,12 +6,65 @@ import type {PageEmbed} from '../models/PageEmbed.ts';
  *
  * Handles both literal HTML comments (<!--vps:embed:…-->) and HTML-entity-encoded
  * variants (&lt;!--vps:embed:…--&gt;) that may appear after server-side eval/cache.
+ *
+ * collapse format:  <!--vps:embed:collapse:[{"title":"…","body":"…"},…]-->
+ * carousel format:  <!--vps:embed:carousel:[{"title":"…","body":"…"},…]:autoplay:dotDuration:speed-->
  */
+
+/** Find the index of the closing bracket/brace that balances the first one in `s`. */
+function findJsonEndIndex(s: string): number {
+    let depth = 0;
+    let inString = false;
+    let escape = false;
+    for (let i = 0; i < s.length; i++) {
+        const c = s[i];
+        if (escape) { escape = false; continue; }
+        if (c === '\\' && inString) { escape = true; continue; }
+        if (c === '"') { inString = !inString; continue; }
+        if (inString) continue;
+        if (c === '[' || c === '{') depth++;
+        else if (c === ']' || c === '}') {
+            depth--;
+            if (depth === 0) return i;
+        }
+    }
+    return -1;
+}
+
+/** Decode HTML entities that may appear when an embed tag is entity-encoded. */
+function decodePayloadEntities(s: string): string {
+    return s.replace(/&quot;/g, '"').replace(/&amp;/g, '&');
+}
+
+/** Type guard for a single embed item. */
+function isEmbedItem(item: unknown): item is EmbedItem {
+    return (
+        typeof item === 'object' &&
+        item !== null &&
+        typeof (item as {title: unknown}).title === 'string' &&
+        typeof (item as {body: unknown}).body === 'string'
+    );
+}
+
+/** Parse a JSON string as an array of {title, body} items; returns null on failure.
+ *  The caller must pass an already-decoded (no HTML entities) string. */
+function parseJsonItems(jsonStr: string): EmbedItem[] | null {
+    try {
+        const parsed = JSON.parse(jsonStr) as unknown;
+        if (Array.isArray(parsed) && parsed.every(isEmbedItem)) {
+            return parsed as EmbedItem[];
+        }
+    } catch {
+        // ignore invalid JSON
+    }
+    return null;
+}
+
 export function parseEmbeds(body: string): PageEmbed[] {
     // Pattern 1: literal HTML comment  <!--vps:embed:type:payload-->
-    const literalPattern = /<!--\s*vps:embed:(?<type>[a-z0-9_-]+):(?<payload>[^\s>]+)\s*-->/ig;
+    const literalPattern = /<!--\s*vps:embed:(?<type>[a-z0-9_-]+):(?<payload>.+?)\s*-->/ig;
     // Pattern 2: entity-encoded         &lt;!--vps:embed:type:payload--&gt;
-    const encodedPattern = /&lt;!--\s*vps:embed:(?<type>[a-z0-9_-]+):(?<payload>[^\s&]+)\s*--&gt;/ig;
+    const encodedPattern = /&lt;!--\s*vps:embed:(?<type>[a-z0-9_-]+):(?<payload>.+?)\s*--&gt;/ig;
 
     const matchesWithIndex: Array<{embed: PageEmbed; index: number}> = [];
 
@@ -28,22 +81,35 @@ export function parseEmbeds(body: string): PageEmbed[] {
                 matchesWithIndex.push({embed: {type: 'image', embedId: Number(payload), placeholder: m[0]}, index: matchIndex});
             } else if (type === 'hero' && /^\d+$/.test(payload)) {
                 matchesWithIndex.push({embed: {type: 'hero', embedId: Number(payload), placeholder: m[0]}, index: matchIndex});
-            } else if (type === 'collapse' && /^\d+$/.test(payload)) {
-                matchesWithIndex.push({embed: {type: 'collapse', embedId: Number(payload), placeholder: m[0]}, index: matchIndex});
+            } else if (type === 'collapse') {
+                const items = parseJsonItems(decodePayloadEntities(payload));
+                if (items) {
+                    matchesWithIndex.push({embed: {type: 'collapse', placeholder: m[0], items}, index: matchIndex});
+                }
             } else if (type === 'carousel') {
-                const parts = payload.split(':');
-                if (parts.length >= 4 && /^\d+$/.test(parts[0])) {
-                    matchesWithIndex.push({
-                        embed: {
-                            type: 'carousel',
-                            embedId: Number(parts[0]),
-                            placeholder: m[0],
-                            autoplay: parts[1].toLowerCase() === 'true',
-                            dotDuration: parts[2].toLowerCase() === 'true',
-                            speed: parseInt(parts[3], 10) || 500,
-                        },
-                        index: matchIndex,
-                    });
+                // Payload format: [{...}]:autoplay:dotDuration:speed
+                // Decode entities first so findJsonEndIndex correctly treats &quot; as string delimiters
+                const decodedPayload = decodePayloadEntities(payload);
+                const jsonEnd = findJsonEndIndex(decodedPayload);
+                if (jsonEnd !== -1 && jsonEnd + 1 < decodedPayload.length && decodedPayload[jsonEnd + 1] === ':') {
+                    const jsonStr = decodedPayload.slice(0, jsonEnd + 1);
+                    const parts = decodedPayload.slice(jsonEnd + 2).split(':');
+                    if (parts.length >= 3) {
+                        const items = parseJsonItems(jsonStr);
+                        if (items) {
+                            matchesWithIndex.push({
+                                embed: {
+                                    type: 'carousel',
+                                    placeholder: m[0],
+                                    items,
+                                    autoplay: parts[0].toLowerCase() === 'true',
+                                    dotDuration: parts[1].toLowerCase() === 'true',
+                                    speed: parseInt(parts[2], 10) || 500,
+                                },
+                                index: matchIndex,
+                            });
+                        }
+                    }
                 }
             }
         }
