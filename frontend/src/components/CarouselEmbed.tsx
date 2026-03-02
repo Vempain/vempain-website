@@ -1,5 +1,5 @@
 import {Carousel, Typography} from 'antd';
-import type {EmbedItem} from '../models/PageEmbed.ts';
+import type {EmbedItem} from '../models/PageEmbed';
 
 const {Title} = Typography;
 
@@ -16,13 +16,13 @@ export function CarouselEmbed({items, autoplay, dotDuration, speed}: CarouselEmb
         : false;
 
     return (
-        <Carousel autoplay={autoplayConfig} speed={speed}>
-            {items.map((item, index) => (
-                <div key={index}>
-                    <Title level={3}>{item.title}</Title>
-                    <div dangerouslySetInnerHTML={{__html: item.body}}/>
-                </div>
-            ))}
-        </Carousel>
+            <Carousel autoplay={autoplayConfig} speed={speed}>
+                {items.map((item, idx) => (
+                        <div key={idx}>
+                            <Title level={3}>{item.title}</Title>
+                            <div dangerouslySetInnerHTML={{__html: item.body ?? ''}}/>
+                        </div>
+                ))}
+            </Carousel>
     );
 }

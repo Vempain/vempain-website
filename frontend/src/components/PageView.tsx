@@ -69,7 +69,10 @@ function PageView({pageContent, pages, pagination, searchInput, onSearchInputCha
                 );
             } else if (embed.type === 'collapse' && embed.items) {
                 segments.push(
-                        <CollapseEmbed key={`collapse-${index}`} items={embed.items}/>
+                        <CollapseEmbed
+                                key={`collapse-${index}`}
+                                items={embed.items}
+                        />
                 );
             } else if (embed.type === 'carousel' && embed.items) {
                 segments.push(

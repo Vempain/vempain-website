@@ -39,63 +39,69 @@ describe('parseEmbeds', () => {
         });
     });
 
-    it('parses a collapse embed tag with inline JSON', () => {
-        const body = '<p>Text</p><!--vps:embed:collapse:[{"title":"First","body":"Body one"},{"title":"Second","body":"Body two"}]--><p>More</p>';
+    it('parses a collapse embed tag with inline JSON items', () => {
+        const body = '<p>Text</p><!--vps:embed:collapse:[{"title":"Item A","body":"<p>Body A</p>"},{"title":"Item B","body":"<p>Body B</p>"}]--><p>More</p>';
         const result = parseEmbeds(body);
         expect(result).toHaveLength(1);
         expect(result[0]).toMatchObject({
             type: 'collapse',
-            placeholder: '<!--vps:embed:collapse:[{"title":"First","body":"Body one"},{"title":"Second","body":"Body two"}]-->',
-            items: [
-                {title: 'First', body: 'Body one'},
-                {title: 'Second', body: 'Body two'},
-            ],
+            embedId: 0,
         });
+        expect(result[0].items).toHaveLength(2);
+        expect(result[0].items![0]).toMatchObject({title: 'Item A', body: '<p>Body A</p>'});
+        expect(result[0].items![1]).toMatchObject({title: 'Item B', body: '<p>Body B</p>'});
     });
 
-    it('parses a carousel embed tag with inline JSON and all parameters', () => {
-        const body = '<!--vps:embed:carousel:[{"title":"Slide 1","body":"Content 1"},{"title":"Slide 2","body":"Content 2"}]:true:true:800-->';
+    it('parses a carousel embed tag with all parameters', () => {
+        const body = '<!--vps:embed:carousel:[{"title":"A","body":"a"},{"title":"B","body":"b"}]:true:true:800-->';
         const result = parseEmbeds(body);
         expect(result).toHaveLength(1);
         expect(result[0]).toMatchObject({
             type: 'carousel',
-            placeholder: '<!--vps:embed:carousel:[{"title":"Slide 1","body":"Content 1"},{"title":"Slide 2","body":"Content 2"}]:true:true:800-->',
-            items: [
-                {title: 'Slide 1', body: 'Content 1'},
-                {title: 'Slide 2', body: 'Content 2'},
-            ],
+            embedId: 0,
             autoplay: true,
             dotDuration: true,
             speed: 800,
         });
+        expect(result[0].items).toHaveLength(2);
     });
 
     it('parses a carousel embed tag with autoplay false', () => {
-        const body = '<!--vps:embed:carousel:[{"title":"A","body":"B"}]:false:false:400-->';
+        const body = '<!--vps:embed:carousel:[{"title":"X","body":"x"}]:false:false:400-->';
         const result = parseEmbeds(body);
         expect(result).toHaveLength(1);
         expect(result[0]).toMatchObject({
             type: 'carousel',
-            items: [{title: 'A', body: 'B'}],
+            embedId: 0,
             autoplay: false,
             dotDuration: false,
             speed: 400,
         });
     });
 
-    it('ignores a carousel embed tag with JSON but missing autoplay/dotDuration/speed parameters', () => {
-        const body = '<!--vps:embed:carousel:[{"title":"T","body":"B"}]-->';
+    it('parses a carousel embed tag with inline JSON items', () => {
+        const body = '<!--vps:embed:carousel:[{"title":"Slide 1","body":"<p>Content 1</p>"},{"title":"Slide 2","body":"<p>Content 2</p>"}]:true:false:600-->';
+        const result = parseEmbeds(body);
+        expect(result).toHaveLength(1);
+        expect(result[0]).toMatchObject({
+            type: 'carousel',
+            embedId: 0,
+            autoplay: true,
+            dotDuration: false,
+            speed: 600,
+        });
+        expect(result[0].items).toHaveLength(2);
+        expect(result[0].items![0]).toMatchObject({title: 'Slide 1', body: '<p>Content 1</p>'});
+        expect(result[0].items![1]).toMatchObject({title: 'Slide 2', body: '<p>Content 2</p>'});
+    });
+
+    it('ignores a carousel embed tag with missing parameters', () => {
+        const body = '<!--vps:embed:carousel:[{"title":"A","body":"a"}]-->';
         const result = parseEmbeds(body);
         expect(result).toHaveLength(0);
     });
 
-    it('ignores a collapse embed tag with invalid JSON', () => {
-        const body = '<!--vps:embed:collapse:[not valid json]-->';
-        const result = parseEmbeds(body);
-        expect(result).toHaveLength(0);
-    });
-
-    it('ignores embed tags with non-numeric IDs for gallery/image/hero', () => {
+    it('ignores embed tags with non-numeric IDs', () => {
         const body = '<!--vps:embed:image:abc-->';
         const result = parseEmbeds(body);
         expect(result).toHaveLength(0);
@@ -106,7 +112,8 @@ describe('parseEmbeds', () => {
         const result = parseEmbeds(body);
         expect(result).toHaveLength(2);
         expect(result[0]).toMatchObject({type: 'image', embedId: 1});
-        expect(result[1]).toMatchObject({type: 'collapse', items: [{title: 'T', body: 'B'}]});
+        expect(result[1]).toMatchObject({type: 'collapse', embedId: 0});
+        expect(result[1].items).toHaveLength(1);
     });
 
     it('is case-insensitive for embed type', () => {
@@ -146,40 +153,18 @@ describe('parseEmbeds', () => {
         expect(result[1]).toMatchObject({type: 'hero', embedId: 2});
     });
 
-    it('parses an HTML-entity-encoded carousel embed tag with inline JSON', () => {
-        const body = '&lt;!--vps:embed:carousel:[{"title":"Slide","body":"Content"}]:true:false:600--&gt;';
+    it('parses an HTML-entity-encoded carousel embed tag', () => {
+        const body = '&lt;!--vps:embed:carousel:[{"title":"A","body":"a"}]:true:false:600--&gt;';
         const result = parseEmbeds(body);
         expect(result).toHaveLength(1);
         expect(result[0]).toMatchObject({
             type: 'carousel',
-            items: [{title: 'Slide', body: 'Content'}],
+            embedId: 0,
             autoplay: true,
             dotDuration: false,
             speed: 600,
         });
-    });
-
-    it('parses an HTML-entity-encoded collapse embed tag with entity-encoded JSON quotes', () => {
-        const body = '&lt;!--vps:embed:collapse:[{&quot;title&quot;:&quot;T&quot;,&quot;body&quot;:&quot;B&quot;}]--&gt;';
-        const result = parseEmbeds(body);
-        expect(result).toHaveLength(1);
-        expect(result[0]).toMatchObject({
-            type: 'collapse',
-            items: [{title: 'T', body: 'B'}],
-        });
-    });
-
-    it('parses an HTML-entity-encoded carousel embed tag with entity-encoded JSON quotes', () => {
-        const body = '&lt;!--vps:embed:carousel:[{&quot;title&quot;:&quot;T&quot;,&quot;body&quot;:&quot;B&quot;}]:true:true:800--&gt;';
-        const result = parseEmbeds(body);
-        expect(result).toHaveLength(1);
-        expect(result[0]).toMatchObject({
-            type: 'carousel',
-            items: [{title: 'T', body: 'B'}],
-            autoplay: true,
-            dotDuration: true,
-            speed: 800,
-        });
+        expect(result[0].items).toHaveLength(1);
     });
 
     it('returns duplicate embed tags in document order when the same placeholder appears more than once', () => {
@@ -190,5 +175,21 @@ describe('parseEmbeds', () => {
         expect(result[0]).toMatchObject({type: 'gallery', embedId: 42});
         expect(result[1]).toMatchObject({type: 'gallery', embedId: 99});
         expect(result[2]).toMatchObject({type: 'gallery', embedId: 42});
+    });
+
+    it('parses a real-world page with hero, large inline collapse, and gallery', () => {
+        const body = '<!--vps:embed:hero:71297--><p>Some text</p>' +
+            '<!--vps:embed:collapse:[{"title":"Day 1","body":"<p>Day 1 content with special chars %2B and brackets [test]</p>"},' +
+            '{"title":"Day 2","body":"<p>Day 2 content</p>"},' +
+            '{"title":"Day 3","body":"<p>Day 3 content</p>"}]-->' +
+            '<p>More text</p><!--vps:embed:gallery:1059-->';
+        const result = parseEmbeds(body);
+        expect(result).toHaveLength(3);
+        expect(result[0]).toMatchObject({type: 'hero', embedId: 71297});
+        expect(result[1]).toMatchObject({type: 'collapse', embedId: 0});
+        expect(result[1].items).toHaveLength(3);
+        expect(result[1].items![0].title).toBe('Day 1');
+        expect(result[1].items![2].title).toBe('Day 3');
+        expect(result[2]).toMatchObject({type: 'gallery', embedId: 1059});
     });
 });

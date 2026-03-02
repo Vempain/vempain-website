@@ -1,15 +1,15 @@
 import {Collapse} from 'antd';
-import type {EmbedItem} from '../models/PageEmbed.ts';
+import type {EmbedItem} from '../models';
 
 interface CollapseEmbedProps {
     items: EmbedItem[];
 }
 
 export function CollapseEmbed({items}: CollapseEmbedProps) {
-    const collapseItems = items.map((item, index) => ({
-        key: String(index),
+    const collapseItems = items.map((item, idx) => ({
+        key: String(idx),
         label: item.title,
-        children: <div dangerouslySetInnerHTML={{__html: item.body}}/>,
+        children: <div dangerouslySetInnerHTML={{__html: item.body ?? ''}}/>,
     }));
 
     return <Collapse items={collapseItems}/>;
