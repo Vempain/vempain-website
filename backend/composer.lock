@@ -812,16 +812,16 @@
         },
         {
             "name": "firebase/php-jwt",
-            "version": "v7.0.2",
+            "version": "v7.0.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/firebase/php-jwt.git",
-                "reference": "5645b43af647b6947daac1d0f659dd1fbe8d3b65"
+                "reference": "28aa0694bcfdfa5e2959c394d5a1ee7a5083629e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/firebase/php-jwt/zipball/5645b43af647b6947daac1d0f659dd1fbe8d3b65",
-                "reference": "5645b43af647b6947daac1d0f659dd1fbe8d3b65",
+                "url": "https://api.github.com/repos/firebase/php-jwt/zipball/28aa0694bcfdfa5e2959c394d5a1ee7a5083629e",
+                "reference": "28aa0694bcfdfa5e2959c394d5a1ee7a5083629e",
                 "shasum": ""
             },
             "require": {
@@ -869,9 +869,9 @@
             ],
             "support": {
                 "issues": "https://github.com/firebase/php-jwt/issues",
-                "source": "https://github.com/firebase/php-jwt/tree/v7.0.2"
+                "source": "https://github.com/firebase/php-jwt/tree/v7.0.3"
             },
-            "time": "2025-12-16T22:17:28+00:00"
+            "time": "2026-02-25T22:16:40+00:00"
         },
         {
             "name": "graham-campbell/result-type",
@@ -2096,16 +2096,16 @@
         },
         {
             "name": "symfony/cache",
-            "version": "v8.0.5",
+            "version": "v8.0.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/cache.git",
-                "reference": "92e9960386c7e01f58198038c199d522959a843c"
+                "reference": "59184fa14658d7724cd9b8743d91c1b1aa618bff"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/cache/zipball/92e9960386c7e01f58198038c199d522959a843c",
-                "reference": "92e9960386c7e01f58198038c199d522959a843c",
+                "url": "https://api.github.com/repos/symfony/cache/zipball/59184fa14658d7724cd9b8743d91c1b1aa618bff",
+                "reference": "59184fa14658d7724cd9b8743d91c1b1aa618bff",
                 "shasum": ""
             },
             "require": {
@@ -2172,7 +2172,7 @@
                 "psr6"
             ],
             "support": {
-                "source": "https://github.com/symfony/cache/tree/v8.0.5"
+                "source": "https://github.com/symfony/cache/tree/v8.0.6"
             },
             "funding": [
                 {
@@ -2192,7 +2192,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-01-27T16:18:07+00:00"
+            "time": "2026-02-21T23:29:37+00:00"
         },
         {
             "name": "symfony/cache-contracts",
@@ -2429,16 +2429,16 @@
         },
         {
             "name": "symfony/password-hasher",
-            "version": "v8.0.4",
+            "version": "v8.0.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/password-hasher.git",
-                "reference": "ca6af4e20357d58d50c818d676cf2e2dd5e53b02"
+                "reference": "ff98a0be88030c5f4ba800414f911678cf9dad9a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/password-hasher/zipball/ca6af4e20357d58d50c818d676cf2e2dd5e53b02",
-                "reference": "ca6af4e20357d58d50c818d676cf2e2dd5e53b02",
+                "url": "https://api.github.com/repos/symfony/password-hasher/zipball/ff98a0be88030c5f4ba800414f911678cf9dad9a",
+                "reference": "ff98a0be88030c5f4ba800414f911678cf9dad9a",
                 "shasum": ""
             },
             "require": {
@@ -2478,7 +2478,7 @@
                 "password"
             ],
             "support": {
-                "source": "https://github.com/symfony/password-hasher/tree/v8.0.4"
+                "source": "https://github.com/symfony/password-hasher/tree/v8.0.6"
             },
             "funding": [
                 {
@@ -2498,7 +2498,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-01-01T23:07:29+00:00"
+            "time": "2026-02-13T09:57:13+00:00"
         },
         {
             "name": "symfony/polyfill-ctype",
@@ -3485,5 +3485,5 @@
         "ext-pdo": "*"
     },
     "platform-dev": {},
-    "plugin-api-version": "2.6.0"
+    "plugin-api-version": "2.9.0"
 }
