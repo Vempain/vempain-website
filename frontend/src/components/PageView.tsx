@@ -1,12 +1,17 @@
 import {Col, Input, Pagination, Row, Typography} from 'antd';
 import React, {useMemo} from 'react';
+import {Link as RouterLink} from 'react-router-dom';
 import {GalleryLoader, ShowSubjects} from './index';
 import {ImageEmbed} from './ImageEmbed';
 import {HeroEmbed} from './HeroEmbed';
 import {CollapseEmbed} from './CollapseEmbed';
 import {CarouselEmbed} from './CarouselEmbed';
+import {VideoEmbed} from './VideoEmbed';
+import {AudioEmbed} from './AudioEmbed';
+import {YouTubeEmbed} from './YouTubeEmbed';
+import {LastItemsEmbed} from './LastItemsEmbed';
 import type {WebSitePage} from '../models';
-import {parseEmbeds} from '../tools/embedParser.ts';
+import {parseEmbeds, toFrontendPagePath} from '../tools';
 import dayjs from "dayjs";
 
 const {Title, Paragraph} = Typography;
@@ -66,6 +71,22 @@ function PageView({pageContent, pages, pagination, searchInput, onSearchInputCha
             } else if (embed.type === 'hero' && embed.embedId) {
                 segments.push(
                         <HeroEmbed key={`hero-${embed.embedId}-${index}`} fileId={embed.embedId} title={pageContent?.title ?? ''}/>
+                );
+            } else if (embed.type === 'video' && embed.embedId) {
+                segments.push(
+                        <VideoEmbed key={`video-${embed.embedId}-${index}`} fileId={embed.embedId}/>
+                );
+            } else if (embed.type === 'audio' && embed.embedId) {
+                segments.push(
+                        <AudioEmbed key={`audio-${embed.embedId}-${index}`} fileId={embed.embedId}/>
+                );
+            } else if (embed.type === 'youtube' && embed.youtubeUrl) {
+                segments.push(
+                        <YouTubeEmbed key={`youtube-${index}`} url={embed.youtubeUrl}/>
+                );
+            } else if (embed.type === 'last' && embed.lastType && embed.count) {
+                segments.push(
+                        <LastItemsEmbed key={`last-${embed.lastType}-${index}`} lastType={embed.lastType} count={embed.count}/>
                 );
             } else if (embed.type === 'collapse' && embed.items) {
                 segments.push(
@@ -133,8 +154,12 @@ function PageView({pageContent, pages, pagination, searchInput, onSearchInputCha
                     {pages.map((page) => (
                             <Col key={page.id} xs={24} sm={12} lg={8} xl={6} className="card-column">
                                 <div className="card">
-                                    <Title level={4}>{page.title}</Title>
-                                    <Paragraph type="secondary">{page.path}</Paragraph>
+                                    <Title level={4}>
+                                        <RouterLink to={toFrontendPagePath(page.file_path ?? page.path ?? 'index')}>
+                                            {page.title}
+                                        </RouterLink>
+                                    </Title>
+                                    <Paragraph type="secondary">{page.file_path ?? page.path ?? ''}</Paragraph>
                                     <Paragraph ellipsis={{rows: 3}}>{page.header}</Paragraph>
                                     {page.subjects && <ShowSubjects subjects={page.subjects}/>}
                                     {page.aclId && <Paragraph type="warning">Pääsy rajoitettu</Paragraph>}

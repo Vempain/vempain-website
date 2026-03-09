@@ -3,6 +3,7 @@
 namespace Vempain\VempainWebsite\Domain\Repository;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\QueryBuilder;
 use Vempain\VempainWebsite\Domain\Entity\WebSiteFile;
 use Vempain\VempainWebsite\Domain\Entity\WebSiteUser;
 
@@ -81,5 +82,66 @@ class WebSiteFileRepository
     public function getEntityManager(): EntityManagerInterface
     {
         return $this->entityManager;
+    }
+
+    public function findLatestByTypeForUser(int $userId, string $type, int $count): array
+    {
+        $count = max(1, min(50, $count));
+
+        $qb = $this->entityManager->createQueryBuilder();
+        $qb
+            ->select('f')
+            ->from(WebSiteFile::class, 'f')
+            ->leftJoin('Vempain\VempainWebsite\Domain\Entity\WebSiteAcl', 'a', 'WITH', 'a.aclId = f.aclId')
+            ->andWhere(
+                $qb->expr()->orX(
+                    'a.aclId IS NULL',
+                    'a.userId = :userId',
+                    'EXISTS (SELECT 1 FROM ' . WebSiteUser::class . ' wsu WHERE wsu.id = :userId AND wsu.globalPermission = TRUE)'
+                )
+            )
+            ->setParameter('userId', $userId);
+
+        $this->applyTypeFilter($qb, $type);
+
+        $qb
+            ->orderBy('f.originalDateTime', 'DESC')
+            ->addOrderBy('f.id', 'DESC')
+            ->setMaxResults($count);
+
+        return $qb->getQuery()->getResult();
+    }
+
+    private function applyTypeFilter(QueryBuilder $qb, string $type): void
+    {
+        $type = strtolower($type);
+
+        if ($type === 'images') {
+            $qb->andWhere('LOWER(f.mimetype) LIKE :imageMime')
+                ->setParameter('imageMime', 'image/%');
+            return;
+        }
+
+        if ($type === 'videos') {
+            $qb->andWhere('LOWER(f.mimetype) LIKE :videoMime')
+                ->setParameter('videoMime', 'video/%');
+            return;
+        }
+
+        if ($type === 'audio') {
+            $qb->andWhere('LOWER(f.mimetype) LIKE :audioMime')
+                ->setParameter('audioMime', 'audio/%');
+            return;
+        }
+
+        if ($type === 'documents') {
+            $qb
+                ->andWhere('LOWER(f.mimetype) NOT LIKE :imageMime')
+                ->andWhere('LOWER(f.mimetype) NOT LIKE :videoMime')
+                ->andWhere('LOWER(f.mimetype) NOT LIKE :audioMime')
+                ->setParameter('imageMime', 'image/%')
+                ->setParameter('videoMime', 'video/%')
+                ->setParameter('audioMime', 'audio/%');
+        }
     }
 }

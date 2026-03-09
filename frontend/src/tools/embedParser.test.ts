@@ -192,4 +192,67 @@ describe('parseEmbeds', () => {
         expect(result[1].items![2].title).toBe('Day 3');
         expect(result[2]).toMatchObject({type: 'gallery', embedId: 1059});
     });
+
+    it('parses a video embed tag', () => {
+        const body = '<!--vps:embed:video:123-->';
+        const result = parseEmbeds(body);
+        expect(result).toHaveLength(1);
+        expect(result[0]).toMatchObject({
+            type: 'video',
+            embedId: 123,
+            placeholder: '<!--vps:embed:video:123-->',
+        });
+    });
+
+    it('parses an audio embed tag', () => {
+        const body = '<!--vps:embed:audio:456-->';
+        const result = parseEmbeds(body);
+        expect(result).toHaveLength(1);
+        expect(result[0]).toMatchObject({
+            type: 'audio',
+            embedId: 456,
+            placeholder: '<!--vps:embed:audio:456-->',
+        });
+    });
+
+    it('parses a youtube embed tag', () => {
+        const body = '<!--vps:embed:youtube:https://www.youtube.com/watch?v=dQw4w9WgXcQ-->';
+        const result = parseEmbeds(body);
+        expect(result).toHaveLength(1);
+        expect(result[0]).toMatchObject({
+            type: 'youtube',
+            youtubeUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+        });
+    });
+
+    it('parses a last-items embed tag', () => {
+        const body = '<!--vps:embed:last:images:10-->';
+        const result = parseEmbeds(body);
+        expect(result).toHaveLength(1);
+        expect(result[0]).toMatchObject({
+            type: 'last',
+            lastType: 'images',
+            count: 10,
+        });
+    });
+
+    it('parses an encoded last-items embed tag', () => {
+        const body = '&lt;!--vps:embed:last:pages:5--&gt;';
+        const result = parseEmbeds(body);
+        expect(result).toHaveLength(1);
+        expect(result[0]).toMatchObject({
+            type: 'last',
+            lastType: 'pages',
+            count: 5,
+        });
+    });
+
+    it('parses mixed media and last embeds in document order', () => {
+        const body = '<!--vps:embed:video:1--><p>X</p><!--vps:embed:last:documents:3--><p>Y</p><!--vps:embed:audio:2-->';
+        const result = parseEmbeds(body);
+        expect(result).toHaveLength(3);
+        expect(result[0]).toMatchObject({type: 'video', embedId: 1});
+        expect(result[1]).toMatchObject({type: 'last', lastType: 'documents', count: 3});
+        expect(result[2]).toMatchObject({type: 'audio', embedId: 2});
+    });
 });

@@ -123,7 +123,9 @@ $containerBuilder->addDefinitions([
             $container->get(SubjectTransformer::class),
             $container->get(PageCacheEvaluator::class),
             $container->get(LoggerInterface::class),
-            $container->get(ResourceAccessService::class)
+            $container->get(ResourceAccessService::class),
+            $container->get(WebSiteFileRepository::class),
+            $container->get(WebSiteGalleryRepository::class)
         );
     },
     ResourceAccessService::class => DI\autowire(ResourceAccessService::class),

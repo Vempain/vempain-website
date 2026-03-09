@@ -673,6 +673,27 @@ class Routes
             $response->getBody()->write(json_encode($payload, JSON_UNESCAPED_SLASHES));
             return $response->withHeader('Content-Type', 'application/json');
         });
+
+        $app->get('/api/public/embeds/last', function (Request $request, Response $response) use ($app) {
+            /** @var PageService $pageService */
+            $pageService = $app->getContainer()->get(PageService::class);
+
+            $params = $request->getQueryParams();
+            $type = strtolower(trim((string)($params['type'] ?? '')));
+            $count = isset($params['count']) ? (int)$params['count'] : 5;
+            $count = max(1, min(50, $count));
+            $userId = self::getUserId($request);
+
+            try {
+                $payload = $pageService->getLastItems($type, $count, $userId);
+            } catch (\InvalidArgumentException) {
+                $response->getBody()->write(json_encode(['error' => 'Unsupported last-items type'], JSON_UNESCAPED_SLASHES));
+                return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+            }
+
+            $response->getBody()->write(json_encode($payload, JSON_UNESCAPED_SLASHES));
+            return $response->withHeader('Content-Type', 'application/json');
+        });
     }
 
     private static function applyAuthCookie(Response $response, string $token): Response

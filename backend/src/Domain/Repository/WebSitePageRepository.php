@@ -205,6 +205,30 @@ SQL;
         return $qb->getQuery()->getResult();
     }
 
+    public function findLatestAccessible(int $userId, int $count): array
+    {
+        $count = max(1, min(50, $count));
+
+        $qb = $this->entityManager->createQueryBuilder();
+        $qb
+            ->select('p')
+            ->from(WebSitePage::class, 'p')
+            ->leftJoin('Vempain\VempainWebsite\Domain\Entity\WebSiteAcl', 'a', 'WITH', 'a.aclId = p.aclId')
+            ->andWhere(
+                $qb->expr()->orX(
+                    'a.aclId IS NULL',
+                    'a.userId = :userId',
+                    'EXISTS (SELECT 1 FROM ' . WebSiteUser::class . ' wsu WHERE wsu.id = :userId AND wsu.globalPermission = TRUE)'
+                )
+            )
+            ->setParameter('userId', $userId)
+            ->orderBy('p.published', 'DESC')
+            ->addOrderBy('p.id', 'DESC')
+            ->setMaxResults($count);
+
+        return $qb->getQuery()->getResult();
+    }
+
     public function getEntityManager(): EntityManagerInterface
     {
         return $this->entityManager;

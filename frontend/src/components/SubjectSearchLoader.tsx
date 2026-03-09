@@ -1,9 +1,11 @@
-import React, {useCallback, useEffect, useMemo, useState} from "react";
-import {Col, Divider, Empty, Row, Spin, Typography} from "antd";
-import {subjectSearchAPI} from "../services";
-import type {WebSiteFile, WebSiteGallery, WebSitePage} from "../models";
-import {GalleryBlock} from "./GalleryBlock";
-import {useAuth} from "../context";
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import {Col, Divider, Empty, Row, Spin, Typography} from 'antd';
+import {Link as RouterLink} from 'react-router-dom';
+import {subjectSearchAPI} from '../services';
+import type {WebSiteFile, WebSiteGallery, WebSitePage} from '../models';
+import {GalleryBlock} from './GalleryBlock';
+import {useAuth} from '../context';
+import {toFrontendPagePath} from '../tools';
 
 const {Title, Paragraph} = Typography;
 
@@ -107,8 +109,12 @@ export function SubjectSearchLoader({subjectIdList}: SubjectSearchProps) {
                             <Row gutter={[16, 16]}>
                                 {pages.map((page) => (
                                         <Col key={`subject-page-${page.id}`} span={24}>
-                                            <Title level={4} style={{marginBottom: 4}}>{page.title}</Title>
-                                            <Paragraph type="secondary">{page.path}</Paragraph>
+                                            <Title level={4} style={{marginBottom: 4}}>
+                                                <RouterLink to={toFrontendPagePath(page.file_path ?? page.path ?? 'index')}>
+                                                    {page.title}
+                                                </RouterLink>
+                                            </Title>
+                                            <Paragraph type="secondary">{page.file_path ?? page.path ?? ''}</Paragraph>
                                             <Paragraph ellipsis={{rows: 3}}>{page.header}</Paragraph>
                                         </Col>
                                 ))}
@@ -130,7 +136,9 @@ export function SubjectSearchLoader({subjectIdList}: SubjectSearchProps) {
                                 {galleries.map((gallery) => (
                                         <Col key={`subject-gallery-${gallery.id}`} span={24}>
                                             <Title level={4} style={{marginBottom: 4}}>
-                                                {gallery.shortname || `Gallery #${gallery.galleryId}`}
+                                                <RouterLink to={`/galleries/${gallery.galleryId}`}>
+                                                    {gallery.shortname || `Gallery #${gallery.galleryId}`}
+                                                </RouterLink>
                                             </Title>
                                             <Paragraph>{gallery.description}</Paragraph>
                                         </Col>
