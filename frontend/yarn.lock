@@ -6199,7 +6199,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-router-dom@npm:^7.13.0":
+"react-router-dom@npm:^7.13.0, react-router-dom@npm:^7.3.0":
   version: 7.13.1
   resolution: "react-router-dom@npm:7.13.1"
   dependencies:
@@ -7080,6 +7080,7 @@ __metadata:
     react-dom: "npm:^19.2.4"
     react-leaflet: "npm:^5.0.0"
     react-player: "npm:^3.0.0"
+    react-router-dom: "npm:^7.3.0"
     ts-jest: "npm:^29.4.6"
     typescript: "npm:^5.9.3"
     typescript-eslint: "npm:^8.56.1"

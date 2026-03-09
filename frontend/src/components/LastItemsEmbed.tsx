@@ -1,11 +1,12 @@
 import {Card, Col, List, Row, Spin, Typography} from 'antd';
 import {useEffect, useMemo, useRef, useState} from 'react';
+import {Link as RouterLink} from 'react-router-dom';
 import type {ApiResponse, LastEmbedType, PageEmbed} from '../models';
 import {fileAPI} from '../services';
 import {type LastItemsResponse, pageAPI} from '../services/PageAPI';
-import {parseEmbeds} from '../tools';
+import {parseEmbeds, toFrontendPagePath} from '../tools';
 
-const {Link, Paragraph, Text, Title} = Typography;
+const {Paragraph, Text, Title} = Typography;
 
 interface LastItemsEmbedProps {
     lastType: LastEmbedType;
@@ -37,11 +38,11 @@ function formatPublished(published: string | null): string {
 
 function getItemLink(item: LastItem, lastType: LastEmbedType): string {
     if (lastType === 'pages' && item.filePath) {
-        return `/${encodeURI(item.filePath)}`;
+        return toFrontendPagePath(item.filePath);
     }
 
     if (lastType === 'galleries' && item.galleryId) {
-        return `/api/galleries/${item.galleryId}/files`;
+        return `/galleries/${item.galleryId}`;
     }
 
     if (item.filePath) {
@@ -54,14 +55,14 @@ function getItemLink(item: LastItem, lastType: LastEmbedType): string {
 function getAllLink(lastType: LastEmbedType): string {
     switch (lastType) {
         case 'pages':
-            return '/';
+            return toFrontendPagePath('index');
         case 'galleries':
-            return '/api/public/galleries';
+            return '/galleries';
         case 'images':
         case 'videos':
         case 'audio':
         case 'documents':
-            return '/api/public/files';
+            return '/search';
         default:
             return '/';
     }
@@ -144,6 +145,14 @@ function PageHeroThumbnail({heroFileId, alt}: { heroFileId: number; alt: string 
     );
 }
 
+function renderNavLink(path: string, label: string): React.ReactNode {
+    if (path.startsWith('/file/') || path.startsWith('/api/')) {
+        return <a href={path}>{label}</a>;
+    }
+
+    return <RouterLink to={path}>{label}</RouterLink>;
+}
+
 export function LastItemsEmbed({lastType, count}: LastItemsEmbedProps) {
     const [result, setResult] = useState<{ items: LastItem[]; error: string | null } | null>(null);
     const activeRef = useRef(true);
@@ -206,7 +215,7 @@ export function LastItemsEmbed({lastType, count}: LastItemsEmbedProps) {
                                                     ) : null}
                                                     <Col xs={24} md={heroFileId ? 16 : 24}>
                                                         <Title level={4} style={{marginTop: 0, marginBottom: 8}}>
-                                                            <Link href={getItemLink(item, lastType)}>{item.title}</Link>
+                                                            {renderNavLink(getItemLink(item, lastType), item.title)}
                                                         </Title>
                                                         <Paragraph style={{marginBottom: 8}}>{excerpt}</Paragraph>
                                                         <Text type="secondary">{formatPublished(item.published)}</Text>
@@ -217,7 +226,7 @@ export function LastItemsEmbed({lastType, count}: LastItemsEmbedProps) {
                                 })}
                             </div>
                             <div style={{marginTop: 8}}>
-                                <Link href={allLink}>View all {lastType}</Link>
+                                {renderNavLink(allLink, `View all ${lastType}`)}
                             </div>
                         </>
                 )}
@@ -228,13 +237,13 @@ export function LastItemsEmbed({lastType, count}: LastItemsEmbedProps) {
                                     dataSource={items}
                                     renderItem={(item) => (
                                             <List.Item>
-                                                <Link href={getItemLink(item, lastType)}>{item.title}</Link>
+                                                {renderNavLink(getItemLink(item, lastType), item.title)}
                                                 <Text type="secondary">{formatPublished(item.published)}</Text>
                                             </List.Item>
                                     )}
                             />
                             <div style={{marginTop: 8}}>
-                                <Link href={allLink}>View all {lastType}</Link>
+                                {renderNavLink(allLink, `View all ${lastType}`)}
                             </div>
                         </>
                 )}

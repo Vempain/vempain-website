@@ -1,6 +1,7 @@
 import {Layout, Tooltip, Tree, type TreeProps} from 'antd';
 import type {DataNode} from 'antd/es/tree';
-import {type Key, useCallback, useEffect, useState} from 'react';
+import {type Key, useCallback, useEffect, useMemo, useState} from 'react';
+import {useLocation} from 'react-router-dom';
 import type {DirectoryNode} from '../models';
 import {pageAPI} from '../services';
 import {toPathSegment, trimSlashes} from '../tools';
@@ -41,27 +42,30 @@ const buildTreeNodes = (nodes: DirectoryNode[], parentPath: string): DirectoryTr
             };
         });
 
-function resolveInitialPath(directory: string, tree: DirectoryTreeNode[]): string {
-    const normalized = trimSlashes(directory);
-    const segments = normalized.split('/');
+function findSelectedTreeKey(nodes: DirectoryTreeNode[], currentPagePath: string | null): string[] {
+    if (!currentPagePath) {
+        return [];
+    }
 
-    let level: DirectoryTreeNode[] = tree;
-    let foundNode: DirectoryTreeNode | null = null;
+    const stack = [...nodes];
+    while (stack.length > 0) {
+        const node = stack.pop()!;
 
-    for (const seg of segments) {
-        const next = level.find((n) => trimSlashes(n.fullPath).endsWith(seg));
-        if (!next) {
-            return normalized.endsWith('/index') ? normalized : `${normalized}/index`;
+        // Exact page node match.
+        if (node.fullPath === currentPagePath) {
+            return [node.fullPath];
         }
-        foundNode = next;
-        level = (next.children as DirectoryTreeNode[]) ?? [];
+
+        // Index pages are represented by their directory node in the tree.
+        if (node.indexPagePath === currentPagePath) {
+            return [node.fullPath];
+        }
+
+        const children = (node.children as DirectoryTreeNode[] | undefined) ?? [];
+        stack.push(...children);
     }
 
-    if (foundNode?.indexPagePath) {
-        return foundNode.indexPagePath;
-    }
-
-    return normalized.endsWith('/index') ? normalized : `${normalized}/index`;
+    return [];
 }
 
 export function SideBar({
@@ -71,6 +75,15 @@ export function SideBar({
                             onPagePathSelect,
                         }: SideBarProps) {
     const [treeData, setTreeData] = useState<DirectoryTreeNode[]>([]);
+    const location = useLocation();
+
+    const currentPagePath = useMemo(() => {
+        const normalized = trimSlashes(location.pathname);
+        if (!normalized.startsWith('pages/')) {
+            return null;
+        }
+        return normalized.slice('pages/'.length);
+    }, [location.pathname]);
 
     useEffect(() => {
         if (!selectedDirectory) {
@@ -80,13 +93,12 @@ export function SideBar({
         let active = true;
 
         pageAPI.getDirectoryTree(selectedDirectory)
-                .then(async (response) => {
+                .then((response) => {
                     if (!active) return;
 
                     if (response.data) {
                         const tree = buildTreeNodes(response.data, selectedDirectory);
                         setTreeData(tree);
-                        await onPagePathSelect(resolveInitialPath(selectedDirectory, tree));
                         return;
                     }
 
@@ -100,10 +112,21 @@ export function SideBar({
         return () => {
             active = false;
         };
-    }, [selectedDirectory, onPagePathSelect]);
+    }, [selectedDirectory]);
 
-    const handleTreeSelect: TreeProps['onSelect'] = useCallback(async (keys: Key[], info: { node: DataNode }) => {
+    const selectedTreeKeys = useMemo(
+            () => findSelectedTreeKey(treeData, currentPagePath),
+            [treeData, currentPagePath]
+    );
+
+    const handleTreeSelect: TreeProps['onSelect'] = useCallback(async (keys: Key[], info: { node: DataNode; nativeEvent?: Event }) => {
         if (keys.length === 0) {
+            return;
+        }
+
+        // Only react to trusted, user-triggered click events.
+        const nativeEvent = info.nativeEvent;
+        if (!(nativeEvent instanceof MouseEvent) || !nativeEvent.isTrusted) {
             return;
         }
 
@@ -113,8 +136,12 @@ export function SideBar({
             return;
         }
 
+        if (currentPagePath === targetPath) {
+            return;
+        }
+
         await onPagePathSelect(targetPath);
-    }, [onPagePathSelect]);
+    }, [currentPagePath, onPagePathSelect]);
 
     return (
             <Sider
@@ -134,6 +161,7 @@ export function SideBar({
                                     showLine={false}
                                     treeData={treeData}
                                     defaultExpandAll
+                                    selectedKeys={selectedTreeKeys}
                                     onSelect={handleTreeSelect}
                                     style={{whiteSpace: 'nowrap'}}
                             />

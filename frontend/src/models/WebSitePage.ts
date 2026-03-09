@@ -6,7 +6,8 @@ export interface WebSitePage {
     id: number;
     pageId: number;
     title: string;
-    path: string;
+    path?: string;
+    file_path?: string;
     header: string;
     body: string;
     page_style: WebSiteStyle | null;
@@ -16,6 +17,7 @@ export interface WebSitePage {
     created?: string | null;
     modifier?: string | null;
     modified?: string | null;
+    published?: string | null;
     embeds?: PageEmbed[];
     subjects?: WebSiteSubject[];
 }

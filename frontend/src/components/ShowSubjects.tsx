@@ -1,4 +1,5 @@
 import {Tag} from 'antd';
+import {useNavigate} from 'react-router-dom';
 import type {WebSiteSubject} from '../models';
 
 interface ShowSubjectsProps {
@@ -16,13 +17,15 @@ const getDisplayName = (subject: WebSiteSubject): string => {
 };
 
 export function ShowSubjects({subjects = []}: ShowSubjectsProps) {
+    const navigate = useNavigate();
+
     if (subjects.length === 0) {
         return null;
     }
 
     const handleClick = (subjectId: number, e: React.MouseEvent) => {
         e.preventDefault();
-        window.dispatchEvent(new CustomEvent('subject-search-open', {detail: [subjectId]}));
+        navigate(`/search?subjects=${encodeURIComponent(String(subjectId))}`);
     };
 
     return (
