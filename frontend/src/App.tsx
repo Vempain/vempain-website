@@ -1,66 +1,19 @@
-import {
-    Button,
-    Col,
-    ConfigProvider,
-    Form,
-    Input,
-    Layout,
-    Menu,
-    type MenuProps,
-    message,
-    Modal,
-    Row,
-    Select,
-    Space,
-    Tabs,
-    Tooltip,
-    Tree,
-    Typography
-} from 'antd';
-import type {DataNode} from 'antd/es/tree';
-import {SearchOutlined} from '@ant-design/icons';
+import {Button, Col, ConfigProvider, Form, Input, Layout, message, Modal, Row, Select, Space, Tabs, Typography} from 'antd';
 import './App.css';
 import {useAuth, useTheme} from './context';
-import {BottomFooter, GalleryLoader, PageView, ShowSubjects, SubjectSearchLoader} from './components';
-import type {DirectoryNode, WebSiteFile, WebSiteGallery, WebSitePage, WebSitePageDirectory, WebSiteSubject} from "./models";
-import {galleryAPI, pageAPI, subjectSearchAPI, webSiteConfigurationAPI} from "./services";
-import {toPathSegment, trimSlashes} from "./tools";
+import {BottomFooter, GalleryLoader, PageView, ShowSubjects, SideBar, SubjectSearchLoader, TopBar} from './components';
+import type {WebSiteFile, WebSiteGallery, WebSitePage, WebSitePageDirectory, WebSiteSubject} from './models';
+import {galleryAPI, pageAPI, subjectSearchAPI, webSiteConfigurationAPI} from './services';
 import {useCallback, useEffect, useRef, useState} from 'react';
 
-const {Header, Sider, Content} = Layout
-const {Title, Paragraph} = Typography
+const {Content} = Layout;
+const {Title, Paragraph} = Typography;
 
-type MenuItem = Required<MenuProps>["items"][number];
-type DirectoryTreeNode = DataNode & {
-    fullPath: string
-    isDirectory: boolean
-    indexPagePath?: string
-}
-
-const buildTreeNodes = (nodes: DirectoryNode[], parentPath: string): DirectoryTreeNode[] =>
-        nodes.map((node) => {
-            const rawChildren = (node.children ?? []) as DirectoryNode[]
-            const fullPath = node.key.includes('/') ? trimSlashes(node.key) : [trimSlashes(parentPath), toPathSegment(node)].filter(Boolean).join('/')
-            const childNodes = rawChildren.length > 0 ? buildTreeNodes(rawChildren, fullPath) : []
-            const indexChild = childNodes.find((child) => child.fullPath.endsWith('/index'))
-            const filteredChildren = childNodes.filter((child) => !child.fullPath.endsWith('/index'))
-
-            return {
-                ...node,
-                key: fullPath,
-                children: filteredChildren.length ? filteredChildren : undefined,
-                fullPath,
-                isDirectory: rawChildren.length > 0,
-                indexPagePath: indexChild?.fullPath,
-                selectable: rawChildren.length > 0 ? Boolean(indexChild) : true,
-            }
-        })
-
-const DEFAULT_PAGE_PATH = 'index'
-const DEFAULT_SITE_CONFIG = {name: 'Vempain', description: 'Vempain'}
+const DEFAULT_PAGE_PATH = 'index';
+const DEFAULT_SITE_CONFIG = {name: 'Vempain', description: 'Vempain'};
 
 function App() {
-    const {isAuthenticated, login, logout, showLogin, hideLogin, loginVisible} = useAuth()
+    const {login, hideLogin, loginVisible, showLogin} = useAuth();
     const {applyPageStyle, resetToDefault, antdTheme} = useTheme()
     const [activeSection, setActiveSection] = useState('pages')
     const [username, setUsername] = useState('')
@@ -75,7 +28,6 @@ function App() {
     const [directories, setDirectories] = useState<WebSitePageDirectory[]>([])
     const [selectedDirectory, setSelectedDirectory] = useState<string | null>(null)
     const [loading, setLoading] = useState(false)
-    const [treeData, setTreeData] = useState<DirectoryTreeNode[]>([])
     const [pageContent, setPageContent] = useState<WebSitePage | null>(null)
     const [siteConfig, setSiteConfig] = useState(DEFAULT_SITE_CONFIG)
     const [searchModalVisible, setSearchModalVisible] = useState(false)
@@ -84,45 +36,6 @@ function App() {
     const [pageError, setPageError] = useState<string | null>(null)
     const [pageStatus, setPageStatus] = useState<number | null>(null)
     const hasInitialized = useRef(false)
-
-    const menuBarItems: MenuItem[] = [
-        ...directories.map((dir: WebSitePageDirectory) => ({
-            key: `dir-${dir.name}`,
-            label: <a href="#" onClick={(e) => {
-                e.preventDefault();
-                handleDirectoryClick(dir.name);
-            }}>{dir.name}</a>,
-        })),
-        {type: 'divider'},
-        {
-            key: 'auth',
-            label: isAuthenticated ? (
-                    <a href="#" onClick={(e) => {
-                        e.preventDefault();
-                        logout();
-                    }}>Logout</a>
-            ) : (
-                    <a href="#" onClick={(e) => {
-                        e.preventDefault();
-                        showLogin();
-                    }}>Login</a>
-            ),
-        },
-        {
-            key: 'global-search',
-            label: (
-                    <Button
-                            type="text"
-                            icon={<SearchOutlined/>}
-                            aria-label="Search"
-                            onClick={(e) => {
-                                e.preventDefault()
-                                setSearchModalVisible(true)
-                            }}
-                    />
-            ),
-        }
-    ]
 
     async function handleLogin() {
         setLoading(true)
@@ -206,22 +119,6 @@ function App() {
     }, [])
 
     // Helpers
-    const findIndexPathInTree = useCallback((path: string): string | null => {
-        const normalized = trimSlashes(path)
-        const segments = normalized.split('/')
-        // Walk the tree to locate the node matching the path prefix, then see if index child exists
-        let level: DirectoryTreeNode[] = treeData
-        let foundNode: DirectoryTreeNode | null = null
-
-        for (const seg of segments) {
-            const next = level.find((n) => trimSlashes(n.fullPath).endsWith(seg))
-            if (!next) return null
-            foundNode = next
-            level = (next.children as DirectoryTreeNode[]) ?? []
-        }
-        return foundNode?.indexPagePath ?? null
-    }, [treeData])
-
     const loadPageContent = useCallback(async (path: string) => {
         setPageError(null)
         setPageStatus(null)
@@ -238,27 +135,13 @@ function App() {
         }
     }, [showLogin])
 
-    const ensureIndexPageLoadedForPath = useCallback(async (path: string) => {
-        const indexPathFromTree = findIndexPathInTree(path)
-        const normalized = trimSlashes(path)
-        const targetPath = indexPathFromTree
-                ? indexPathFromTree
-                : normalized === 'index' || normalized.endsWith('/index')
-                        ? normalized
-                        : `${normalized}/index`
-        await loadPageContent(targetPath)
-    }, [findIndexPathInTree, loadPageContent])
-
     async function handleDirectoryClick(directory: string) {
         setSelectedDirectory(directory)
         setActiveSection('pages')
         setLoading(true)
         setError('')
         try {
-            const [pagesResp, treeResp] = await Promise.all([
-                pageAPI.getPublicPages({directory, page: 0}),
-                pageAPI.getDirectoryTree(directory),
-            ])
+            const pagesResp = await pageAPI.getPublicPages({directory, page: 0})
 
             if (pagesResp.data) {
                 setPages(pagesResp.data.content)
@@ -270,15 +153,6 @@ function App() {
             } else {
                 setError(pagesResp.error || 'Failed to load pages')
             }
-
-            if (treeResp.data) {
-                setTreeData(buildTreeNodes(treeResp.data, directory))
-                await ensureIndexPageLoadedForPath(directory)
-            } else {
-                console.debug("No tree data received for directory:", directory)
-                setTreeData([])
-                setPageContent(null)
-            }
         } catch (err) {
             const messageText = err instanceof Error ? err.message : 'Failed to load data'
             setError(messageText)
@@ -286,19 +160,6 @@ function App() {
         } finally {
             setLoading(false)
         }
-    }
-
-    async function handleTreeSelect(keys: React.Key[], info: { node: DirectoryTreeNode }) {
-        if (keys.length === 0) {
-            return
-        }
-
-        const targetPath = info.node.isDirectory ? info.node.indexPagePath : info.node.fullPath
-        if (!targetPath) {
-            return
-        }
-
-        await loadPageContent(targetPath)
     }
 
     const handleGlobalSearch = useCallback((value: string) => {
@@ -358,8 +219,8 @@ function App() {
         hasInitialized.current = true
         handleLoadSection('pages')
         void loadDirectories()
-        void ensureIndexPageLoadedForPath(DEFAULT_PAGE_PATH)
-    }, [handleLoadSection, loadDirectories, ensureIndexPageLoadedForPath])
+        void loadPageContent(DEFAULT_PAGE_PATH)
+    }, [handleLoadSection, loadDirectories, loadPageContent])
 
     useEffect(() => {
         let isMounted = true
@@ -472,52 +333,19 @@ function App() {
     return (
         <ConfigProvider theme={antdTheme}>
             <Layout className="app-layout">
-                <Header className="app-header"
-                        style={{
-                            position: "fixed",
-                            top: 0,
-                            left: 0,
-                            right: 0,
-                            zIndex: 1000,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                            padding: "0 0px",
-                            maxWidth: "100%"
-                        }}
-                >
-                    <Menu
-                            mode="horizontal"
-                            selectedKeys={selectedDirectory ? [`dir-${selectedDirectory}`] : []}
-                            items={menuBarItems}
-                            style={{width: "100%"}}
-                    />
-                </Header>
+                <TopBar
+                        selectedDirectory={selectedDirectory}
+                        directories={directories}
+                        onDirectoryClick={handleDirectoryClick}
+                        onShowSearch={() => setSearchModalVisible(true)}
+                />
                 <div className="app-main">
-                    <Sider
-                            trigger={null}
-                            collapsible
-                            collapsed={false}
-                            width="auto"
-                            style={{flex: '0 0 auto', minWidth: 320, maxWidth: 720}}
-                            className="app-sider"
-                    >
-                        <Tooltip title={siteConfig.description}>
-                            <div className="logo">{siteConfig.name}</div>
-                        </Tooltip>
-                        {selectedDirectory && (
-                                <div style={{overflowX: 'auto'}}>
-                                    <Tree
-                                            showLine={false}
-                                            treeData={treeData}
-                                            defaultExpandAll
-                                            onSelect={handleTreeSelect}
-                                            // ensure tree rows don't wrap and can scroll horizontally if needed
-                                            style={{whiteSpace: 'nowrap'}}
-                                    />
-                                </div>
-                        )}
-                    </Sider>
+                    <SideBar
+                            siteName={siteConfig.name}
+                            siteDescription={siteConfig.description}
+                            selectedDirectory={selectedDirectory}
+                            onPagePathSelect={loadPageContent}
+                    />
                     <Content className="app-content">
                         {error && <Paragraph type="danger">{error}</Paragraph>}
                         {renderContent()}

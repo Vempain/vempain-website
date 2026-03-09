@@ -52,7 +52,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v6.2.0
         with:
-          node-version: '22'
+          node-version: '24'
         env:
           VEMPAIN_ACTION_TOKEN: ${{ secrets.VEMPAIN_ACTION_TOKEN }}
 
@@ -96,7 +96,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v6.2.0
         with:
-          node-version: '22'
+          node-version: '24'
 
       - name: Get main and base version
         id: basemain
