@@ -9,6 +9,8 @@ export interface LastItemsResponseItem {
     published: string | null;
     filePath?: string | null;
     galleryId?: number | null;
+    header?: string | null;
+    body?: string | null;
 }
 
 export interface LastItemsResponse {

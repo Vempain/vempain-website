@@ -282,17 +282,26 @@ class PageService
 
         if ($type === 'pages') {
             $pages = $this->pageRepository->findLatestAccessible($userId, $count);
+            $items = [];
+
+            foreach ($pages as $pageEntity) {
+                $evaluatedBody = $this->pageCacheEvaluator->render($pageEntity);
+
+                $items[] = [
+                    'id' => $pageEntity->getId(),
+                    'title' => $pageEntity->getTitle(),
+                    'header' => $pageEntity->getHeader(),
+                    // Prefer cache/evaluated content; fall back to raw body if evaluation fails.
+                    'body' => $evaluatedBody ?? $pageEntity->getBody(),
+                    'published' => $pageEntity->getPublished()?->format('c'),
+                    'filePath' => $pageEntity->getFilePath(),
+                ];
+            }
+
             return [
                 'type' => 'pages',
                 'count' => $count,
-                'items' => array_map(static function ($pageEntity): array {
-                    return [
-                        'id' => $pageEntity->getId(),
-                        'title' => $pageEntity->getTitle(),
-                        'published' => $pageEntity->getPublished()?->format('c'),
-                        'filePath' => $pageEntity->getFilePath(),
-                    ];
-                }, $pages),
+                'items' => $items,
             ];
         }
 
