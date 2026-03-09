@@ -222,4 +222,35 @@ SQL;
             'metadata' => $row['metadata'] ?? null,
         ];
     }
+
+    /**
+     * @return array<int, array<string,mixed>>
+     */
+    public function findLatestAccessible(int $userId, int $count): array
+    {
+        $count = max(1, min(50, $count));
+
+        $conn = $this->entityManager->getConnection();
+        $sql = <<<'SQL'
+SELECT g.id,
+       g.gallery_id,
+       g.shortname,
+       g.description,
+       COALESCE(g.modified, g.created) AS published
+FROM web_site_gallery g
+LEFT JOIN web_site_acl a
+       ON a.acl_id = g.acl_id
+WHERE (a.user_id = :userId
+   OR a.acl_id IS NULL
+   OR EXISTS (SELECT 1 FROM web_site_users wsu WHERE wsu.id = :userId AND wsu.global_permission = TRUE))
+ORDER BY COALESCE(g.modified, g.created) DESC, g.id DESC
+LIMIT :limit
+SQL;
+
+        $stmt = $conn->prepare($sql);
+        $stmt->bindValue('userId', $userId, ParameterType::INTEGER);
+        $stmt->bindValue('limit', $count, ParameterType::INTEGER);
+
+        return $stmt->executeQuery()->fetchAllAssociative();
+    }
 }

@@ -1,7 +1,21 @@
 import {AbstractAPI} from './AbstractAPI.ts';
-import type {ApiResponse, DirectoryNode, WebSiteFile, WebSitePage, WebSitePageDirectory} from '../models';
+import type {ApiResponse, DirectoryNode, LastEmbedType, WebSiteFile, WebSitePage, WebSitePageDirectory} from '../models';
 import type {PagedRequest, PagedResponse} from "@vempain/vempain-auth-frontend";
 
+
+export interface LastItemsResponseItem {
+    id?: number;
+    title: string;
+    published: string | null;
+    filePath?: string | null;
+    galleryId?: number | null;
+}
+
+export interface LastItemsResponse {
+    type: LastEmbedType;
+    count: number;
+    items: LastItemsResponseItem[];
+}
 
 class PageAPI extends AbstractAPI {
     async getPublicPages(params: Partial<PagedRequest & { sortDir?: 'asc' | 'desc'; directory?: string | null }> = {}) {
@@ -39,6 +53,14 @@ class PageAPI extends AbstractAPI {
 
     async getPublicFileById(id: number): Promise<ApiResponse<WebSiteFile>> {
         return await this.request<WebSiteFile>(`/files/id/${id}`);
+    }
+
+    async getLastItems(type: LastEmbedType, count: number): Promise<ApiResponse<LastItemsResponse>> {
+        const params = new URLSearchParams({
+            type,
+            count: String(Math.max(1, Math.min(50, count))),
+        });
+        return await this.request<LastItemsResponse>(`/embeds/last?${params.toString()}`);
     }
 }
 

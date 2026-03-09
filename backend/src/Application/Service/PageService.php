@@ -2,11 +2,14 @@
 
 namespace Vempain\VempainWebsite\Application\Service;
 
+use InvalidArgumentException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Log\LoggerInterface;
 use Slim\Psr7\Response;
 use Vempain\VempainWebsite\Application\Transformer\SubjectTransformer;
+use Vempain\VempainWebsite\Domain\Repository\WebSiteFileRepository;
+use Vempain\VempainWebsite\Domain\Repository\WebSiteGalleryRepository;
 use Vempain\VempainWebsite\Domain\Repository\WebSitePageRepository;
 use Vempain\VempainWebsite\Domain\Repository\WebSiteSubjectRepository;
 
@@ -22,6 +25,8 @@ class PageService
         private readonly PageCacheEvaluator $pageCacheEvaluator,
         private readonly LoggerInterface $logger,
         private readonly ResourceAccessService $resourceAccessService,
+        private readonly WebSiteFileRepository $fileRepository,
+        private readonly WebSiteGalleryRepository $galleryRepository,
     ) {
     }
 
@@ -268,5 +273,66 @@ class PageService
             'modified' => $page->getModified()?->format('c'),
             'secure' => $page->isSecure()
         ];
+    }
+
+    public function getLastItems(string $type, int $count, int $userId): array
+    {
+        $type = strtolower(trim($type));
+        $count = max(1, min(self::MAX_PER_PAGE, $count));
+
+        if ($type === 'pages') {
+            $pages = $this->pageRepository->findLatestAccessible($userId, $count);
+            return [
+                'type' => 'pages',
+                'count' => $count,
+                'items' => array_map(static function ($pageEntity): array {
+                    return [
+                        'id' => $pageEntity->getId(),
+                        'title' => $pageEntity->getTitle(),
+                        'published' => $pageEntity->getPublished()?->format('c'),
+                        'filePath' => $pageEntity->getFilePath(),
+                    ];
+                }, $pages),
+            ];
+        }
+
+        if ($type === 'galleries') {
+            $galleries = $this->galleryRepository->findLatestAccessible($userId, $count);
+            return [
+                'type' => 'galleries',
+                'count' => $count,
+                'items' => array_map(static function (array $gallery): array {
+                    $name = isset($gallery['shortname']) && $gallery['shortname'] !== null && $gallery['shortname'] !== ''
+                        ? (string)$gallery['shortname']
+                        : 'Gallery #' . (int)$gallery['gallery_id'];
+
+                    return [
+                        'id' => isset($gallery['id']) ? (int)$gallery['id'] : null,
+                        'galleryId' => isset($gallery['gallery_id']) ? (int)$gallery['gallery_id'] : null,
+                        'title' => $name,
+                        'published' => isset($gallery['published']) ? (string)$gallery['published'] : null,
+                    ];
+                }, $galleries),
+            ];
+        }
+
+        if (in_array($type, ['images', 'videos', 'audio', 'documents'], true)) {
+            $files = $this->fileRepository->findLatestByTypeForUser($userId, $type, $count);
+            return [
+                'type' => $type,
+                'count' => $count,
+                'items' => array_map(static function ($file): array {
+                    $path = $file->getFilePath();
+                    return [
+                        'id' => $file->getId(),
+                        'title' => basename($path),
+                        'published' => $file->getOriginalDateTime()?->format('c'),
+                        'filePath' => $path,
+                    ];
+                }, $files),
+            ];
+        }
+
+        throw new InvalidArgumentException('Unsupported last-items type');
     }
 }
