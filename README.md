@@ -15,3 +15,5 @@ This service is intended to replace the [Vempain Simplex](https://github.com/Vem
 ## Licensing
 
 The Vempain Website is open-source software licensed under the GPL 2.0 license.
+
+[AGENTS.md](docs/AGENTS.md) has more detailed orientation and workflow guidance for agents working in this codebase.
