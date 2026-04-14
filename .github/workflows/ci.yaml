@@ -1,4 +1,6 @@
-name: Continuous Integration
+name: CI
+permissions:
+  contents: read
 on:
   pull_request:
   push:
@@ -12,12 +14,13 @@ env:
   FRONTEND_IMAGE: ghcr.io/vempain/vempain-site-frontend
 
 concurrency: build
-permissions:
-  contents: read
 
 jobs:
   backend-tests:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
@@ -44,6 +47,9 @@ jobs:
 
   frontend-tests:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
     needs: backend-tests
     steps:
       - name: Check out repository
@@ -53,8 +59,18 @@ jobs:
         uses: actions/setup-node@v6.3.0
         with:
           node-version: '24'
-        env:
-          VEMPAIN_ACTION_TOKEN: ${{ secrets.VEMPAIN_ACTION_TOKEN }}
+
+      - name: Resolve package token
+        shell: bash
+        run: |
+          if [ -n "${{ secrets.VEMPAIN_ACTION_TOKEN }}" ]; then
+            echo "Using VEMPAIN_ACTION_TOKEN for package registry authentication"
+            VEMPAIN_ACTION_TOKEN="${{ secrets.VEMPAIN_ACTION_TOKEN }}"
+          else
+            echo "VEMPAIN_ACTION_TOKEN not found, falling back to GITHUB_TOKEN for package registry authentication"
+            VEMPAIN_ACTION_TOKEN="${{ secrets.GITHUB_TOKEN }}"
+          fi
+          echo "VEMPAIN_ACTION_TOKEN=${VEMPAIN_ACTION_TOKEN}" >> $GITHUB_ENV
 
       - name: Install frontend dependencies
         working-directory: frontend
@@ -97,6 +113,18 @@ jobs:
         uses: actions/setup-node@v6.3.0
         with:
           node-version: '24'
+
+      - name: Resolve package token
+        shell: bash
+        run: |
+          if [ -n "${{ secrets.VEMPAIN_ACTION_TOKEN }}" ]; then
+            echo "Using VEMPAIN_ACTION_TOKEN for package registry authentication"
+            VEMPAIN_ACTION_TOKEN="${{ secrets.VEMPAIN_ACTION_TOKEN }}"
+          else
+            echo "VEMPAIN_ACTION_TOKEN not found, falling back to GITHUB_TOKEN for package registry authentication"
+            VEMPAIN_ACTION_TOKEN="${{ secrets.GITHUB_TOKEN }}"
+          fi
+          echo "VEMPAIN_ACTION_TOKEN=${VEMPAIN_ACTION_TOKEN}" >> $GITHUB_ENV
 
       - name: Get main and base version
         id: basemain
