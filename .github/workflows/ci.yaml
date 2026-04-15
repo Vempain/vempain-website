@@ -220,7 +220,7 @@ jobs:
           newVersion: ${{ steps.newVer.outputs.newVersion }}
 
       - name: Create git tag
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.VEMPAIN_ACTION_TOKEN }}
           script: |
@@ -232,7 +232,7 @@ jobs:
             })
 
       - name: Create GitHub Release
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           github-token: ${{ secrets.VEMPAIN_ACTION_TOKEN }}
           script: |
