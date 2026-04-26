@@ -2,6 +2,17 @@ export type {ApiResponse} from './ApiResponse.ts';
 export type {DirectoryNode} from './DirectoryNode.ts';
 export type {MetadataEntry} from './MetadataEntry.ts';
 export type {PageEmbed, EmbedItem, LastEmbedType} from './PageEmbed.ts';
+export type {
+    GpsBounds,
+    GpsClusterItem,
+    GpsClusterPointsResponse,
+    GpsClustersResponse,
+    GpsOverviewResponse,
+    GpsPoint,
+    GpsTrackResponse,
+    MusicDataResponse,
+    MusicDataRow
+} from './PublishedData';
 export type {WebSiteConfiguration} from './WebSiteConfiguration.ts';
 export type {WebSiteFile} from './WebSiteFile.ts';
 export type {WebSiteGallery} from './WebSiteGallery.ts';

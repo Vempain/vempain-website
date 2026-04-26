@@ -22,7 +22,7 @@ function tryParseItemsJson(json: string): EmbedItem[] | null {
 
 /**
  * Parses embed tags from a page body string and returns an array of PageEmbed objects.
- * Supports: gallery, image, hero, collapse, carousel embed types.
+ * Supports: gallery, image, hero, music, gps_timeseries, collapse, carousel embed types.
  *
  * Collapse and carousel use inline JSON array payloads:
  *   <!--vps:embed:collapse:[{"title":"…","body":"…"},…]-->
@@ -49,6 +49,24 @@ export function parseEmbeds(body: string): PageEmbed[] {
                 embed: {type, embedId: id, placeholder: m[0]},
                 index: m.index,
             });
+        }
+    }
+
+    // Dataset embeds keyed by identifier
+    const datasetLiteral = /<!--\s*vps:embed:(?<type>music|gps_timeseries):(?<identifier>[a-z][a-z0-9_]*)\s*-->/ig;
+    const datasetEncoded = /&lt;!--\s*vps:embed:(?<type>music|gps_timeseries):(?<identifier>[a-z][a-z0-9_]*)\s*--&gt;/ig;
+
+    for (const pattern of [datasetLiteral, datasetEncoded]) {
+        let m: RegExpExecArray | null;
+        while ((m = pattern.exec(body)) !== null) {
+            const type = (m.groups?.type ?? '').toLowerCase();
+            const identifier = (m.groups?.identifier ?? '').trim();
+            if (identifier !== '') {
+                matchesWithIndex.push({
+                    embed: {type, identifier, placeholder: m[0]},
+                    index: m.index,
+                });
+            }
         }
     }
 

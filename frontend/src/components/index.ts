@@ -15,5 +15,6 @@ export {VideoEmbed} from './VideoEmbed';
 export {AudioEmbed} from './AudioEmbed';
 export {YouTubeEmbed} from './YouTubeEmbed';
 export {LastItemsEmbed} from './LastItemsEmbed';
+export {MusicDataEmbed} from './MusicDataEmbed';
 export {TopBar} from './TopBar';
 export {SideBar} from './SideBar';

@@ -8,6 +8,7 @@ export type LastEmbedType = 'pages' | 'galleries' | 'images' | 'videos' | 'audio
 export interface PageEmbed {
     type: string;
     embedId?: number;
+    identifier?: string;
     placeholder?: string;
     autoplay?: boolean;
     dotDuration?: boolean;

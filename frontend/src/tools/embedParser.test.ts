@@ -1,3 +1,5 @@
+/// <reference types="jest" />
+
 import {parseEmbeds} from './embedParser';
 
 describe('parseEmbeds', () => {
@@ -225,6 +227,28 @@ describe('parseEmbeds', () => {
         });
     });
 
+    it('parses a music data embed tag', () => {
+        const body = '<!--vps:embed:music:music_library-->';
+        const result = parseEmbeds(body);
+        expect(result).toHaveLength(1);
+        expect(result[0]).toMatchObject({
+            type: 'music',
+            identifier: 'music_library',
+            placeholder: '<!--vps:embed:music:music_library-->',
+        });
+    });
+
+    it('parses a gps time series embed tag', () => {
+        const body = '<!--vps:embed:gps_timeseries:gps_timeseries_holidays_2024-->';
+        const result = parseEmbeds(body);
+        expect(result).toHaveLength(1);
+        expect(result[0]).toMatchObject({
+            type: 'gps_timeseries',
+            identifier: 'gps_timeseries_holidays_2024',
+            placeholder: '<!--vps:embed:gps_timeseries:gps_timeseries_holidays_2024-->',
+        });
+    });
+
     it('parses a last-items embed tag', () => {
         const body = '<!--vps:embed:last:images:10-->';
         const result = parseEmbeds(body);
@@ -245,6 +269,14 @@ describe('parseEmbeds', () => {
             lastType: 'pages',
             count: 5,
         });
+    });
+
+    it('parses encoded music and gps data embeds', () => {
+        const body = '&lt;!--vps:embed:music:music_library--&gt;&lt;!--vps:embed:gps_timeseries:gps_timeseries_holidays_2024--&gt;';
+        const result = parseEmbeds(body);
+        expect(result).toHaveLength(2);
+        expect(result[0]).toMatchObject({type: 'music', identifier: 'music_library'});
+        expect(result[1]).toMatchObject({type: 'gps_timeseries', identifier: 'gps_timeseries_holidays_2024'});
     });
 
     it('parses mixed media and last embeds in document order', () => {

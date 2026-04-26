@@ -1,5 +1,5 @@
 import {Col, Input, Pagination, Row, Typography} from 'antd';
-import React, {useMemo} from 'react';
+import React, {lazy, Suspense, useMemo} from 'react';
 import {Link as RouterLink} from 'react-router-dom';
 import {GalleryLoader, ShowSubjects} from './index';
 import {ImageEmbed} from './ImageEmbed';
@@ -8,6 +8,7 @@ import {CollapseEmbed} from './CollapseEmbed';
 import {CarouselEmbed} from './CarouselEmbed';
 import {VideoEmbed} from './VideoEmbed';
 import {AudioEmbed} from './AudioEmbed';
+import {MusicDataEmbed} from './MusicDataEmbed';
 import {YouTubeEmbed} from './YouTubeEmbed';
 import {LastItemsEmbed} from './LastItemsEmbed';
 import type {WebSitePage} from '../models';
@@ -15,6 +16,7 @@ import {parseEmbeds, toFrontendPagePath} from '../tools';
 import dayjs from "dayjs";
 
 const {Title, Paragraph} = Typography;
+const LazyGpsTimeSeriesEmbed = lazy(() => import('./GpsTimeSeriesEmbed'));
 
 interface PageViewProps {
     pageContent: WebSitePage | null;
@@ -83,6 +85,16 @@ function PageView({pageContent, pages, pagination, searchInput, onSearchInputCha
             } else if (embed.type === 'youtube' && embed.youtubeUrl) {
                 segments.push(
                         <YouTubeEmbed key={`youtube-${index}`} url={embed.youtubeUrl}/>
+                );
+            } else if (embed.type === 'music' && embed.identifier) {
+                segments.push(
+                        <MusicDataEmbed key={`music-${embed.identifier}-${index}`} identifier={embed.identifier}/>
+                );
+            } else if (embed.type === 'gps_timeseries' && embed.identifier) {
+                segments.push(
+                        <Suspense key={`gps-${embed.identifier}-${index}`} fallback={<div>Loading GPS map…</div>}>
+                            <LazyGpsTimeSeriesEmbed identifier={embed.identifier}/>
+                        </Suspense>
                 );
             } else if (embed.type === 'last' && embed.lastType && embed.count) {
                 segments.push(
