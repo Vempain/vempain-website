@@ -258,9 +258,7 @@ export default function GpsTimeSeriesEmbed({identifier}: GpsTimeSeriesEmbedProps
                         />
                         <MapViewportBridge
                                 onMapReady={setMapInstance}
-                                onViewportChange={(map) => {
-                                    void loadClusters(map);
-                                }}
+                                onViewportChange={loadClusters}
                         />
                         {trackPath.length > 1 && (
                                 <Polyline positions={trackPath} pathOptions={{color: '#52c41a', weight: 3, opacity: 0.85}}/>
