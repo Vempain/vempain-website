@@ -22,28 +22,39 @@ export function GalleryLoader({galleryId, title}: GalleryLoaderProps) {
 
     // Reset and fetch first page when gallery changes
     useEffect(() => {
-        setLoading(true);
-        setWebSiteFileList([]);
-        setCurrentPage(0);
-        setLastPageFetched(false);
-        setTotalElements(0);
+        let active = true;
+        const timerId = window.setTimeout(() => {
+            setLoading(true);
+            setWebSiteFileList([]);
+            setCurrentPage(0);
+            setLastPageFetched(false);
+            setTotalElements(0);
 
-        galleryAPI.getGalleryFiles(galleryId, {page: 0, size: currentSize})
-                .then((pagedData) => {
-                    if (pagedData) {
+            galleryAPI.getGalleryFiles(galleryId, {page: 0, size: currentSize})
+                    .then((pagedData) => {
+                        if (!active || !pagedData) {
+                            return;
+                        }
                         setWebSiteFileList(pagedData.content);
                         setCurrentPage(pagedData.page);
                         setCurrentSize(pagedData.size);
                         setTotalElements(pagedData.total_elements);
                         setLastPageFetched(pagedData.last);
-                    }
-                })
-                .catch((error) => {
-                    console.error('Error fetching gallery files:', error);
-                })
-                .finally(() => {
-                    setLoading(false);
-                });
+                    })
+                    .catch((error) => {
+                        console.error('Error fetching gallery files:', error);
+                    })
+                    .finally(() => {
+                        if (active) {
+                            setLoading(false);
+                        }
+                    });
+        }, 0);
+
+        return () => {
+            active = false;
+            window.clearTimeout(timerId);
+        };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [galleryId]);
 

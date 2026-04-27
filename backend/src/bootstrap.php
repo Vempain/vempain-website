@@ -21,6 +21,7 @@ use Vempain\VempainWebsite\Application\Service\FileService;
 use Vempain\VempainWebsite\Application\Service\LegacyEmbedParser;
 use Vempain\VempainWebsite\Application\Service\PageCacheEvaluator;
 use Vempain\VempainWebsite\Application\Service\PageService;
+use Vempain\VempainWebsite\Application\Service\PublishedDataService;
 use Vempain\VempainWebsite\Application\Service\ResourceAccessService;
 use Vempain\VempainWebsite\Application\Transformer\SubjectTransformer;
 use Vempain\VempainWebsite\Domain\Repository\UserRepository;
@@ -128,6 +129,7 @@ $containerBuilder->addDefinitions([
             $container->get(WebSiteGalleryRepository::class)
         );
     },
+    PublishedDataService::class => DI\autowire(PublishedDataService::class),
     ResourceAccessService::class => DI\autowire(ResourceAccessService::class),
     CorsMiddleware::class => function (): CorsMiddleware {
         $rawOrigins = getenv('ENV_VEMPAIN_CORS_ALLOW_ORIGINS');

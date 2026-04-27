@@ -10,6 +10,7 @@ use Slim\Routing\RouteContext;
 use Vempain\VempainWebsite\Application\Auth\AuthService;
 use Vempain\VempainWebsite\Application\Service\FileService;
 use Vempain\VempainWebsite\Application\Service\PageService;
+use Vempain\VempainWebsite\Application\Service\PublishedDataService;
 use Vempain\VempainWebsite\Application\Service\ResourceAccessService;
 use Vempain\VempainWebsite\Application\Service\SubjectSearchService;
 use Vempain\VempainWebsite\Application\Transformer\LocationTransformer;
@@ -689,6 +690,120 @@ class Routes
             } catch (\InvalidArgumentException) {
                 $response->getBody()->write(json_encode(['error' => 'Unsupported last-items type'], JSON_UNESCAPED_SLASHES));
                 return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+            }
+
+            $response->getBody()->write(json_encode($payload, JSON_UNESCAPED_SLASHES));
+            return $response->withHeader('Content-Type', 'application/json');
+        });
+
+        $app->get('/api/public/embeds/music/{identifier}', function (Request $request, Response $response, string $identifier) use ($app) {
+            /** @var PublishedDataService $publishedDataService */
+            $publishedDataService = $app->getContainer()->get(PublishedDataService::class);
+            $params = $request->getQueryParams();
+            $page = isset($params['page']) ? (int)$params['page'] : 0;
+            $perPage = isset($params['perPage']) ? (int)$params['perPage'] : 25;
+            $sortBy = (string)($params['sortBy'] ?? 'artist');
+            $direction = (string)($params['direction'] ?? 'asc');
+            $search = (string)($params['search'] ?? '');
+
+            try {
+                $payload = $publishedDataService->listMusicData($identifier, $page, $perPage, $sortBy, $direction, $search);
+            } catch (\InvalidArgumentException $exception) {
+                $response->getBody()->write(json_encode(['error' => $exception->getMessage()], JSON_UNESCAPED_SLASHES));
+                return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+            } catch (\RuntimeException $exception) {
+                $response->getBody()->write(json_encode(['error' => $exception->getMessage()], JSON_UNESCAPED_SLASHES));
+                return $response->withStatus(404)->withHeader('Content-Type', 'application/json');
+            }
+
+            $response->getBody()->write(json_encode($payload, JSON_UNESCAPED_SLASHES));
+            return $response->withHeader('Content-Type', 'application/json');
+        });
+
+        $app->get('/api/public/embeds/gps/{identifier}/overview', function (Request $request, Response $response, string $identifier) use ($app) {
+            /** @var PublishedDataService $publishedDataService */
+            $publishedDataService = $app->getContainer()->get(PublishedDataService::class);
+
+            try {
+                $payload = $publishedDataService->getGpsOverview($identifier);
+            } catch (\InvalidArgumentException $exception) {
+                $response->getBody()->write(json_encode(['error' => $exception->getMessage()], JSON_UNESCAPED_SLASHES));
+                return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+            } catch (\RuntimeException $exception) {
+                $response->getBody()->write(json_encode(['error' => $exception->getMessage()], JSON_UNESCAPED_SLASHES));
+                return $response->withStatus(404)->withHeader('Content-Type', 'application/json');
+            }
+
+            $response->getBody()->write(json_encode($payload, JSON_UNESCAPED_SLASHES));
+            return $response->withHeader('Content-Type', 'application/json');
+        });
+
+        $app->get('/api/public/embeds/gps/{identifier}/clusters', function (Request $request, Response $response, string $identifier) use ($app) {
+            /** @var PublishedDataService $publishedDataService */
+            $publishedDataService = $app->getContainer()->get(PublishedDataService::class);
+            $params = $request->getQueryParams();
+            $zoom = isset($params['zoom']) ? (int)$params['zoom'] : 4;
+
+            try {
+                $payload = $publishedDataService->getGpsClusters(
+                    $identifier,
+                    $zoom,
+                    isset($params['minLat']) ? (float)$params['minLat'] : null,
+                    isset($params['maxLat']) ? (float)$params['maxLat'] : null,
+                    isset($params['minLng']) ? (float)$params['minLng'] : null,
+                    isset($params['maxLng']) ? (float)$params['maxLng'] : null,
+                );
+            } catch (\InvalidArgumentException $exception) {
+                $response->getBody()->write(json_encode(['error' => $exception->getMessage()], JSON_UNESCAPED_SLASHES));
+                return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+            } catch (\RuntimeException $exception) {
+                $response->getBody()->write(json_encode(['error' => $exception->getMessage()], JSON_UNESCAPED_SLASHES));
+                return $response->withStatus(404)->withHeader('Content-Type', 'application/json');
+            }
+
+            $response->getBody()->write(json_encode($payload, JSON_UNESCAPED_SLASHES));
+            return $response->withHeader('Content-Type', 'application/json');
+        });
+
+        $app->get('/api/public/embeds/gps/{identifier}/clusters/{clusterKey}/points', function (
+            Request $request,
+            Response $response,
+            string $identifier,
+            string $clusterKey
+        ) use ($app) {
+            /** @var PublishedDataService $publishedDataService */
+            $publishedDataService = $app->getContainer()->get(PublishedDataService::class);
+            $params = $request->getQueryParams();
+            $limit = isset($params['limit']) ? (int)$params['limit'] : 250;
+
+            try {
+                $payload = $publishedDataService->getGpsClusterPoints($identifier, $clusterKey, $limit);
+            } catch (\InvalidArgumentException $exception) {
+                $response->getBody()->write(json_encode(['error' => $exception->getMessage()], JSON_UNESCAPED_SLASHES));
+                return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+            } catch (\RuntimeException $exception) {
+                $response->getBody()->write(json_encode(['error' => $exception->getMessage()], JSON_UNESCAPED_SLASHES));
+                return $response->withStatus(404)->withHeader('Content-Type', 'application/json');
+            }
+
+            $response->getBody()->write(json_encode($payload, JSON_UNESCAPED_SLASHES));
+            return $response->withHeader('Content-Type', 'application/json');
+        });
+
+        $app->get('/api/public/embeds/gps/{identifier}/track', function (Request $request, Response $response, string $identifier) use ($app) {
+            /** @var PublishedDataService $publishedDataService */
+            $publishedDataService = $app->getContainer()->get(PublishedDataService::class);
+            $params = $request->getQueryParams();
+            $maxPoints = isset($params['maxPoints']) ? (int)$params['maxPoints'] : 3000;
+
+            try {
+                $payload = $publishedDataService->getGpsTrack($identifier, $maxPoints);
+            } catch (\InvalidArgumentException $exception) {
+                $response->getBody()->write(json_encode(['error' => $exception->getMessage()], JSON_UNESCAPED_SLASHES));
+                return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
+            } catch (\RuntimeException $exception) {
+                $response->getBody()->write(json_encode(['error' => $exception->getMessage()], JSON_UNESCAPED_SLASHES));
+                return $response->withStatus(404)->withHeader('Content-Type', 'application/json');
             }
 
             $response->getBody()->write(json_encode($payload, JSON_UNESCAPED_SLASHES));

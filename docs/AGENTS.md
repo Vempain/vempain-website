@@ -72,6 +72,17 @@
 - `frontend/generateBuildInfo.js` writes `frontend/src/buildInfo.json` during builds. Treat `src/buildInfo.json` as
   generated output, not hand-edited source.
 
+## GPS time-series embed
+
+- The `GpsTimeSeriesEmbed` component renders a Leaflet map with a polyline track, cluster markers, and expanded-point
+  markers for the GPS dataset identified by the embed tag `<!--vps:embed:gps_timeseries:<identifier>-->`.
+- Data is fetched via three backend endpoints: `/api/public/embeds/gps/{id}/overview`, `/track`, and `/clusters`.
+- **Critical**: `onViewportChange` passed to `MapViewportBridge` **must be a stable (memoized) callback**. The
+  `MapViewportBridge` effect lists `onViewportChange` as a dependency; if the prop is a new inline arrow function on
+  every render, the effect re-fires on each cluster fetch, causing an infinite request loop. Always pass the
+  `useCallback`
+  reference directly (e.g. `onViewportChange={loadClusters}`) rather than wrapping it in `() => {}`.
+
 ## Editing guidance specific to this repo
 
 - Keep changes small and local; this codebase mixes modern code with legacy compatibility layers, especially around page
