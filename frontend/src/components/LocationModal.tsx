@@ -17,10 +17,9 @@ export function LocationModal({open, location, onClose}: LocationModalProps) {
 
     const compass = useMemo(() => toCompass16(location.direction), [location.direction]);
 
-    // Generate a unique key based on location to force map remount when location changes
+    // Force map remount when open/close state or coordinates change.
     const mapKey = useMemo(
-        () => `map-${location.longitude}-${location.latitude}-${Date.now()}`,
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+            () => `map-${open ? 'open' : 'closed'}-${location.longitude}-${location.latitude}`,
         [open, location.longitude, location.latitude]
     );
 

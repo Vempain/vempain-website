@@ -27,40 +27,56 @@ export function SubjectSearchLoader({subjectIdList}: SubjectSearchProps) {
 
     // Initial fetch on subject change
     useEffect(() => {
-        if (subjectIdList.length === 0) {
-            setPages([]);
-            setGalleries([]);
-            setFiles([]);
-            setFilesPage(0);
-            setFilesTotal(0);
-            setFilesHasMore(false);
-            return;
-        }
+        let active = true;
+        const timerId = window.setTimeout(() => {
+            if (subjectIdList.length === 0) {
+                setPages([]);
+                setGalleries([]);
+                setFiles([]);
+                setFilesPage(0);
+                setFilesTotal(0);
+                setFilesHasMore(false);
+                setLoading(false);
+                return;
+            }
 
-        setLoading(true);
-        subjectSearchAPI.searchByIds({subjectIds: subjectIdList, page: 0, size: filesSize})
-                .then((data) => {
-                    if (!data) {
-                        setPages([]);
-                        setGalleries([]);
-                        setFiles([]);
-                        setFilesTotal(0);
-                        setFilesHasMore(false);
-                        return;
-                    }
-                    setPages(data.pages?.content ?? []);
-                    setGalleries(data.galleries?.content ?? []);
-                    const incomingFiles = data.files?.content ?? [];
-                    setFiles(incomingFiles);
-                    setFilesPage(data.files?.page ?? 0);
-                    setFilesSize(data.files?.size ?? filesSize);
-                    setFilesTotal(data.files?.total_elements ?? incomingFiles.length);
-                    setFilesHasMore(!(data.files?.last ?? true));
-                })
-                .catch((error) => {
-                    console.error("Subject search failed:", error);
-                })
-                .finally(() => setLoading(false));
+            setLoading(true);
+            subjectSearchAPI.searchByIds({subjectIds: subjectIdList, page: 0, size: filesSize})
+                    .then((data) => {
+                        if (!active) {
+                            return;
+                        }
+                        if (!data) {
+                            setPages([]);
+                            setGalleries([]);
+                            setFiles([]);
+                            setFilesTotal(0);
+                            setFilesHasMore(false);
+                            return;
+                        }
+                        setPages(data.pages?.content ?? []);
+                        setGalleries(data.galleries?.content ?? []);
+                        const incomingFiles = data.files?.content ?? [];
+                        setFiles(incomingFiles);
+                        setFilesPage(data.files?.page ?? 0);
+                        setFilesSize(data.files?.size ?? filesSize);
+                        setFilesTotal(data.files?.total_elements ?? incomingFiles.length);
+                        setFilesHasMore(!(data.files?.last ?? true));
+                    })
+                    .catch((error) => {
+                        console.error("Subject search failed:", error);
+                    })
+                    .finally(() => {
+                        if (active) {
+                            setLoading(false);
+                        }
+                    });
+        }, 0);
+
+        return () => {
+            active = false;
+            window.clearTimeout(timerId);
+        };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [subjectIdList.join(",")]);
 
@@ -71,24 +87,24 @@ export function SubjectSearchLoader({subjectIdList}: SubjectSearchProps) {
         }
         const nextPage = filesPage + 1;
         return subjectSearchAPI.searchByIds({subjectIds: subjectIdList, page: nextPage, size: filesSize})
-            .then((data) => {
-                if (!data?.files) {
-                    setFilesHasMore(false);
+                .then((data) => {
+                    if (!data?.files) {
+                        setFilesHasMore(false);
+                        return files;
+                    }
+                    const incoming = data.files.content ?? [];
+                    const combined = [...files, ...incoming];
+                    setFiles(combined);
+                    setFilesPage(data.files.page ?? nextPage);
+                    setFilesSize(data.files.size ?? filesSize);
+                    setFilesTotal(data.files.total_elements ?? combined.length);
+                    setFilesHasMore(!(data.files.last ?? true));
+                    return combined;
+                })
+                .catch((error) => {
+                    console.error("Error fetching additional files:", error);
                     return files;
-                }
-                const incoming = data.files.content ?? [];
-                const combined = [...files, ...incoming];
-                setFiles(combined);
-                setFilesPage(data.files.page ?? nextPage);
-                setFilesSize(data.files.size ?? filesSize);
-                setFilesTotal(data.files.total_elements ?? combined.length);
-                setFilesHasMore(!(data.files.last ?? true));
-                return combined;
-            })
-            .catch((error) => {
-                console.error("Error fetching additional files:", error);
-                return files;
-            });
+                });
     }, [files, filesHasMore, filesPage, filesSize, subjectIdList]);
 
     const sections = useMemo(() => {

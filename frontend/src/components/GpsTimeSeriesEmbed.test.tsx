@@ -33,7 +33,7 @@ jest.mock('leaflet', () => {
 });
 
 jest.mock('react-leaflet', () => {
-    const ReactLocal = require('react');
+    const ReactLocal = React;
 
     return {
         MapContainer: ({children}: { children: React.ReactNode }) => {
