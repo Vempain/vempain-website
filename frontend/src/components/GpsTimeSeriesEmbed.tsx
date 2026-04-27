@@ -233,16 +233,16 @@ export default function GpsTimeSeriesEmbed({identifier}: GpsTimeSeriesEmbedProps
     }
 
     if (overviewError) {
-        return <Alert type="warning" message={overviewError}/>;
+        return <Alert type="warning" title={overviewError}/>;
     }
 
     if (!overviewBounds) {
-        return <Empty description="No GPS time series data available" image={Empty.PRESENTED_IMAGE_SIMPLE}/>;
+        return <Empty description="Kuvaston reittiä ei löydy" image={Empty.PRESENTED_IMAGE_SIMPLE}/>;
     }
 
     return (
             <div style={{margin: '24px 0'}}>
-                <Typography.Title level={4} style={{marginBottom: 12}}>GPS time series</Typography.Title>
+                <Typography.Title level={4} style={{marginBottom: 12}}>Kuvaston reitti</Typography.Title>
                 {trackError && <Alert type="warning" message={trackError} style={{marginBottom: 12}}/>}
                 {clusterError && <Alert type="error" message={clusterError} style={{marginBottom: 12}}/>}
                 {expansionError && <Alert type="warning" message={expansionError} style={{marginBottom: 12}}/>}
@@ -292,9 +292,8 @@ export default function GpsTimeSeriesEmbed({identifier}: GpsTimeSeriesEmbedProps
                     </MapContainer>
                 </div>
                 <Typography.Paragraph type="secondary" style={{marginTop: 8, marginBottom: 0}}>
-                    Dataset: {identifier}
-                    {loadingTrack ? ' · loading track path…' : ''}
-                    {loadingClusters ? ' · loading visible map area…' : ''}
+                    {loadingTrack ? ' · Kuvaston karttareittiä ladataan…' : ''}
+                    {loadingClusters ? ' · Ladataan karttanäkymä…' : ''}
                 </Typography.Paragraph>
                 {mapInstance && expandedPoints.length > 0 && (
                         <Typography.Paragraph type="secondary" style={{marginTop: 4, marginBottom: 0}}>
