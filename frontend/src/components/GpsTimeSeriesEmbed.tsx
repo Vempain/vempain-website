@@ -261,7 +261,7 @@ export default function GpsTimeSeriesEmbed({identifier}: GpsTimeSeriesEmbedProps
                                 onViewportChange={loadClusters}
                         />
                         {trackPath.length > 1 && (
-                                <Polyline positions={trackPath} pathOptions={{color: '#52c41a', weight: 3, opacity: 0.85}}/>
+                                <Polyline positions={trackPath} color="#52c41a" weight={3} opacity={0.85}/>
                         )}
                         {clusters.map((cluster) => cluster.kind === 'cluster' ? (
                                 <ClusterMarker key={cluster.cluster_key} cluster={cluster} onExpand={handleClusterExpand}/>
