@@ -60,6 +60,11 @@
   `deploy/document/site/default-style.json` and must also exist in the mounted file root + DB metadata in production.
 - Leaflet CSS is imported once in `frontend/src/main.tsx`; map components are lazy-loaded so avoid moving Leaflet
   imports back into eager top-level bundles.
+- `frontend/src/main.tsx` also overrides `L.Icon.Default` using explicit imports from
+  `leaflet/dist/images/{marker-icon-2x.png,marker-icon.png,marker-shadow.png}`. Keep this override: without it,
+  production builds can resolve marker URLs relative to the current SPA route (for example
+  `/pages/.../marker-icon.png`),
+  causing missing map pins.
 
 ## Developer workflows
 
