@@ -17,8 +17,8 @@ interface LastItem {
     id?: number;
     title: string;
     published: string | null;
-    filePath?: string | null;
-    galleryId?: number | null;
+    file_path?: string | null;
+    gallery_id?: number | null;
     header?: string | null;
     body?: string | null;
 }
@@ -37,16 +37,19 @@ function formatPublished(published: string | null): string {
 }
 
 function getItemLink(item: LastItem, lastType: LastEmbedType): string {
-    if (lastType === 'pages' && item.filePath) {
-        return toFrontendPagePath(item.filePath);
+    const filePath = item.file_path;
+    const galleryId = item.gallery_id;
+
+    if (lastType === 'pages' && filePath) {
+        return toFrontendPagePath(filePath);
     }
 
-    if (lastType === 'galleries' && item.galleryId) {
-        return `/galleries/${item.galleryId}`;
+    if (lastType === 'galleries' && galleryId) {
+        return `/galleries/${galleryId}`;
     }
 
-    if (item.filePath) {
-        return `/file/${item.filePath}`;
+    if (filePath) {
+        return `/file/${filePath}`;
     }
 
     return '/';
@@ -70,8 +73,8 @@ function getAllLink(lastType: LastEmbedType): string {
 
 function findHeroEmbedId(body: string): number | null {
     const embeds = parseEmbeds(body);
-    const hero = embeds.find((embed: PageEmbed) => embed.type === 'hero' && typeof embed.embedId === 'number');
-    return hero?.embedId ?? null;
+    const hero = embeds.find((embed: PageEmbed) => embed.type === 'hero' && typeof embed.embed_id === 'number');
+    return hero?.embed_id ?? null;
 }
 
 function createPlainTopicExcerpt(body: string, header?: string | null, maxLength = 260): string {
@@ -112,8 +115,9 @@ function PageHeroThumbnail({heroFileId, alt}: { heroFileId: number; alt: string 
         pageAPI.getPublicFileById(heroFileId)
                 .then((response) => {
                     if (!activeRef.current) return;
-                    if (response.data?.filePath) {
-                        setSrc(fileAPI.getFileUrl(response.data.filePath));
+                    const filePath = response.data?.file_path;
+                    if (filePath) {
+                        setSrc(fileAPI.getFileUrl(filePath));
                     }
                 })
                 .catch(() => {

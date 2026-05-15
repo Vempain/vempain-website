@@ -128,12 +128,12 @@ class PageService
             'content' => array_map(function ($pageEntity) {
                 return [
                     'id' => $pageEntity->getId(),
-                    'pageId' => $pageEntity->getPageId(),
+                    'page_id' => $pageEntity->getPageId(),
                     'title' => $pageEntity->getTitle(),
                     'header' => $pageEntity->getHeader(),
                     'file_path' => $pageEntity->getFilePath(),
                     'secure' => $pageEntity->isSecure(),
-                    'aclId' => $pageEntity->getAclId(),
+                    'acl_id' => $pageEntity->getAclId(),
                     'published' => $pageEntity->getPublished()?->format('c'),
                     'embeds' => $pageEntity->getEmbeds(),
                     'subjects' => $this->subjectTransformer->manyFromEntities($pageEntity->getSubjects()),
@@ -217,7 +217,7 @@ class PageService
             $tree[] = [
                 'title' => $segments[0],
                 'key' => $page->getFilePath(),
-                'isLeaf' => true,
+                'is_leaf' => true,
             ];
             return;
         }
@@ -294,7 +294,7 @@ class PageService
                     // Prefer cache/evaluated content; fall back to raw body if evaluation fails.
                     'body' => $evaluatedBody ?? $pageEntity->getBody(),
                     'published' => $pageEntity->getPublished()?->format('c'),
-                    'filePath' => $pageEntity->getFilePath(),
+                    'file_path' => $pageEntity->getFilePath(),
                 ];
             }
 
@@ -317,7 +317,7 @@ class PageService
 
                     return [
                         'id' => isset($gallery['id']) ? (int)$gallery['id'] : null,
-                        'galleryId' => isset($gallery['gallery_id']) ? (int)$gallery['gallery_id'] : null,
+                        'gallery_id' => isset($gallery['gallery_id']) ? (int)$gallery['gallery_id'] : null,
                         'title' => $name,
                         'published' => isset($gallery['published']) ? (string)$gallery['published'] : null,
                     ];
@@ -336,7 +336,7 @@ class PageService
                         'id' => $file->getId(),
                         'title' => basename($path),
                         'published' => $file->getOriginalDateTime()?->format('c'),
-                        'filePath' => $path,
+                        'file_path' => $path,
                     ];
                 }, $files),
             ];

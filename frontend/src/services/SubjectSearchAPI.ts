@@ -4,9 +4,9 @@ import type {PagedRequest} from '@vempain/vempain-auth-frontend';
 
 
 export interface SubjectSearchByIdsRequest extends Partial<PagedRequest> {
-    subjectIds: number[];
+    subject_ids: number[];
     sort_by?: string;
-    direction?: 'asc' | 'desc';
+    direction?: 'ASC' | 'DESC';
 }
 
 class SubjectSearchAPI extends AbstractAPI {
@@ -21,7 +21,7 @@ class SubjectSearchAPI extends AbstractAPI {
             page: params.page ?? 0,
             size: params.size ?? 12,
             sort_by: params.sort_by ?? 'id',
-            direction: params.direction ?? 'asc',
+            direction: params.direction ?? 'ASC',
             search: params.search ?? '',
             case_sensitive: params.case_sensitive ?? false,
         };
@@ -33,7 +33,7 @@ class SubjectSearchAPI extends AbstractAPI {
 
     async searchByIds(params: SubjectSearchByIdsRequest): Promise<SubjectSearchResponse> {
         const payload = {
-            subjectIds: params.subjectIds ?? [],
+            subject_ids: params.subject_ids ?? [],
             page: params.page ?? 0,
             size: params.size ?? 12,
             sort_by: params.sort_by ?? 'id',

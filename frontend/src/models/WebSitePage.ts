@@ -4,7 +4,7 @@ import type {WebSiteStyle} from "./WebSiteStyle.ts";
 
 export interface WebSitePage {
     id: number;
-    pageId: number;
+    page_id: number;
     title: string;
     path?: string;
     file_path?: string;
@@ -12,7 +12,7 @@ export interface WebSitePage {
     body: string;
     page_style: WebSiteStyle | null;
     secure: boolean;
-    aclId: number | null;
+    acl_id: number | null;
     creator: string;
     created?: string | null;
     modifier?: string | null;

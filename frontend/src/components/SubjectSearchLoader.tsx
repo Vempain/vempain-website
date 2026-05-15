@@ -41,7 +41,7 @@ export function SubjectSearchLoader({subjectIdList}: SubjectSearchProps) {
             }
 
             setLoading(true);
-            subjectSearchAPI.searchByIds({subjectIds: subjectIdList, page: 0, size: filesSize})
+            subjectSearchAPI.searchByIds({subject_ids: subjectIdList, page: 0, size: filesSize})
                     .then((data) => {
                         if (!active) {
                             return;
@@ -86,7 +86,7 @@ export function SubjectSearchLoader({subjectIdList}: SubjectSearchProps) {
             return Promise.resolve(files);
         }
         const nextPage = filesPage + 1;
-        return subjectSearchAPI.searchByIds({subjectIds: subjectIdList, page: nextPage, size: filesSize})
+        return subjectSearchAPI.searchByIds({subject_ids: subjectIdList, page: nextPage, size: filesSize})
                 .then((data) => {
                     if (!data?.files) {
                         setFilesHasMore(false);
@@ -152,8 +152,8 @@ export function SubjectSearchLoader({subjectIdList}: SubjectSearchProps) {
                                 {galleries.map((gallery) => (
                                         <Col key={`subject-gallery-${gallery.id}`} span={24}>
                                             <Title level={4} style={{marginBottom: 4}}>
-                                                <RouterLink to={`/galleries/${gallery.galleryId}`}>
-                                                    {gallery.shortname || `Gallery #${gallery.galleryId}`}
+                                                <RouterLink to={`/galleries/${gallery.gallery_id}`}>
+                                                    {gallery.shortname || `Gallery #${gallery.gallery_id}`}
                                                 </RouterLink>
                                             </Title>
                                             <Paragraph>{gallery.description}</Paragraph>

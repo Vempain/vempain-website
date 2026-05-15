@@ -48,7 +48,7 @@ function PageView({pageContent, pages, pagination, searchInput, onSearchInputCha
         let cursor = 0;
 
         resolvedEmbeds.forEach((embed, index) => {
-            const placeholder = embed.placeholder ?? `<!--vps:embed:${embed.type}:${embed.embedId}-->`;
+            const placeholder = embed.placeholder ?? `<!--vps:embed:${embed.type}:${embed.embed_id}-->`;
             const placeholderIndex = body.indexOf(placeholder, cursor);
 
             if (placeholderIndex === -1) {
@@ -62,29 +62,29 @@ function PageView({pageContent, pages, pagination, searchInput, onSearchInputCha
                 );
             }
 
-            if (embed.type === 'gallery' && embed.embedId) {
+            if (embed.type === 'gallery' && embed.embed_id) {
                 segments.push(
-                        <GalleryLoader key={`gallery-${embed.embedId}-${index}`} galleryId={embed.embedId}/>
+                        <GalleryLoader key={`gallery-${embed.embed_id}-${index}`} galleryId={embed.embed_id}/>
                 );
-            } else if (embed.type === 'image' && embed.embedId) {
+            } else if (embed.type === 'image' && embed.embed_id) {
                 segments.push(
-                        <ImageEmbed key={`image-${embed.embedId}-${index}`} fileId={embed.embedId}/>
+                        <ImageEmbed key={`image-${embed.embed_id}-${index}`} fileId={embed.embed_id}/>
                 );
-            } else if (embed.type === 'hero' && embed.embedId) {
+            } else if (embed.type === 'hero' && embed.embed_id) {
                 segments.push(
-                        <HeroEmbed key={`hero-${embed.embedId}-${index}`} fileId={embed.embedId} title={pageContent?.title ?? ''}/>
+                        <HeroEmbed key={`hero-${embed.embed_id}-${index}`} fileId={embed.embed_id} title={pageContent?.title ?? ''}/>
                 );
-            } else if (embed.type === 'video' && embed.embedId) {
+            } else if (embed.type === 'video' && embed.embed_id) {
                 segments.push(
-                        <VideoEmbed key={`video-${embed.embedId}-${index}`} fileId={embed.embedId}/>
+                        <VideoEmbed key={`video-${embed.embed_id}-${index}`} fileId={embed.embed_id}/>
                 );
-            } else if (embed.type === 'audio' && embed.embedId) {
+            } else if (embed.type === 'audio' && embed.embed_id) {
                 segments.push(
-                        <AudioEmbed key={`audio-${embed.embedId}-${index}`} fileId={embed.embedId}/>
+                        <AudioEmbed key={`audio-${embed.embed_id}-${index}`} fileId={embed.embed_id}/>
                 );
-            } else if (embed.type === 'youtube' && embed.youtubeUrl) {
+            } else if (embed.type === 'youtube' && embed.youtube_url) {
                 segments.push(
-                        <YouTubeEmbed key={`youtube-${index}`} url={embed.youtubeUrl}/>
+                        <YouTubeEmbed key={`youtube-${index}`} url={embed.youtube_url}/>
                 );
             } else if (embed.type === 'music' && embed.identifier) {
                 segments.push(
@@ -96,9 +96,9 @@ function PageView({pageContent, pages, pagination, searchInput, onSearchInputCha
                             <LazyGpsTimeSeriesEmbed identifier={embed.identifier}/>
                         </Suspense>
                 );
-            } else if (embed.type === 'last' && embed.lastType && embed.count) {
+            } else if (embed.type === 'last' && embed.last_type && embed.count) {
                 segments.push(
-                        <LastItemsEmbed key={`last-${embed.lastType}-${index}`} lastType={embed.lastType} count={embed.count}/>
+                        <LastItemsEmbed key={`last-${embed.last_type}-${index}`} lastType={embed.last_type} count={embed.count}/>
                 );
             } else if (embed.type === 'collapse' && embed.items) {
                 segments.push(
@@ -113,7 +113,7 @@ function PageView({pageContent, pages, pagination, searchInput, onSearchInputCha
                                 key={`carousel-${index}`}
                                 items={embed.items}
                                 autoplay={embed.autoplay ?? false}
-                                dotDuration={embed.dotDuration ?? false}
+                                dotDuration={embed.dot_duration ?? false}
                                 speed={embed.speed ?? 500}
                         />
                 );
@@ -174,7 +174,7 @@ function PageView({pageContent, pages, pagination, searchInput, onSearchInputCha
                                     <Paragraph type="secondary">{page.file_path ?? page.path ?? ''}</Paragraph>
                                     <Paragraph ellipsis={{rows: 3}}>{page.header}</Paragraph>
                                     {page.subjects && <ShowSubjects subjects={page.subjects}/>}
-                                    {page.aclId && <Paragraph type="warning">Pääsy rajoitettu</Paragraph>}
+                                    {page.acl_id && <Paragraph type="warning">Pääsy rajoitettu</Paragraph>}
                                 </div>
                             </Col>
                     ))}

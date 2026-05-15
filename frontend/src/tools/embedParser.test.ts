@@ -14,7 +14,7 @@ describe('parseEmbeds', () => {
         expect(result).toHaveLength(1);
         expect(result[0]).toMatchObject({
             type: 'gallery',
-            embedId: 42,
+            embed_id: 42,
             placeholder: '<!--vps:embed:gallery:42-->',
         });
     });
@@ -25,7 +25,7 @@ describe('parseEmbeds', () => {
         expect(result).toHaveLength(1);
         expect(result[0]).toMatchObject({
             type: 'image',
-            embedId: 7,
+            embed_id: 7,
             placeholder: '<!--vps:embed:image:7-->',
         });
     });
@@ -36,7 +36,7 @@ describe('parseEmbeds', () => {
         expect(result).toHaveLength(1);
         expect(result[0]).toMatchObject({
             type: 'hero',
-            embedId: 15,
+            embed_id: 15,
             placeholder: '<!--vps:embed:hero:15-->',
         });
     });
@@ -47,7 +47,7 @@ describe('parseEmbeds', () => {
         expect(result).toHaveLength(1);
         expect(result[0]).toMatchObject({
             type: 'collapse',
-            embedId: 0,
+            embed_id: 0,
         });
         expect(result[0].items).toHaveLength(2);
         expect(result[0].items![0]).toMatchObject({title: 'Item A', body: '<p>Body A</p>'});
@@ -60,9 +60,9 @@ describe('parseEmbeds', () => {
         expect(result).toHaveLength(1);
         expect(result[0]).toMatchObject({
             type: 'carousel',
-            embedId: 0,
+            embed_id: 0,
             autoplay: true,
-            dotDuration: true,
+            dot_duration: true,
             speed: 800,
         });
         expect(result[0].items).toHaveLength(2);
@@ -74,9 +74,9 @@ describe('parseEmbeds', () => {
         expect(result).toHaveLength(1);
         expect(result[0]).toMatchObject({
             type: 'carousel',
-            embedId: 0,
+            embed_id: 0,
             autoplay: false,
-            dotDuration: false,
+            dot_duration: false,
             speed: 400,
         });
     });
@@ -87,9 +87,9 @@ describe('parseEmbeds', () => {
         expect(result).toHaveLength(1);
         expect(result[0]).toMatchObject({
             type: 'carousel',
-            embedId: 0,
+            embed_id: 0,
             autoplay: true,
-            dotDuration: false,
+            dot_duration: false,
             speed: 600,
         });
         expect(result[0].items).toHaveLength(2);
@@ -113,8 +113,8 @@ describe('parseEmbeds', () => {
         const body = '<p>A</p><!--vps:embed:image:1--><p>B</p><!--vps:embed:collapse:[{"title":"T","body":"B"}]--><p>C</p>';
         const result = parseEmbeds(body);
         expect(result).toHaveLength(2);
-        expect(result[0]).toMatchObject({type: 'image', embedId: 1});
-        expect(result[1]).toMatchObject({type: 'collapse', embedId: 0});
+        expect(result[0]).toMatchObject({type: 'image', embed_id: 1});
+        expect(result[1]).toMatchObject({type: 'collapse', embed_id: 0});
         expect(result[1].items).toHaveLength(1);
     });
 
@@ -122,7 +122,7 @@ describe('parseEmbeds', () => {
         const body = '<!--vps:embed:GALLERY:99-->';
         const result = parseEmbeds(body);
         expect(result).toHaveLength(1);
-        expect(result[0]).toMatchObject({type: 'gallery', embedId: 99});
+        expect(result[0]).toMatchObject({type: 'gallery', embed_id: 99});
     });
 
     it('parses an HTML-entity-encoded hero embed tag', () => {
@@ -131,7 +131,7 @@ describe('parseEmbeds', () => {
         expect(result).toHaveLength(1);
         expect(result[0]).toMatchObject({
             type: 'hero',
-            embedId: 71291,
+            embed_id: 71291,
             placeholder: '&lt;!--vps:embed:hero:71291--&gt;',
         });
     });
@@ -142,7 +142,7 @@ describe('parseEmbeds', () => {
         expect(result).toHaveLength(1);
         expect(result[0]).toMatchObject({
             type: 'gallery',
-            embedId: 42,
+            embed_id: 42,
             placeholder: '&lt;!--vps:embed:gallery:42--&gt;',
         });
     });
@@ -151,8 +151,8 @@ describe('parseEmbeds', () => {
         const body = '<!--vps:embed:image:1--><p>Mid</p>&lt;!--vps:embed:hero:2--&gt;';
         const result = parseEmbeds(body);
         expect(result).toHaveLength(2);
-        expect(result[0]).toMatchObject({type: 'image', embedId: 1});
-        expect(result[1]).toMatchObject({type: 'hero', embedId: 2});
+        expect(result[0]).toMatchObject({type: 'image', embed_id: 1});
+        expect(result[1]).toMatchObject({type: 'hero', embed_id: 2});
     });
 
     it('parses an HTML-entity-encoded carousel embed tag', () => {
@@ -161,9 +161,9 @@ describe('parseEmbeds', () => {
         expect(result).toHaveLength(1);
         expect(result[0]).toMatchObject({
             type: 'carousel',
-            embedId: 0,
+            embed_id: 0,
             autoplay: true,
-            dotDuration: false,
+            dot_duration: false,
             speed: 600,
         });
         expect(result[0].items).toHaveLength(1);
@@ -174,9 +174,9 @@ describe('parseEmbeds', () => {
         const body = '<!--vps:embed:gallery:42--><p>Mid</p><!--vps:embed:gallery:99--><!--vps:embed:gallery:42-->';
         const result = parseEmbeds(body);
         expect(result).toHaveLength(3);
-        expect(result[0]).toMatchObject({type: 'gallery', embedId: 42});
-        expect(result[1]).toMatchObject({type: 'gallery', embedId: 99});
-        expect(result[2]).toMatchObject({type: 'gallery', embedId: 42});
+        expect(result[0]).toMatchObject({type: 'gallery', embed_id: 42});
+        expect(result[1]).toMatchObject({type: 'gallery', embed_id: 99});
+        expect(result[2]).toMatchObject({type: 'gallery', embed_id: 42});
     });
 
     it('parses a real-world page with hero, large inline collapse, and gallery', () => {
@@ -187,12 +187,12 @@ describe('parseEmbeds', () => {
             '<p>More text</p><!--vps:embed:gallery:1059-->';
         const result = parseEmbeds(body);
         expect(result).toHaveLength(3);
-        expect(result[0]).toMatchObject({type: 'hero', embedId: 71297});
-        expect(result[1]).toMatchObject({type: 'collapse', embedId: 0});
+        expect(result[0]).toMatchObject({type: 'hero', embed_id: 71297});
+        expect(result[1]).toMatchObject({type: 'collapse', embed_id: 0});
         expect(result[1].items).toHaveLength(3);
         expect(result[1].items![0].title).toBe('Day 1');
         expect(result[1].items![2].title).toBe('Day 3');
-        expect(result[2]).toMatchObject({type: 'gallery', embedId: 1059});
+        expect(result[2]).toMatchObject({type: 'gallery', embed_id: 1059});
     });
 
     it('parses a video embed tag', () => {
@@ -201,7 +201,7 @@ describe('parseEmbeds', () => {
         expect(result).toHaveLength(1);
         expect(result[0]).toMatchObject({
             type: 'video',
-            embedId: 123,
+            embed_id: 123,
             placeholder: '<!--vps:embed:video:123-->',
         });
     });
@@ -212,7 +212,7 @@ describe('parseEmbeds', () => {
         expect(result).toHaveLength(1);
         expect(result[0]).toMatchObject({
             type: 'audio',
-            embedId: 456,
+            embed_id: 456,
             placeholder: '<!--vps:embed:audio:456-->',
         });
     });
@@ -223,7 +223,7 @@ describe('parseEmbeds', () => {
         expect(result).toHaveLength(1);
         expect(result[0]).toMatchObject({
             type: 'youtube',
-            youtubeUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+            youtube_url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
         });
     });
 
@@ -255,7 +255,7 @@ describe('parseEmbeds', () => {
         expect(result).toHaveLength(1);
         expect(result[0]).toMatchObject({
             type: 'last',
-            lastType: 'images',
+            last_type: 'images',
             count: 10,
         });
     });
@@ -266,7 +266,7 @@ describe('parseEmbeds', () => {
         expect(result).toHaveLength(1);
         expect(result[0]).toMatchObject({
             type: 'last',
-            lastType: 'pages',
+            last_type: 'pages',
             count: 5,
         });
     });
@@ -283,8 +283,8 @@ describe('parseEmbeds', () => {
         const body = '<!--vps:embed:video:1--><p>X</p><!--vps:embed:last:documents:3--><p>Y</p><!--vps:embed:audio:2-->';
         const result = parseEmbeds(body);
         expect(result).toHaveLength(3);
-        expect(result[0]).toMatchObject({type: 'video', embedId: 1});
-        expect(result[1]).toMatchObject({type: 'last', lastType: 'documents', count: 3});
-        expect(result[2]).toMatchObject({type: 'audio', embedId: 2});
+        expect(result[0]).toMatchObject({type: 'video', embed_id: 1});
+        expect(result[1]).toMatchObject({type: 'last', last_type: 'documents', count: 3});
+        expect(result[2]).toMatchObject({type: 'audio', embed_id: 2});
     });
 });

@@ -7,15 +7,15 @@ export type LastEmbedType = 'pages' | 'galleries' | 'images' | 'videos' | 'audio
 
 export interface PageEmbed {
     type: string;
-    embedId?: number;
+    embed_id?: number;
     identifier?: string;
     placeholder?: string;
     autoplay?: boolean;
-    dotDuration?: boolean;
+    dot_duration?: boolean;
     speed?: number;
     /** Inline items for collapse/carousel embeds (new JSON format) */
     items?: EmbedItem[];
-    youtubeUrl?: string;
-    lastType?: LastEmbedType;
+    youtube_url?: string;
+    last_type?: LastEmbedType;
     count?: number;
 }

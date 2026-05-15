@@ -46,7 +46,7 @@ export function parseEmbeds(body: string): PageEmbed[] {
             const type = (m.groups?.type ?? '').toLowerCase();
             const id = Number(m.groups?.id);
             matchesWithIndex.push({
-                embed: {type, embedId: id, placeholder: m[0]},
+                embed: {type, embed_id: id, placeholder: m[0]},
                 index: m.index,
             });
         }
@@ -80,7 +80,7 @@ export function parseEmbeds(body: string): PageEmbed[] {
             const youtubeUrl = (m.groups?.url ?? '').trim();
             if (youtubeUrl !== '') {
                 matchesWithIndex.push({
-                    embed: {type: 'youtube', youtubeUrl, placeholder: m[0]},
+                    embed: {type: 'youtube', youtube_url: youtubeUrl, placeholder: m[0]},
                     index: m.index,
                 });
             }
@@ -98,7 +98,7 @@ export function parseEmbeds(body: string): PageEmbed[] {
             const count = Number(m.groups?.count ?? '0');
             if (count > 0) {
                 matchesWithIndex.push({
-                    embed: {type: 'last', lastType, count, placeholder: m[0]},
+                    embed: {type: 'last', last_type: lastType, count, placeholder: m[0]},
                     index: m.index,
                 });
             }
@@ -116,7 +116,7 @@ export function parseEmbeds(body: string): PageEmbed[] {
             const items = tryParseItemsJson(jsonStr);
             if (items) {
                 matchesWithIndex.push({
-                    embed: {type: 'collapse', embedId: 0, placeholder: m[0], items},
+                    embed: {type: 'collapse', embed_id: 0, placeholder: m[0], items},
                     index: m.index,
                 });
             }
@@ -137,11 +137,11 @@ export function parseEmbeds(body: string): PageEmbed[] {
                 matchesWithIndex.push({
                     embed: {
                         type: 'carousel',
-                        embedId: 0,
+                        embed_id: 0,
                         placeholder: m[0],
                         items,
                         autoplay: m[2].toLowerCase() === 'true',
-                        dotDuration: m[3].toLowerCase() === 'true',
+                        dot_duration: m[3].toLowerCase() === 'true',
                         speed: parseInt(m[4], 10) || 500,
                     },
                     index: m.index,

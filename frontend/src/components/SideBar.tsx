@@ -34,6 +34,7 @@ const buildTreeNodes = (nodes: DirectoryNode[], parentPath: string): DirectoryTr
             return {
                 ...node,
                 key: fullPath,
+                isLeaf: node.is_leaf,
                 children: filteredChildren.length ? filteredChildren : undefined,
                 fullPath,
                 isDirectory: rawChildren.length > 0,

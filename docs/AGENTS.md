@@ -44,8 +44,10 @@
 
 ## API/data-shape gotchas
 
-- Preserve existing DTO casing; it is intentionally mixed by legacy history. Examples: pages use `file_path`, files use
-  `filePath`, galleries use `galleryId`, ACL fields appear as both `acl_id` and `aclId` depending on endpoint.
+- JSON API contract is strict snake_case across backend and frontend (`file_path`, `gallery_id`, `total_elements`,
+  etc.); do not introduce camelCase JSON keys.
+- Use snake_case for both request and response JSON payloads (for example `subject_ids`, `acl_id`,
+  `gallery_subjects`, `file_path`). Keep camelCase only for local variable names or UI-only props.
 - `frontend/src/services/PageAPI.ts` instantiates APIs with `import.meta.env.VITE_APP_API_URL`, while
   `frontend/src/services/AbstractAPI.ts` also knows about `VITE_API_BASE_URL`. Prefer following the existing service
   constructors instead of introducing a third env name.
