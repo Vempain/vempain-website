@@ -17,8 +17,9 @@ export function VideoEmbed({fileId}: VideoEmbedProps) {
         pageAPI.getPublicFileById(fileId)
                 .then((response) => {
                     if (!activeRef.current) return;
-                    if (response.data?.filePath) {
-                        setSrc(fileAPI.getFileUrl(response.data.filePath));
+                    const filePath = response.data?.file_path;
+                    if (filePath) {
+                        setSrc(fileAPI.getFileUrl(filePath));
                     }
                 })
                 .catch((err) => {

@@ -143,9 +143,9 @@ class Routes
 
                 return [
                     'id' => $file->getId(),
-                    'filePath' => $file->getFilePath(),
+                    'file_path' => $file->getFilePath(),
                     'mimetype' => $file->getMimetype(),
-                    'aclId' => $file->getAclId(),
+                    'acl_id' => $file->getAclId(),
                     'subjects' => $subjectTransformer->manyFromEntities($file->getSubjects()),
                 ];
             }, $files);
@@ -171,7 +171,7 @@ class Routes
 
                 return [
                     'id' => $gallery->getId(),
-                    'galleryId' => $gallery->getGalleryId(),
+                    'gallery_id' => $gallery->getGalleryId(),
                     'shortname' => $gallery->getShortname(),
                     'description' => $gallery->getDescription(),
                     'subjects' => $subjectTransformer->manyFromEntities($gallery->getSubjects()),
@@ -217,7 +217,7 @@ class Routes
                 $gallery->setSubjects($subjects);
                 return [
                     'id' => $gallery->getId(),
-                    'galleryId' => $gallery->getGalleryId(),
+                    'gallery_id' => $gallery->getGalleryId(),
                     'shortname' => $gallery->getShortname(),
                     'description' => $gallery->getDescription(),
                     'subjects' => $subjectTransformer->manyFromEntities($gallery->getSubjects()),
@@ -352,7 +352,7 @@ class Routes
                 'first' => $page === 0,
                 'last' => $totalPages === 0 ? true : ($page >= $totalPages - 1),
                 'empty' => $result['total'] === 0,
-                'gallerySubjects' => $subjectTransformer->manyFromEntities($gallerySubjects),
+                'gallery_subjects' => $subjectTransformer->manyFromEntities($gallerySubjects),
             ];
 
             $response->getBody()->write(json_encode($payload, JSON_UNESCAPED_SLASHES));
@@ -538,7 +538,7 @@ class Routes
                     'id' => $file->getId(),
                     'file_path' => $file->getFilePath(),
                     'mimetype' => $file->getMimetype(),
-                    'aclId' => $file->getAclId(),
+                    'acl_id' => $file->getAclId(),
                     'subjects' => $subjectTransformer->manyFromEntities($file->getSubjects()),
                 ];
             }, $files);
@@ -588,9 +588,9 @@ class Routes
 
             $payload = [
                 'id' => $file->getId(),
-                'filePath' => $file->getFilePath(),
+                'file_path' => $file->getFilePath(),
                 'mimetype' => $file->getMimetype(),
-                'aclId' => $file->getAclId(),
+                'acl_id' => $file->getAclId(),
             ];
 
             $response->getBody()->write(json_encode($payload, JSON_UNESCAPED_SLASHES));
@@ -663,7 +663,7 @@ class Routes
             /** @var SubjectSearchService $service */
             $service = $app->getContainer()->get(SubjectSearchService::class);
             $body = (array)$request->getParsedBody();
-            $subjectIds = array_values(array_filter(array_map('intval', $body['subjectIds'] ?? [])));
+            $subjectIds = array_values(array_filter(array_map('intval', $body['subject_ids'] ?? [])));
             $page = isset($body['page']) ? (int)$body['page'] : 0;
             $size = isset($body['size']) ? (int)$body['size'] : 12;
             $sortBy = $body['sort_by'] ?? 'id';

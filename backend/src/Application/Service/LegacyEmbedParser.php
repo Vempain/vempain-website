@@ -28,7 +28,7 @@ class LegacyEmbedParser
             if (in_array($type, ['gallery', 'image', 'hero', 'collapse'], true) && is_numeric($payload)) {
                 $embeds[] = [
                     'type' => $type,
-                    'embedId' => (int)$payload,
+                    'embed_id' => (int)$payload,
                     'placeholder' => $match[0],
                 ];
             } elseif ($type === 'carousel') {
@@ -36,9 +36,9 @@ class LegacyEmbedParser
                 if (count($parts) >= 4 && is_numeric($parts[0])) {
                     $embeds[] = [
                         'type' => 'carousel',
-                        'embedId' => (int)$parts[0],
+                        'embed_id' => (int)$parts[0],
                         'autoplay' => strtolower($parts[1]) === 'true',
-                        'dotDuration' => strtolower($parts[2]) === 'true',
+                        'dot_duration' => strtolower($parts[2]) === 'true',
                         'speed' => $this->parseCarouselSpeed($parts[3] ?? ''),
                         'placeholder' => $match[0],
                     ];
@@ -52,7 +52,7 @@ class LegacyEmbedParser
             $id = (int)$m['id'];
             $embeds[] = [
                 'type' => 'gallery',
-                'embedId' => $id,
+                'embed_id' => $id,
                 'placeholder' => "<!--vps:embed:gallery:{$id}-->",
             ];
         }

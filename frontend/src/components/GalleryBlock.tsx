@@ -77,14 +77,17 @@ export function GalleryBlock({title, siteFileList, totalFiles, gallerySubjects, 
 
         const rawEntries = [
             {label: 'Kommentti', value: activeFile.comment},
-            {label: 'Kuvausaika', value: (activeFile.originalDateTime !== null ? activeFile.originalDateTime : "")},
-            {label: 'Oikeuksien haltija', value: activeFile.rightsHolder},
-            {label: 'Käyttöehdot', value: activeFile.rightsTerms},
-            {label: 'Oikeuksien verkko-osoite', value: activeFile.rightsUrl},
-            {label: 'Tekijä', value: activeFile.creatorName},
-            {label: 'Tekijän sähköposti', value: activeFile.creatorEmail},
-            {label: 'Tekijän maa', value: activeFile.creatorCountry},
-            {label: 'Tekijän verkko-osoite', value: activeFile.creatorUrl},
+            {
+                label: 'Kuvausaika',
+                value: (activeFile.original_date_time ?? ""),
+            },
+            {label: 'Oikeuksien haltija', value: activeFile.rights_holder},
+            {label: 'Käyttöehdot', value: activeFile.rights_terms},
+            {label: 'Oikeuksien verkko-osoite', value: activeFile.rights_url},
+            {label: 'Tekijä', value: activeFile.creator_name},
+            {label: 'Tekijän sähköposti', value: activeFile.creator_email},
+            {label: 'Tekijän maa', value: activeFile.creator_country},
+            {label: 'Tekijän verkko-osoite', value: activeFile.creator_url},
         ];
 
         return rawEntries.flatMap((entry) => {
@@ -150,7 +153,8 @@ export function GalleryBlock({title, siteFileList, totalFiles, gallerySubjects, 
                     >
                         <div style={columnsStyle}>
                             {siteFileList.map((siteFile, idx) => {
-                                const imagePath = fileAPI.getFileUrl(siteFile.filePath);
+                                const filePath = siteFile.file_path;
+                                const imagePath = fileAPI.getFileUrl(filePath);
                                 const thumbPath = fileAPI.getFileThumbUrl(imagePath);
                                 const hasLocation = Boolean(isAuthenticated) && siteFile.location != null;
 
@@ -162,7 +166,7 @@ export function GalleryBlock({title, siteFileList, totalFiles, gallerySubjects, 
                                         title={
                                             <img
                                                 src={thumbPath}
-                                                alt={siteFile.filePath}
+                                                alt={filePath}
                                                 style={{
                                                     maxWidth: THUMB_TOOLTIP_MAX_WIDTH,
                                                     maxHeight: THUMB_TOOLTIP_MAX_HEIGHT,
@@ -191,7 +195,7 @@ export function GalleryBlock({title, siteFileList, totalFiles, gallerySubjects, 
                                             />
                                             <Image
                                                 src={thumbPath}
-                                                alt={siteFile.filePath}
+                                                alt={filePath}
                                                 style={THUMBNAIL_IMAGE_STYLE}
                                                 preview={{src: imagePath}}
                                             />

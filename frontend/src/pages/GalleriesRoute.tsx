@@ -53,12 +53,12 @@ export function GalleriesRoute() {
                     {galleries.map((gallery) => (
                             <Col key={gallery.id} span={24}>
                                 <Title level={4} style={{marginBottom: 4}}>
-                                    <RouterLink to={`/galleries/${gallery.galleryId}`}>
-                                        {gallery.shortname || `Gallery #${gallery.galleryId}`}
+                                    <RouterLink to={`/galleries/${gallery.gallery_id}`}>
+                                        {gallery.shortname || `Gallery #${gallery.gallery_id}`}
                                     </RouterLink>
                                 </Title>
                                 <Paragraph>{gallery.description || 'No description available'}</Paragraph>
-                                <GalleryLoader galleryId={gallery.galleryId}/>
+                                <GalleryLoader galleryId={gallery.gallery_id}/>
                             </Col>
                     ))}
                 </Row>

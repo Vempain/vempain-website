@@ -1,7 +1,7 @@
 export interface DirectoryNode {
     title: string;
     key: string;
-    isLeaf?: boolean;
+    is_leaf?: boolean;
     children?: DirectoryNode[];
 }
 
