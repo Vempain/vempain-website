@@ -154,6 +154,9 @@ export function GalleryBlock({title, siteFileList, totalFiles, gallerySubjects, 
                         <div style={columnsStyle}>
                             {siteFileList.map((siteFile, idx) => {
                                 const filePath = siteFile.file_path;
+                                if (!filePath) {
+                                    return null;
+                                }
                                 const imagePath = fileAPI.getFileUrl(filePath);
                                 const thumbPath = fileAPI.getFileThumbUrl(imagePath);
                                 const hasLocation = Boolean(isAuthenticated) && siteFile.location != null;
