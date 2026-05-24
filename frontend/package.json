@@ -22,7 +22,8 @@
   },
   "dependencies" : {
     "@ant-design/icons" : "^6.2.3",
-    "@vempain/vempain-auth-frontend" : "^1.0.10",
+    "@vempain/vempain-auth-frontend" : "^1.0.11",
+    "@vempain/vempain-rt-renderer" : "1.0.2",
     "antd" : "^6.4.3",
     "axios" : "^1.16.1",
     "dayjs" : "^1.11.20",
@@ -49,15 +50,19 @@
     "globals" : "^17.6.0",
     "jest" : "^30.4.2",
     "jest-environment-jsdom" : "^30.4.1",
-    "ts-jest" : "^29.4.10",
+    "ts-jest" : "^29.4.11",
     "typescript" : "^6.0.3",
     "typescript-eslint" : "^8.59.4",
-    "vite" : "^8.0.13"
+    "vite" : "^8.0.14"
   },
   "jest" : {
     "preset" : "ts-jest/presets/js-with-ts",
     "testEnvironment" : "jest-environment-jsdom",
+    "setupFilesAfterEnv" : [
+      "<rootDir>/src/setupTests.ts"
+    ],
     "moduleNameMapper" : {
+      "^react-player$" : "<rootDir>/__mocks__/reactPlayerMock.js",
       "\\\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$" : "<rootDir>/__mocks__/fileMock.js",
       "\\\\.(css|less)$" : "<rootDir>/__mocks__/styleMock.js"
     },
