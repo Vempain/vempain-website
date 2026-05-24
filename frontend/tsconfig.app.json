@@ -10,6 +10,11 @@
 
     /* Bundler mode */
     "moduleResolution": "bundler",
+    "paths" : {
+      "@vempain/vempain-rt-renderer" : [
+        "../../vempain-rt-renderer/src/index.ts"
+      ]
+    },
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "moduleDetection": "force",
