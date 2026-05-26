@@ -26,7 +26,7 @@
     "@vempain/vempain-rt-renderer" : "1.0.2",
     "antd" : "^6.4.3",
     "axios" : "^1.16.1",
-    "dayjs" : "^1.11.20",
+    "dayjs" : "^1.11.21",
     "leaflet" : "^1.9.4",
     "react" : "^19.2.6",
     "react-dom" : "^19.2.6",
@@ -52,7 +52,7 @@
     "jest-environment-jsdom" : "^30.4.1",
     "ts-jest" : "^29.4.11",
     "typescript" : "^6.0.3",
-    "typescript-eslint" : "^8.59.4",
+    "typescript-eslint" : "^8.60.0",
     "vite" : "^8.0.14"
   },
   "jest" : {
