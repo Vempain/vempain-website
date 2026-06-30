@@ -27,6 +27,7 @@ class PageService
         private readonly ResourceAccessService $resourceAccessService,
         private readonly WebSiteFileRepository $fileRepository,
         private readonly WebSiteGalleryRepository $galleryRepository,
+        private readonly WordCloudEmbedService $wordCloudEmbedService,
     ) {
     }
 
@@ -60,6 +61,8 @@ class PageService
             return $this->errorResponse();
         }
 
+        $bodyWithInjectedEmbeds = $this->wordCloudEmbedService->injectTopTagData($body);
+
         $payload = [
             'id' => $page->getId(),
             'acl_id' => $page->getAclId(),
@@ -67,7 +70,7 @@ class PageService
             'header' => $page->getHeader(),
             'title' => $page->getTitle(),
             'file_path' => $page->getFilePath(),
-            'body' => $body,
+            'body' => $bodyWithInjectedEmbeds,
             'page_style' => $page->getPageStyle(),
             'embeds' => $page->getEmbeds(),
             'subjects' => $this->subjectTransformer->manyFromEntities($page->getSubjects()),
@@ -256,6 +259,8 @@ class PageService
             return null;
         }
 
+        $bodyWithInjectedEmbeds = $this->wordCloudEmbedService->injectTopTagData($body);
+
         return [
             'id' => $page->getId(),
             'acl_id' => $page->getAclId(),
@@ -263,7 +268,7 @@ class PageService
             'header' => $page->getHeader(),
             'title' => $page->getTitle(),
             'file_path' => $page->getFilePath(),
-            'body' => $body,
+            'body' => $bodyWithInjectedEmbeds,
             'page_style' => $page->getPageStyle(),
             'embeds' => $page->getEmbeds(),
             'subjects' => $this->subjectTransformer->manyFromEntities($page->getSubjects()),

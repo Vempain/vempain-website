@@ -187,4 +187,43 @@ class WebSiteSubjectRepository
             ->getQuery()
             ->getResult();
     }
+
+    /**
+     * @return array<int, array{text:string, value:int}>
+     */
+    public function findMostUsedTags(int $limit = 100): array
+    {
+        $limit = max(1, min(1000, $limit));
+
+        $connection = $this->entityManager->getConnection();
+        $sql = <<<'SQL'
+SELECT tag_counts.tag_text AS text, tag_counts.usage_count AS value
+FROM (
+    SELECT LOWER(TRIM(s.subject)) AS tag_text, COUNT(*) AS usage_count
+    FROM (
+        SELECT subject_id FROM web_site_page_subject
+        UNION ALL
+        SELECT subject_id FROM web_site_file_subject
+        UNION ALL
+        SELECT subject_id FROM web_site_gallery_subject
+    ) refs
+    INNER JOIN web_site_subject s ON s.id = refs.subject_id
+    WHERE s.subject IS NOT NULL
+      AND TRIM(s.subject) <> ''
+    GROUP BY LOWER(TRIM(s.subject))
+) tag_counts
+ORDER BY tag_counts.usage_count DESC, tag_counts.tag_text ASC
+LIMIT :limit
+SQL;
+
+        $rows = $connection->executeQuery($sql, ['limit' => $limit])->fetchAllAssociative();
+
+        return array_map(
+            static fn(array $row): array => [
+                'text' => (string)$row['text'],
+                'value' => (int)$row['value'],
+            ],
+            $rows,
+        );
+    }
 }
