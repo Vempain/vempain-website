@@ -21,10 +21,10 @@
     "build:production" : "yarn prebuild && env-cmd -f .env.prod vite build"
   },
   "dependencies" : {
-    "@ant-design/icons" : "^6.3.1",
+    "@ant-design/icons" : "^6.3.2",
     "@vempain/vempain-auth-frontend" : "^1.0.13",
     "@vempain/vempain-rt-renderer" : "1.0.4",
-    "antd" : "^6.4.5",
+    "antd" : "^6.5.0",
     "axios" : "^1.18.1",
     "dayjs" : "^1.11.21",
     "leaflet" : "^1.9.4",
