@@ -9,6 +9,7 @@ export interface PageEmbed {
     type: string;
     embed_id?: number;
     identifier?: string;
+    word_cloud_options?: Record<string, unknown>;
     placeholder?: string;
     autoplay?: boolean;
     dot_duration?: boolean;
