@@ -28,6 +28,7 @@ class PageService
         private readonly WebSiteFileRepository $fileRepository,
         private readonly WebSiteGalleryRepository $galleryRepository,
         private readonly WordCloudEmbedService $wordCloudEmbedService,
+        private readonly TodayRandomEmbedService $todayRandomEmbedService,
     ) {
     }
 
@@ -62,6 +63,7 @@ class PageService
         }
 
         $bodyWithInjectedEmbeds = $this->wordCloudEmbedService->injectTopTagData($body);
+        $bodyWithInjectedEmbeds = $this->todayRandomEmbedService->injectTodayRandomData($bodyWithInjectedEmbeds);
 
         $payload = [
             'id' => $page->getId(),
@@ -260,6 +262,7 @@ class PageService
         }
 
         $bodyWithInjectedEmbeds = $this->wordCloudEmbedService->injectTopTagData($body);
+        $bodyWithInjectedEmbeds = $this->todayRandomEmbedService->injectTodayRandomData($bodyWithInjectedEmbeds);
 
         return [
             'id' => $page->getId(),

@@ -23,6 +23,7 @@ use Vempain\VempainWebsite\Application\Service\PageCacheEvaluator;
 use Vempain\VempainWebsite\Application\Service\PageService;
 use Vempain\VempainWebsite\Application\Service\PublishedDataService;
 use Vempain\VempainWebsite\Application\Service\ResourceAccessService;
+use Vempain\VempainWebsite\Application\Service\TodayRandomEmbedService;
 use Vempain\VempainWebsite\Application\Service\WordCloudEmbedService;
 use Vempain\VempainWebsite\Application\Transformer\SubjectTransformer;
 use Vempain\VempainWebsite\Domain\Repository\UserRepository;
@@ -119,6 +120,7 @@ $containerBuilder->addDefinitions([
     PageCacheEvaluator::class => DI\autowire(PageCacheEvaluator::class),
     LegacyEmbedParser::class => DI\autowire(LegacyEmbedParser::class),
     WordCloudEmbedService::class => DI\autowire(WordCloudEmbedService::class),
+    TodayRandomEmbedService::class => DI\autowire(TodayRandomEmbedService::class),
     PageService::class => function ($container) {
         return new PageService(
             $container->get(WebSitePageRepository::class),
@@ -129,7 +131,8 @@ $containerBuilder->addDefinitions([
             $container->get(ResourceAccessService::class),
             $container->get(WebSiteFileRepository::class),
             $container->get(WebSiteGalleryRepository::class),
-            $container->get(WordCloudEmbedService::class)
+            $container->get(WordCloudEmbedService::class),
+            $container->get(TodayRandomEmbedService::class)
         );
     },
     PublishedDataService::class => DI\autowire(PublishedDataService::class),

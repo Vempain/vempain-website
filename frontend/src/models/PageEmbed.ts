@@ -10,6 +10,7 @@ export interface PageEmbed {
     embed_id?: number;
     identifier?: string;
     word_cloud_options?: Record<string, unknown>;
+    today_random_options?: Record<string, unknown>;
     placeholder?: string;
     autoplay?: boolean;
     dot_duration?: boolean;
