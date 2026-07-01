@@ -12,6 +12,7 @@ This service is intended to replace the [Vempain Simplex](https://github.com/Vem
 - Support to limit access to specific content based on permissions
 - Containerized deployment using Docker and Docker Compose
 - Word cloud embed support (`word_cloud`) with backend-injected top tag data
+- Today-random embed support (`today_random`) with backend-injected same-date image/page selections
 
 ## Licensing
 
@@ -58,3 +59,22 @@ embed payload:
 2. Open the page on website frontend.
 3. Confirm the embed renders as a word cloud and check `/api/public/page-content?file_path=...` response contains
    `word_cloud` payload with `data`.
+
+## Today random embed flow
+
+Author this tag in page content:
+
+```html
+<!--vps:embed:today_random:{"title":"On this day"}-->
+```
+
+When `/api/public/page-content` is requested, backend injects `images` and `pages` into each `today_random` payload.
+`images` contains up to 5 randomly selected images and `pages` contains up to 2 randomly selected pages where month+day
+matches the current date.
+
+### Verification
+
+1. Add a today-random embed from the editor toolbar (**Today**).
+2. Open the page on website frontend.
+3. Confirm image and page cards are shown (or empty-state message if no same-date content exists).
+4. Check `/api/public/page-content?file_path=...` response contains `today_random` payload with `images` and `pages`.

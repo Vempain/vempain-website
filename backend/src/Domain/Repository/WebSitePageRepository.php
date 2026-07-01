@@ -229,6 +229,39 @@ SQL;
         return $qb->getQuery()->getResult();
     }
 
+    /**
+     * @return array<int, array{id:int, title:string, header:?string, file_path:string, published:?string}>
+     */
+    public function findRandomPublishedByCurrentMonthDay(int $count): array
+    {
+        $count = max(1, min(2, $count));
+        $connection = $this->entityManager->getConnection();
+        $sql = <<<'SQL'
+SELECT id,
+       title,
+       header,
+       file_path,
+       CASE WHEN published IS NULL THEN NULL ELSE to_char(published, 'YYYY-MM-DD"T"HH24:MI:SS') END AS published
+FROM web_site_page
+WHERE published IS NOT NULL
+  AND to_char(published::date, 'MM-DD') = to_char(CURRENT_DATE, 'MM-DD')
+ORDER BY random()
+LIMIT :limit
+SQL;
+
+        $rows = $connection->executeQuery($sql, ['limit' => $count])->fetchAllAssociative();
+
+        return array_map(static function (array $row): array {
+            return [
+                'id' => (int)$row['id'],
+                'title' => (string)$row['title'],
+                'header' => isset($row['header']) ? (string)$row['header'] : null,
+                'file_path' => (string)$row['file_path'],
+                'published' => isset($row['published']) && $row['published'] !== '' ? (string)$row['published'] : null,
+            ];
+        }, $rows);
+    }
+
     public function getEntityManager(): EntityManagerInterface
     {
         return $this->entityManager;

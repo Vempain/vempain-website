@@ -112,6 +112,39 @@ class WebSiteFileRepository
         return $qb->getQuery()->getResult();
     }
 
+    /**
+     * @return array<int, array{id:int, title:string, file_path:string, published:?string}>
+     */
+    public function findRandomImagesByCurrentMonthDay(int $count): array
+    {
+        $count = max(1, min(5, $count));
+
+        $connection = $this->entityManager->getConnection();
+        $sql = <<<'SQL'
+SELECT id,
+       COALESCE(NULLIF(regexp_replace(file_path, '^.*/', ''), ''), file_path) AS title,
+       file_path,
+       CASE WHEN original_datetime IS NULL THEN NULL ELSE to_char(original_datetime, 'YYYY-MM-DD"T"HH24:MI:SS') END AS published
+FROM web_site_file
+WHERE original_datetime IS NOT NULL
+  AND LOWER(mimetype) LIKE 'image/%'
+  AND to_char(original_datetime::date, 'MM-DD') = to_char(CURRENT_DATE, 'MM-DD')
+ORDER BY random()
+LIMIT :limit
+SQL;
+
+        $rows = $connection->executeQuery($sql, ['limit' => $count])->fetchAllAssociative();
+
+        return array_map(static function (array $row): array {
+            return [
+                'id' => (int)$row['id'],
+                'title' => (string)$row['title'],
+                'file_path' => (string)$row['file_path'],
+                'published' => isset($row['published']) && $row['published'] !== '' ? (string)$row['published'] : null,
+            ];
+        }, $rows);
+    }
+
     private function applyTypeFilter(QueryBuilder $qb, string $type): void
     {
         $type = strtolower($type);
