@@ -23,7 +23,7 @@
   "dependencies" : {
     "@ant-design/charts" : "^2.6.7",
     "@ant-design/icons" : "^6.3.2",
-    "@vempain/vempain-auth-frontend" : "^1.0.14",
+    "@vempain/vempain-auth-frontend" : "^1.0.15",
     "@vempain/vempain-rt-renderer" : "1.0.6",
     "antd" : "^6.5.0",
     "axios" : "^1.18.1",
@@ -39,7 +39,7 @@
     "@eslint/js" : "^10.0.1",
     "@types/jest" : "^30.0.0",
     "@types/leaflet" : "^1.9.21",
-    "@types/node" : "^26.0.1",
+    "@types/node" : "^26.1.1",
     "@types/react" : "^19.2.17",
     "@types/react-dom" : "^19.2.3",
     "@vitejs/plugin-react" : "^6.0.3",
@@ -53,8 +53,8 @@
     "jest-environment-jsdom" : "^30.4.1",
     "ts-jest" : "^29.4.11",
     "typescript" : "^6.0.3",
-    "typescript-eslint" : "^8.62.1",
-    "vite" : "^8.1.0"
+    "typescript-eslint" : "^8.63.0",
+    "vite" : "^8.1.3"
   },
   "jest" : {
     "preset" : "ts-jest/presets/js-with-ts",
