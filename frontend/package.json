@@ -1,77 +1,77 @@
 {
-  "name" : "vempain-website",
-  "private" : true,
-  "version" : "0.0.0",
-  "type" : "module",
-  "engines" : {
-    "node" : ">=18.0.0",
-    "yarn" : ">=4.0.0"
+  "name": "vempain-website",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "engines": {
+    "node": ">=18.0.0",
+    "yarn": ">=4.0.0"
   },
-  "packageManager" : "yarn@4.16.0",
-  "scripts" : {
-    "prebuild" : "node generateBuildInfo.js",
-    "start" : "env-cmd -f .env.local vite",
-    "build" : "yarn prebuild && tsc && env-cmd -f .env.prod vite build",
-    "lint" : "eslint .",
-    "typecheck" : "tsc --noEmit",
-    "test" : "jest --passWithNoTests",
-    "test:watch" : "jest --watch",
-    "test:coverage" : "jest --coverage . --passWithNoTests",
-    "preview" : "vite preview",
-    "build:production" : "yarn prebuild && env-cmd -f .env.prod vite build"
+  "packageManager": "yarn@4.16.0",
+  "scripts": {
+    "prebuild": "node generateBuildInfo.js",
+    "start": "env-cmd -f .env.local vite",
+    "build": "yarn prebuild && tsc && env-cmd -f .env.prod vite build",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "jest --passWithNoTests",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage . --passWithNoTests",
+    "preview": "vite preview",
+    "build:production": "yarn prebuild && env-cmd -f .env.prod vite build"
   },
-  "dependencies" : {
-    "@ant-design/charts" : "^2.6.7",
-    "@ant-design/icons" : "^6.3.2",
-    "@vempain/vempain-auth-frontend" : "^1.0.15",
-    "@vempain/vempain-rt-renderer" : "1.0.6",
-    "antd" : "^6.5.1",
-    "axios" : "^1.18.1",
-    "dayjs" : "^1.11.21",
-    "leaflet" : "^1.9.4",
-    "react" : "^19.2.7",
-    "react-dom" : "^19.2.7",
-    "react-leaflet" : "^5.0.0",
-    "react-player" : "^3.4.0",
-    "react-router-dom" : "^7.18.1"
+  "dependencies": {
+    "@ant-design/charts": "^2.6.7",
+    "@ant-design/icons": "^6.3.2",
+    "@vempain/vempain-auth-frontend": "^1.0.16",
+    "@vempain/vempain-rt-renderer": "1.0.7",
+    "antd": "^6.5.1",
+    "axios": "^1.18.1",
+    "dayjs": "^1.11.21",
+    "leaflet": "^1.9.4",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "react-leaflet": "^5.0.0",
+    "react-player": "^3.4.0",
+    "react-router-dom": "^7.18.1"
   },
-  "devDependencies" : {
-    "@eslint/js" : "^10.0.1",
-    "@types/jest" : "^30.0.0",
-    "@types/leaflet" : "^1.9.21",
-    "@types/node" : "^26.1.1",
-    "@types/react" : "^19.2.17",
-    "@types/react-dom" : "^19.2.3",
-    "@vitejs/plugin-react" : "^6.0.3",
-    "corepack" : "^0.35.0",
-    "env-cmd" : "^11.0.0",
-    "eslint" : "^10.7.0",
-    "eslint-plugin-react-hooks" : "^7.1.1",
-    "eslint-plugin-react-refresh" : "^0.5.3",
-    "globals" : "^17.7.0",
-    "jest" : "^30.4.2",
-    "jest-environment-jsdom" : "^30.4.1",
-    "ts-jest" : "^29.4.11",
-    "typescript" : "^6.0.3",
-    "typescript-eslint" : "^8.63.0",
-    "vite" : "^8.1.4"
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/jest": "^30.0.0",
+    "@types/leaflet": "^1.9.21",
+    "@types/node": "^26.1.1",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.3",
+    "corepack": "^0.35.0",
+    "env-cmd": "^11.0.0",
+    "eslint": "^10.7.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.3",
+    "globals": "^17.7.0",
+    "jest": "^30.4.2",
+    "jest-environment-jsdom": "^30.4.1",
+    "ts-jest": "^29.4.11",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.64.0",
+    "vite": "^8.1.5"
   },
-  "jest" : {
-    "preset" : "ts-jest/presets/js-with-ts",
-    "testEnvironment" : "jest-environment-jsdom",
-    "setupFilesAfterEnv" : [
+  "jest": {
+    "preset": "ts-jest/presets/js-with-ts",
+    "testEnvironment": "jest-environment-jsdom",
+    "setupFilesAfterEnv": [
       "<rootDir>/src/setupTests.ts"
     ],
-    "moduleNameMapper" : {
-      "^react-player$" : "<rootDir>/__mocks__/reactPlayerMock.js",
-      "\\\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$" : "<rootDir>/__mocks__/fileMock.js",
-      "\\\\.(css|less)$" : "<rootDir>/__mocks__/styleMock.js"
+    "moduleNameMapper": {
+      "^react-player$": "<rootDir>/__mocks__/reactPlayerMock.js",
+      "\\\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$": "<rootDir>/__mocks__/fileMock.js",
+      "\\\\.(css|less)$": "<rootDir>/__mocks__/styleMock.js"
     },
-    "transform" : {
-      "^.+\\.tsx?$" : [
+    "transform": {
+      "^.+\\.tsx?$": [
         "ts-jest",
         {
-          "tsconfig" : "tsconfig.test.json"
+          "tsconfig": "tsconfig.test.json"
         }
       ]
     }
